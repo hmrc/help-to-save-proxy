@@ -32,14 +32,9 @@ case class NSIUserInfo(forename:            String,
                        dateOfBirth:         LocalDate,
                        nino:                String,
                        contactDetails:      ContactDetails,
-                       registrationChannel: String         = "online")
+                       registrationChannel: String)
 
 object NSIUserInfo {
-
-  implicit class NSIUserInfoOps(val nsiUserInfo: NSIUserInfo) {
-    def updateEmail(newEmail: String): NSIUserInfo =
-      nsiUserInfo.copy(contactDetails = nsiUserInfo.contactDetails.copy(email = newEmail))
-  }
 
   case class ContactDetails(address1:                String,
                             address2:                String,
@@ -48,49 +43,15 @@ object NSIUserInfo {
                             address5:                Option[String],
                             postcode:                String,
                             countryCode:             Option[String],
-                            email:                   String,
-                            phoneNumber:             Option[String] = None,
-                            communicationPreference: String         = "02")
+                            email:                   Option[String],
+                            phoneNumber:             Option[String],
+                            communicationPreference: String)
 
   private implicit class StringOps(val s: String) {
     def removeAllSpaces: String = s.replaceAll(" ", "")
 
     def cleanupSpecialCharacters: String = s.replaceAll("\t|\n|\r", " ").trim.replaceAll("\\s{2,}", " ")
 
-  }
-
-  /**
-   * Performs validation checks on the given [[UserInfo]] and converts to [[NSIUserInfo]]
-   * if successful.
-   */
-  def apply(userInfo: UserInfo, email: String): NSIUserInfo = {
-      def extractContactDetails(userInfo: UserInfo): ContactDetails = {
-        val (line1, line2, line3, line4, line5) =
-          userInfo.address.lines.map(_.cleanupSpecialCharacters).filter(_.nonEmpty) match {
-            case Nil ⇒ ("", "", None, None, None)
-            case line1 :: Nil ⇒ (line1, "", None, None, None)
-            case line1 :: line2 :: Nil ⇒ (line1, line2, None, None, None)
-            case line1 :: line2 :: line3 :: Nil ⇒ (line1, line2, Some(line3), None, None)
-            case line1 :: line2 :: line3 :: line4 :: Nil ⇒ (line1, line2, Some(line3), Some(line4), None)
-            case line1 :: line2 :: line3 :: line4 :: line5 :: Nil ⇒ (line1, line2, Some(line3), Some(line4), Some(s"$line5"))
-            case line1 :: line2 :: line3 :: line4 :: line5 :: other ⇒ (line1, line2, Some(line3), Some(line4), Some(s"$line5,${other.mkString(",")}"))
-          }
-
-        ContactDetails(
-          line1, line2, line3, line4, line5,
-          userInfo.address.postcode.getOrElse("").cleanupSpecialCharacters.removeAllSpaces,
-          userInfo.address.country.map(_.cleanupSpecialCharacters.removeAllSpaces).filter(_.toLowerCase =!= "other").map(_.take(2)),
-          email
-        )
-      }
-
-    NSIUserInfo(
-      userInfo.forename.cleanupSpecialCharacters,
-      userInfo.surname.cleanupSpecialCharacters,
-      userInfo.dateOfBirth,
-      userInfo.nino.cleanupSpecialCharacters.removeAllSpaces,
-      extractContactDetails(userInfo)
-    )
   }
 
   implicit val dateFormat: Format[LocalDate] = new Format[LocalDate] {
@@ -110,6 +71,32 @@ object NSIUserInfo {
 
   implicit val contactDetailsFormat: Format[ContactDetails] = Json.format[ContactDetails]
 
-  implicit val nsiUserInfoFormat: Format[NSIUserInfo] = Json.format[NSIUserInfo]
+  implicit val nsiUserInfoFormat: Format[NSIUserInfo] = new Format[NSIUserInfo] {
+
+    val writes: Writes[NSIUserInfo] = Json.writes[NSIUserInfo]
+    val reads: Reads[NSIUserInfo] = Json.reads[NSIUserInfo]
+
+    override def writes(o: NSIUserInfo): JsValue =  writes.writes(o)
+
+    override def reads(json: JsValue): JsResult[NSIUserInfo] = reads.reads(json).map{ u ⇒
+      val c = u.contactDetails
+      NSIUserInfo(
+            u.forename.cleanupSpecialCharacters,
+            u.surname.cleanupSpecialCharacters,
+            u.dateOfBirth,
+            u.nino.cleanupSpecialCharacters.removeAllSpaces,
+              ContactDetails(
+                c.address1, c.address2, c.address3, c.address4, c.address5,
+                c.postcode.cleanupSpecialCharacters.removeAllSpaces,
+                c.countryCode.map(_.cleanupSpecialCharacters.removeAllSpaces).filter(_.toLowerCase =!= "other").map(_.take(2)),
+                c.email,
+                c.phoneNumber,
+                c.communicationPreference.cleanupSpecialCharacters.removeAllSpaces
+              ),
+        u.registrationChannel.cleanupSpecialCharacters.removeAllSpaces
+      )
+
+    }
+  }
 
 }

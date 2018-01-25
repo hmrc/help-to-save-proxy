@@ -28,8 +28,10 @@ object MicroServiceBuild extends Build with MicroService {
     "com.typesafe.play" %% "play-test" % PlayVersion.current % scope,
     "com.github.tomakehurst" % "wiremock" % "2.5.1" % scope,
     "org.scalamock" %% "scalamock-scalatest-support" % "3.5.0" % scope,
-    "hmrc" %% "stub-data-generator" % "0.2.0" % scope,
-    "org.scalatestplus.play" %% "scalatestplus-play" % "2.0.0" % scope
+    "org.scalatestplus.play" %% "scalatestplus-play" % "2.0.0" % scope,
+    "com.miguno.akka" % "akka-mock-scheduler_2.11" % "0.5.1" % scope,
+    "com.typesafe.akka" %% "akka-testkit" % "2.3.11" % scope,
+    "uk.gov.hmrc" %% "stub-data-generator" % "0.4.0" % scope
   )
 
 }

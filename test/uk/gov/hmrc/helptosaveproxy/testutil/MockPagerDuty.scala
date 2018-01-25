@@ -14,16 +14,18 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.helptosaveproxy.models
+package uk.gov.hmrc.helptosaveproxy.testutil
 
-import play.api.libs.json.{Format, Json}
+import org.scalamock.scalatest.MockFactory
+import uk.gov.hmrc.helptosaveproxy.util.PagerDutyAlerting
 
-case class Address(lines:    List[String],
-                   postcode: Option[String],
-                   country:  Option[String])
+trait MockPagerDuty { this: MockFactory ⇒
 
-object Address {
+  val mockPagerDuty: PagerDutyAlerting = mock[PagerDutyAlerting]
 
-  implicit val addressFormat: Format[Address] = Json.format[Address]
+  def mockPagerDutyAlert(expectedMessage: String): Unit =
+    (mockPagerDuty.alert(_: String))
+      .expects(expectedMessage)
+      .returning(())
 
 }
