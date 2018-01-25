@@ -76,23 +76,27 @@ object NSIUserInfo {
     val writes: Writes[NSIUserInfo] = Json.writes[NSIUserInfo]
     val reads: Reads[NSIUserInfo] = Json.reads[NSIUserInfo]
 
-    override def writes(o: NSIUserInfo): JsValue =  writes.writes(o)
+    override def writes(o: NSIUserInfo): JsValue = writes.writes(o)
 
     override def reads(json: JsValue): JsResult[NSIUserInfo] = reads.reads(json).map{ u ⇒
       val c = u.contactDetails
       NSIUserInfo(
-            u.forename.cleanupSpecialCharacters,
-            u.surname.cleanupSpecialCharacters,
-            u.dateOfBirth,
-            u.nino.cleanupSpecialCharacters.removeAllSpaces,
-              ContactDetails(
-                c.address1, c.address2, c.address3, c.address4, c.address5,
-                c.postcode.cleanupSpecialCharacters.removeAllSpaces,
-                c.countryCode.map(_.cleanupSpecialCharacters.removeAllSpaces).filter(_.toLowerCase =!= "other").map(_.take(2)),
-                c.email,
-                c.phoneNumber,
-                c.communicationPreference.cleanupSpecialCharacters.removeAllSpaces
-              ),
+        u.forename.cleanupSpecialCharacters,
+        u.surname.cleanupSpecialCharacters,
+        u.dateOfBirth,
+        u.nino.cleanupSpecialCharacters.removeAllSpaces,
+        ContactDetails(
+          c.address1.cleanupSpecialCharacters,
+          c.address2.cleanupSpecialCharacters,
+          c.address3.map(_.cleanupSpecialCharacters),
+          c.address4.map(_.cleanupSpecialCharacters),
+          c.address5.map(_.cleanupSpecialCharacters),
+          c.postcode.cleanupSpecialCharacters.removeAllSpaces,
+          c.countryCode.map(_.cleanupSpecialCharacters.removeAllSpaces).filter(_.toLowerCase =!= "other").map(_.take(2)),
+          c.email,
+          c.phoneNumber,
+          c.communicationPreference.cleanupSpecialCharacters.removeAllSpaces
+        ),
         u.registrationChannel.cleanupSpecialCharacters.removeAllSpaces
       )
 

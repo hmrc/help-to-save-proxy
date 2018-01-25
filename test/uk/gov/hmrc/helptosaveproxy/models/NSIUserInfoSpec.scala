@@ -55,7 +55,7 @@ class NSIUserInfoSpec extends WordSpec with Matchers {
 
     "have an reads instance" which {
 
-      def performReads(userInfo: NSIUserInfo): NSIUserInfo = Json.toJson(userInfo).validate[NSIUserInfo].get
+        def performReads(userInfo: NSIUserInfo): NSIUserInfo = Json.toJson(userInfo).validate[NSIUserInfo].get
 
       "removes new line, tab and carriage return in forename" in {
         val modifiedForename = "\n\t\rname\t"
@@ -123,11 +123,11 @@ class NSIUserInfoSpec extends WordSpec with Matchers {
           Some("   Address\t\n\r   line3\t\n\r   "),
           Some("   Address\t\n\r   line4\t\n\r   "),
           Some("   Address\t\n\r   line5\t\n\r   "),
-        "BN43 XXX",
-        None,
-        None,
-        None,
-        "comms"
+          "BN43 XXX",
+          None,
+          None,
+          None,
+          "comms"
         )
 
         val json: JsValue = Json.toJson(validNSIUserInfo.copy(contactDetails = specialAddress))
@@ -157,7 +157,7 @@ class NSIUserInfoSpec extends WordSpec with Matchers {
           "comms"
         )
 
-        val json: JsValue = Json.toJson(validNSIUserInfo.copy(forename = longName, surname = longSurname, contactDetails = specialAddress))
+        val json: JsValue = Json.toJson(validNSIUserInfo.copy(forename       = longName, surname = longSurname, contactDetails = specialAddress))
         val result = json.validate[NSIUserInfo].get
 
         result.forename shouldBe "John Paul Harry"
@@ -172,62 +172,18 @@ class NSIUserInfoSpec extends WordSpec with Matchers {
       }
 
       "filters out country codes equal to the string 'other'" in {
-        Set("other", "OTHER", "Other").foreach{ other ⇒
-          val result = validNSIUserInfo.copy(contactDetails = validNSIUserInfo.contactDetails.copy(countryCode = Some(other)))
+        Set("other", "OTHER", "Other").foreach { other ⇒
+          val result = performReads(validNSIUserInfo.copy(contactDetails = validNSIUserInfo.contactDetails.copy(countryCode = Some(other))))
           result.contactDetails.countryCode shouldBe None
         }
       }
 
       "takes the first two characters only of country codes" in {
-        val result = validNSIUserInfo.copy(contactDetails = validNSIUserInfo.contactDetails.copy(countryCode = Some("ABCDEF")))
+        val result = performReads(validNSIUserInfo.copy(contactDetails = validNSIUserInfo.contactDetails.copy(countryCode = Some("ABCDEF"))))
         result.contactDetails.countryCode shouldBe Some("AB")
       }
 
-      "returns a blank string for the postcode if it is not present" in {
-        val result = validNSIUserInfo.copy(contactDetails = validNSIUserInfo.contactDetails.copy(postcode = "BN12 ABC"))
-        result.contactDetails.postcode shouldBe ""
-      }
-
-      "returns a blank string for address lines 1 or 2 if they are missing" in {
-        // check when there are no address lines
-        val result = validNSIUserInfo.copy(contactDetails = validNSIUserInfo.contactDetails.copy(address1 = "", address2 = ""))
-
-        result.contactDetails.address1 shouldBe ""
-        result.contactDetails.address2 shouldBe ""
-        result.contactDetails.address3 shouldBe None
-        result.contactDetails.address4 shouldBe None
-        result.contactDetails.address5 shouldBe None
-
-        // check when there is only one address line
-        val result2 = validNSIUserInfo.copy(contactDetails =
-          validNSIUserInfo.contactDetails.copy(address1 = "line", address2 = "", address3 = None, address4 = None, address5 = None))
-
-        result2.contactDetails.address1 shouldBe "line"
-        result2.contactDetails.address2 shouldBe ""
-        result2.contactDetails.address3 shouldBe None
-        result2.contactDetails.address4 shouldBe None
-        result2.contactDetails.address5 shouldBe None
-      }
-
-      //Not sure if we need this test as theres now no list??
-      "filter out address lines which are empty" in {
-        // check that lines with nothing in them get filitered out
-        val willBeFilteredOut = {
-          val l = List("\t", "\n", "\r", " ", "")
-          l ::: l.combinations(2).flatten.toList
-        }
-
-        val result = validNSIUserInfo.copy(contactDetails =
-          validNSIUserInfo.contactDetails.copy(address1 = willBeFilteredOut ::: List("line")))
-
-        NSIUserInfo(ui, email).contactDetails.address1 shouldBe "line"
-        NSIUserInfo(ui, email).contactDetails.address2 shouldBe ""
-        NSIUserInfo(ui, email).contactDetails.address3 shouldBe None
-        NSIUserInfo(ui, email).contactDetails.address4 shouldBe None
-        NSIUserInfo(ui, email).contactDetails.address5 shouldBe None
-      }
     }
-
   }
 
 }
