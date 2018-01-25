@@ -31,7 +31,8 @@ import uk.gov.hmrc.helptosaveproxy.health.HealthTestSpec.PagerDutyMessage.PagerD
 import uk.gov.hmrc.helptosaveproxy.health.HealthTestSpec.ProxyActor
 import uk.gov.hmrc.helptosaveproxy.health.HealthTestSpec.ProxyActor.Created
 import uk.gov.hmrc.helptosaveproxy.health.HealthTestSpec.TestNSIConnector.{GetTestResult, GetTestResultResponse}
-import uk.gov.hmrc.helptosaveproxy.models.NSIUserInfo
+import uk.gov.hmrc.helptosaveproxy.models.SubmissionResult.{SubmissionFailure, SubmissionSuccess}
+import uk.gov.hmrc.helptosaveproxy.models.{NSIUserInfo, SubmissionResult}
 import uk.gov.hmrc.helptosaveproxy.util.{PagerDutyAlerting, Result}
 import uk.gov.hmrc.http.HeaderCarrier
 
@@ -327,7 +328,7 @@ object HealthTestSpec {
   class TestNSIConnector(reportTo: ActorRef) extends NSIConnector {
     implicit val timeout: Timeout = Timeout(3.seconds)
 
-    override def createAccount(userInfo: NSIUserInfo)(implicit hc: HeaderCarrier, ex: ExecutionContext): Future[NSIConnector.SubmissionResult] =
+    override def createAccount(userInfo: NSIUserInfo)(implicit hc: HeaderCarrier, ex: ExecutionContext): EitherT[Future, SubmissionFailure, SubmissionSuccess] =
       sys.error("Not used")
 
     override def updateEmail(userInfo: NSIUserInfo)(implicit hc: HeaderCarrier, ex: ExecutionContext): Result[Unit] =

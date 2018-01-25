@@ -23,14 +23,15 @@ import com.codahale.metrics.Timer
 import com.google.inject.ImplementedBy
 import play.api.Configuration
 import play.api.http.Status
-import play.api.libs.json.{Format, Json}
+import play.api.libs.json.Json
 import uk.gov.hmrc.helptosaveproxy.config.AppConfig.{nsiAuthHeaderKey, nsiBasicAuth, nsiCreateAccountUrl}
 import uk.gov.hmrc.helptosaveproxy.config.WSHttpProxy
-import uk.gov.hmrc.helptosaveproxy.connectors.NSIConnector.{SubmissionFailure, SubmissionResult, SubmissionSuccess}
 import uk.gov.hmrc.helptosaveproxy.metrics.Metrics
 import uk.gov.hmrc.helptosaveproxy.metrics.Metrics.nanosToPrettyString
 import uk.gov.hmrc.helptosaveproxy.models.NSIUserInfo.nsiUserInfoFormat
+import uk.gov.hmrc.helptosaveproxy.models.SubmissionResult._
 import uk.gov.hmrc.helptosaveproxy.models.NSIUserInfo
+
 import uk.gov.hmrc.helptosaveproxy.util.HttpResponseOps._
 import uk.gov.hmrc.helptosaveproxy.util.Logging._
 import uk.gov.hmrc.helptosaveproxy.util.{Logging, NINO, NINOLogMessageTransformer, PagerDutyAlerting, Result, maskNino}
@@ -41,23 +42,11 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @ImplementedBy(classOf[NSIConnectorImpl])
 trait NSIConnector {
-  def createAccount(userInfo: NSIUserInfo)(implicit hc: HeaderCarrier, ex: ExecutionContext): Future[SubmissionResult]
+  def createAccount(userInfo: NSIUserInfo)(implicit hc: HeaderCarrier, ex: ExecutionContext): EitherT[Future, SubmissionFailure, SubmissionSuccess]
 
   def updateEmail(userInfo: NSIUserInfo)(implicit hc: HeaderCarrier, ex: ExecutionContext): Result[Unit]
 
   def healthCheck(userInfo: NSIUserInfo)(implicit hc: HeaderCarrier, ex: ExecutionContext): Result[Unit]
-
-}
-
-object NSIConnector {
-
-  sealed trait SubmissionResult
-
-  case class SubmissionSuccess() extends SubmissionResult
-
-  case class SubmissionFailure(errorMessageId: Option[String], errorMessage: String, errorDetail: String) extends SubmissionResult
-
-  implicit val submissionFailureFormat: Format[SubmissionFailure] = Json.format[SubmissionFailure]
 
 }
 
@@ -68,7 +57,7 @@ class NSIConnectorImpl @Inject() (conf: Configuration, metrics: Metrics, pagerDu
 
   val httpProxy: WSHttpProxy = new WSHttpProxy(conf)
 
-  override def createAccount(userInfo: NSIUserInfo)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[SubmissionResult] = {
+  override def createAccount(userInfo: NSIUserInfo)(implicit hc: HeaderCarrier, ec: ExecutionContext): EitherT[Future, SubmissionFailure, SubmissionSuccess] = {
     import uk.gov.hmrc.helptosaveproxy.util.Toggles._
 
     val nino = userInfo.nino
@@ -82,23 +71,23 @@ class NSIConnectorImpl @Inject() (conf: Configuration, metrics: Metrics, pagerDu
 
     val timeContext: Timer.Context = metrics.nsiAccountCreationTimer.time()
 
-    httpProxy.post(nsiCreateAccountUrl, userInfo, Map(nsiAuthHeaderKey → nsiBasicAuth))(nsiUserInfoFormat, hc.copy(authorization = None), ec)
-      .map[SubmissionResult] { response ⇒
+    EitherT(httpProxy.post(nsiCreateAccountUrl, userInfo, Map(nsiAuthHeaderKey → nsiBasicAuth))(nsiUserInfoFormat, hc.copy(authorization = None), ec)
+      .map[Either[SubmissionFailure, SubmissionSuccess]]{ response ⇒
         val time = timeContext.stop()
 
         response.status match {
           case Status.CREATED ⇒
             logger.info(s"createAccount/insert returned 201 (Created) ${timeString(time)}", nino)
-            SubmissionSuccess()
+            Right(SubmissionSuccess(accountAlreadyCreated = false))
 
           case Status.CONFLICT ⇒
             logger.info(s"createAccount/insert returned 409 (Conflict). Account had already been created - " +
               s"proceeding as normal ${timeString(time)}", nino)
-            SubmissionSuccess()
+            Right(SubmissionSuccess(accountAlreadyCreated = true))
 
           case other ⇒
             pagerDutyAlerting.alert("Received unexpected http status in response to create account")
-            handleErrorStatus(other, response, userInfo.nino, time)
+            Left(handleErrorStatus(other, response, userInfo.nino, time))
         }
       }.recover {
         case e ⇒
@@ -107,8 +96,8 @@ class NSIConnectorImpl @Inject() (conf: Configuration, metrics: Metrics, pagerDu
           metrics.nsiAccountCreationErrorCounter.inc()
 
           logger.warn(s"Encountered error while trying to create account ${timeString(time)}", e, nino)
-          SubmissionFailure(None, "Encountered error while trying to create account", e.getMessage)
-      }
+          Left(SubmissionFailure(None, "Encountered error while trying to create account", e.getMessage))
+      })
   }
 
   override def updateEmail(userInfo: NSIUserInfo)(implicit hc: HeaderCarrier, ec: ExecutionContext): Result[Unit] = EitherT[Future, String, Unit]{
