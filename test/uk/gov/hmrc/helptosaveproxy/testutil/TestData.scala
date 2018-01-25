@@ -52,17 +52,14 @@ object TestData {
       val country = "GB"
       val nino = "WM123456C"
       val email = "tyrion_lannister@gmail.com"
-      val phone = "07890 000000"
+      val phone = "07890000000"
       val comms = "00"
       val regChannel = "callCentre"
 
       val nsiValidContactDetails =
         ContactDetails(addressLine1, addressLine2, Some(addressLine3), None, None, postcode, Some(country), Some(email), Some(phone), comms)
       val nsiUserInfo =
-        NSIUserInfo(forename, surname, dateOfBirth, nino,
-                    ContactDetails(addressLine1, addressLine2, Some(addressLine3), None, None, postcode, Some(country), Some(email), Some(phone), comms),
-                    regChannel
-        )
+        NSIUserInfo(forename, surname, dateOfBirth, nino, nsiValidContactDetails, regChannel)
 
       (nsiValidContactDetails, nsiUserInfo)
     }
