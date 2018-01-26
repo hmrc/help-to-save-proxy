@@ -111,50 +111,50 @@ class NSIConnectorSpec extends TestSupport with MockFactory with GeneratorDriven
     "Return a SubmissionSuccess when the status is Created" in {
       mockPost(validNSIUserInfo, nsiCreateAccountUrl)(Right(HttpResponse(Status.CREATED)))
       val result = testNSAndIConnectorImpl.createAccount(validNSIUserInfo)
-      Await.result(result, 3.seconds) shouldBe SubmissionSuccess(false)
+      Await.result(result.value, 3.seconds) shouldBe Right(SubmissionSuccess(false))
     }
 
     "Return a SubmissionSuccess when the status is CONFLICT" in {
       mockPost(validNSIUserInfo, nsiCreateAccountUrl)(Right(HttpResponse(Status.CONFLICT)))
       val result = testNSAndIConnectorImpl.createAccount(validNSIUserInfo)
-      Await.result(result, 3.seconds) shouldBe SubmissionSuccess(true)
+      Await.result(result.value, 3.seconds) shouldBe Right(SubmissionSuccess(true))
     }
 
     "return a SubmissionFailure" when {
       "the status is BAD_REQUEST" in {
         val submissionFailure = SubmissionFailure(Some("id"), "message", "detail")
         inSequence {
-          mockPost(validNSIUserInfo, nsiCreateAccountUrl)(Right(HttpResponse(Status.BAD_REQUEST,
-                                                                             Some(JsObject(Seq("error" → submissionFailure.toJson))))))
+          mockPost(validNSIUserInfo, nsiCreateAccountUrl)(Right(
+            HttpResponse(Status.BAD_REQUEST, Some(JsObject(Seq("error" → submissionFailure.toJson))))))
           // WARNING: do not change the message in the following check - this needs to stay in line with the configuration in alert-config
           mockPagerDutyAlert("Received unexpected http status in response to create account")
         }
         val result = testNSAndIConnectorImpl.createAccount(validNSIUserInfo)
-        Await.result(result, 3.seconds) shouldBe submissionFailure
+        Await.result(result.value, 3.seconds) shouldBe Left(submissionFailure)
       }
 
       "the status is INTERNAL_SERVER_ERROR" in {
         val submissionFailure = SubmissionFailure(Some("id"), "message", "detail")
         inSequence {
-          mockPost(validNSIUserInfo, nsiCreateAccountUrl)(Right(HttpResponse(Status.INTERNAL_SERVER_ERROR,
-                                                                             Some(JsObject(Seq("error" → submissionFailure.toJson))))))
+          mockPost(validNSIUserInfo, nsiCreateAccountUrl)(Right(
+            HttpResponse(Status.INTERNAL_SERVER_ERROR, Some(JsObject(Seq("error" → submissionFailure.toJson))))))
           // WARNING: do not change the message in the following check - this needs to stay in line with the configuration in alert-config
           mockPagerDutyAlert("Received unexpected http status in response to create account")
         }
         val result = testNSAndIConnectorImpl.createAccount(validNSIUserInfo)
-        Await.result(result, 3.seconds) shouldBe submissionFailure
+        Await.result(result.value, 3.seconds) shouldBe Left(submissionFailure)
       }
 
       "the status is SERVICE_UNAVAILABLE" in {
         val submissionFailure = SubmissionFailure(Some("id"), "message", "detail")
         inSequence {
-          mockPost(validNSIUserInfo, nsiCreateAccountUrl)(Right(HttpResponse(Status.SERVICE_UNAVAILABLE,
-                                                                             Some(JsObject(Seq("error" → submissionFailure.toJson))))))
+          mockPost(validNSIUserInfo, nsiCreateAccountUrl)(Right(
+            HttpResponse(Status.SERVICE_UNAVAILABLE, Some(JsObject(Seq("error" → submissionFailure.toJson))))))
           // WARNING: do not change the message in the following check - this needs to stay in line with the configuration in alert-config
           mockPagerDutyAlert("Received unexpected http status in response to create account")
         }
         val result = testNSAndIConnectorImpl.createAccount(validNSIUserInfo)
-        Await.result(result, 3.seconds) shouldBe submissionFailure
+        Await.result(result.value, 3.seconds) shouldBe Left(submissionFailure)
       }
 
       "the status is anything else" in {
@@ -178,7 +178,7 @@ class NSIConnectorSpec extends TestSupport with MockFactory with GeneratorDriven
           mockPagerDutyAlert("Failed to make call to create account")
         }
         val result = testNSAndIConnectorImpl.createAccount(validNSIUserInfo)
-        Await.result(result, 3.seconds) shouldBe a[SubmissionFailure]
+        Await.result(result.value, 3.seconds).isLeft shouldBe true
       }
     }
 

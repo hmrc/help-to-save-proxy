@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.helptosaveproxy.controllers
 
-import CreateAccountController.CreateAccountError
+import CreateAccountController.Error
 import cats.data.EitherT
 import cats.instances.future._
 import com.google.inject.Inject
@@ -36,16 +36,34 @@ import scala.concurrent.{ExecutionContext, Future}
 class CreateAccountController @Inject() (nsiConnector:                NSIConnector,
                                          jsonSchemaValidationService: JSONSchemaValidationService) extends BaseController {
 
-  import CreateAccountController.CreateAccountError._
+  import CreateAccountController.Error._
 
   implicit def mdcExecutionContext(implicit loggingDetails: LoggingDetails): ExecutionContext = MdcLoggingExecutionContext.fromLoggingDetails
 
   def createAccount(): Action[AnyContent] = Action.async { implicit request ⇒
-    val result: EitherT[Future, CreateAccountError, SubmissionSuccess] = for {
+    processRequest[SubmissionSuccess](nsiConnector.createAccount(_).leftMap[Error](NSIError)){
+      submissionSuccess ⇒
+        if (submissionSuccess.accountAlreadyCreated) {
+          Conflict
+        } else {
+          Created
+        }
+    }
+  }
+
+  def updateEmail(): Action[AnyContent] = Action.async { implicit request ⇒
+    processRequest[Unit](
+      nsiConnector.updateEmail(_).leftMap[Error](e ⇒ NSIError(SubmissionFailure(e, "Could not update email")))){
+        _ ⇒ Ok
+      }
+  }
+
+  private def processRequest[T](doRequest: NSIUserInfo ⇒ EitherT[Future, Error, T])(handleResult: T ⇒ Result)(implicit request: Request[AnyContent]): Future[Result] = {
+    val result: EitherT[Future, Error, T] = for {
       userInfo ← EitherT.fromEither[Future](extractNSIUSerInfo(request))
       _ ← EitherT.fromEither[Future](jsonSchemaValidationService.validate(Json.toJson(userInfo)))
         .leftMap(e ⇒ InvalidRequest("Invalid data found in request", e))
-      response ← nsiConnector.createAccount(userInfo).leftMap[CreateAccountError](NSIError)
+      response ← doRequest(userInfo)
     } yield response
 
     result.fold[Result]({
@@ -53,12 +71,7 @@ class CreateAccountController @Inject() (nsiConnector:                NSIConnect
         BadRequest(SubmissionFailure(m, d).toJson)
       case NSIError(f) ⇒
         InternalServerError(f.toJson)
-    }, s ⇒
-      if (s.accountAlreadyCreated) {
-        Conflict
-      } else {
-        Created
-      }
+    }, handleResult
     )
   }
 
@@ -75,13 +88,13 @@ class CreateAccountController @Inject() (nsiConnector:                NSIConnect
 
 object CreateAccountController {
 
-  private sealed trait CreateAccountError
+  private sealed trait Error
 
-  private object CreateAccountError {
+  private object Error {
 
-    case class InvalidRequest(message: String, details: String) extends CreateAccountError
+    case class InvalidRequest(message: String, details: String) extends Error
 
-    case class NSIError(error: SubmissionFailure) extends CreateAccountError
+    case class NSIError(error: SubmissionFailure) extends Error
 
   }
 
