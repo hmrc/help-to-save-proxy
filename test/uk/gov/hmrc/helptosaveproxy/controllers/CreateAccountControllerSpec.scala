@@ -20,16 +20,16 @@ import cats.data.EitherT
 import cats.instances.future._
 import cats.syntax.either._
 import play.api.libs.json.{JsValue, Json}
-import play.api.mvc.{Action, AnyContent, Result}
+import play.api.mvc.{Action, AnyContent}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.helptosaveproxy.TestSupport
 import uk.gov.hmrc.helptosaveproxy.connectors.NSIConnector
 import uk.gov.hmrc.helptosaveproxy.models.NSIUserInfo
+import uk.gov.hmrc.helptosaveproxy.models.SubmissionResult.{SubmissionFailure, SubmissionSuccess}
 import uk.gov.hmrc.helptosaveproxy.services.JSONSchemaValidationService
 import uk.gov.hmrc.helptosaveproxy.testutil.TestData.UserData.validNSIUserInfo
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.helptosaveproxy.models.SubmissionResult.{SubmissionFailure, SubmissionSuccess}
 
 import scala.concurrent.{ExecutionContext, Future}
 

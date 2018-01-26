@@ -43,7 +43,7 @@ class JSONSchemaValidationServiceImpl @Inject() (conf: Configuration) extends JS
     Json.fromJson[SchemaType](Json.parse(schemaStr)).getOrElse(sys.error("Could not parse schema string"))
   }
 
-  private lazy val jsonValidator: SchemaValidator = new SchemaValidator()
+  private lazy val jsonValidator: SchemaValidator = SchemaValidator()
 
   private val dateFormatter = DateTimeFormatter.BASIC_ISO_DATE
 
@@ -60,7 +60,7 @@ class JSONSchemaValidationServiceImpl @Inject() (conf: Configuration) extends JS
   private def extractDateOfBirth(userInfo: JsValue): Either[String, LocalDate] = {
     (userInfo \ "dateOfBirth").toEither.fold[Either[String, LocalDate]](
       _ ⇒ Left("No date of birth found"),
-      _ match {
+      {
         case JsString(s) ⇒
           Try(LocalDate.parse(s, dateFormatter)) match {
             case Failure(e)     ⇒ Left(s"Could not parse date of birth: ${e.getMessage}")

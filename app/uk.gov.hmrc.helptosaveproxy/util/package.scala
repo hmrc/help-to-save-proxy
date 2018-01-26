@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.helptosaveproxy
 
-import java.net.{URLDecoder, URLEncoder}
 import java.util.Base64
 
 import cats.data.EitherT

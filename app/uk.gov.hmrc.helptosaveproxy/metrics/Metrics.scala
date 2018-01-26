@@ -32,15 +32,15 @@ class Metrics @Inject() (val metrics: com.kenshoo.play.metrics.Metrics) {
 
   def histogram(name: String): Histogram = metrics.defaultRegistry.histogram(name)
 
-  val nsiAccountCreationTimer: Timer = timer("frontend.nsi-account-creation-time")
+  val nsiAccountCreationTimer: Timer = timer("proxy.nsi-account-creation-time")
 
-  val nsiAccountCreationErrorCounter: Counter = counter("frontend.nsi-account-creation-error-counter")
+  val nsiAccountCreationErrorCounter: Counter = counter("proxy.nsi-account-creation-error-counter")
 
-  val nsiUpdateEmailTimer: Timer = timer("frontend.nsi-update-email-time")
+  val nsiUpdateEmailTimer: Timer = timer("proxy.nsi-update-email-time")
 
-  val nsiUpdateEmailErrorCounter: Counter = counter("frontend.nsi-update-email-error-counter")
+  val nsiUpdateEmailErrorCounter: Counter = counter("proxy.nsi-update-email-error-counter")
 
-  val authTimer: Timer = timer("frontend.auth-timer")
+  val authTimer: Timer = timer("proxy.auth-timer")
 
   val healthCheckTimer: Timer = timer("health.nsi-connection.timer")
 
