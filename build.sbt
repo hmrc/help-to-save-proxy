@@ -149,8 +149,3 @@ lazy val microservice = Project(appName, file("."))
     "hmrc-releases" at hmrcRepoHost + "/content/repositories/hmrc-releases",
     "typesafe-releases" at hmrcRepoHost + "/content/repositories/typesafe-releases"
   ))
-
-  def oneForkedJvmPerTest(tests: Seq[TestDefinition]) =
-    tests map {
-      test ⇒ new Group(test.name, Seq(test), SubProcess(ForkOptions(runJVMOptions = Seq("-Dtest.name=" + test.name))))
-    }
