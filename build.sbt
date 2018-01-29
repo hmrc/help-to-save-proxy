@@ -1,6 +1,5 @@
 import play.core.PlayVersion
 import sbt.Keys._
-import sbt.Tests.{Group, SubProcess}
 import sbt._
 import uk.gov.hmrc.DefaultBuildSettings._
 import uk.gov.hmrc.{SbtAutoBuildPlugin, _}
@@ -143,9 +142,5 @@ lazy val microservice = Project(appName, file("."))
   )
   .settings(resolvers ++= Seq(
     Resolver.bintrayRepo("hmrc", "releases"),
-    Resolver.jcenterRepo,
-    Resolver.bintrayRepo("hmrclt", "maven"),
-    "hmrc-snapshots" at hmrcRepoHost + "/content/repositories/hmrc-snapshots",
-    "hmrc-releases" at hmrcRepoHost + "/content/repositories/hmrc-releases",
-    "typesafe-releases" at hmrcRepoHost + "/content/repositories/typesafe-releases"
+    Resolver.jcenterRepo
   ))
