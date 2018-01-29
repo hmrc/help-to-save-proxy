@@ -1,0 +1,4 @@
+# microservice specific routes
+
+GET        /create-account                    @uk.gov.hmrc.helptosaveproxy.controllers.CreateAccountController.createAccount()
+GET        /update-email                      @uk.gov.hmrc.helptosaveproxy.controllers.CreateAccountController.updateEmail()
