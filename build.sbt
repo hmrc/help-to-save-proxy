@@ -18,6 +18,32 @@ val appName = "help-to-save-proxy"
 lazy val plugins: Seq[Plugins] = Seq.empty
 lazy val playSettings: Seq[Setting[_]] = Seq.empty
 
+lazy val dependencies = Seq(
+  ws,
+  "uk.gov.hmrc" %% "auth-client" % "2.5.0",
+  "uk.gov.hmrc" %% "microservice-bootstrap" % "6.15.0",
+  "uk.gov.hmrc" %% "play-config" % "4.3.0",
+  "uk.gov.hmrc" %% "domain" % "5.1.0",
+  "org.typelevel" %% "cats" % "0.9.0",
+  "com.github.kxbmap" %% "configs" % "0.4.4",
+  "uk.gov.hmrc" %% "play-reactivemongo" % "6.1.0",
+  "com.eclipsesource" %% "play-json-schema-validator" % "0.8.9",
+  "uk.gov.hmrc" %% "mongo-lock" % "5.0.0"
+)
+
+lazy val testDependencies = Seq(
+  "uk.gov.hmrc" %% "hmrctest" % "3.0.0" % test,
+  "org.scalatest" %% "scalatest" % "3.0.4" % test,
+  "org.pegdown" % "pegdown" % "1.6.0" % test,
+  "com.typesafe.play" %% "play-test" % PlayVersion.current % test,
+  "com.github.tomakehurst" % "wiremock" % "2.5.1" % test,
+  "org.scalamock" %% "scalamock-scalatest-support" % "3.5.0" % test,
+  "org.scalatestplus.play" %% "scalatestplus-play" % "2.0.0" % test,
+  "com.miguno.akka" % "akka-mock-scheduler_2.11" % "0.5.1" % test,
+  "com.typesafe.akka" %% "akka-testkit" % "2.3.11" % test,
+  "uk.gov.hmrc" %% "stub-data-generator" % "0.4.0" % test
+)
+
 lazy val scoverageSettings = {
   import scoverage.ScoverageKeys
   Seq(
@@ -103,29 +129,7 @@ lazy val microservice = Project(appName, file("."))
       Seq(sourceManaged.value / "main" / "sbt-buildinfo" / "BuildInfo.scala")
   )
   .settings(
-    libraryDependencies ++= Seq(
-        ws,
-        "uk.gov.hmrc" %% "auth-client" % "2.5.0",
-        "uk.gov.hmrc" %% "microservice-bootstrap" % "6.15.0",
-        "uk.gov.hmrc" %% "play-config" % "4.3.0",
-        "uk.gov.hmrc" %% "domain" % "5.1.0",
-        "org.typelevel" %% "cats" % "0.9.0",
-        "com.github.kxbmap" %% "configs" % "0.4.4",
-        "uk.gov.hmrc" %% "play-reactivemongo" % "6.1.0",
-        "com.eclipsesource" %% "play-json-schema-validator" % "0.8.9",
-        "uk.gov.hmrc" %% "mongo-lock" % "5.0.0",
-
-        "uk.gov.hmrc" %% "hmrctest" % "3.0.0" % test,
-        "org.scalatest" %% "scalatest" % "3.0.4" % test,
-        "org.pegdown" % "pegdown" % "1.6.0" % test,
-        "com.typesafe.play" %% "play-test" % PlayVersion.current % test,
-        "com.github.tomakehurst" % "wiremock" % "2.5.1" % test,
-        "org.scalamock" %% "scalamock-scalatest-support" % "3.5.0" % test,
-        "org.scalatestplus.play" %% "scalatestplus-play" % "2.0.0" % test,
-        "com.miguno.akka" % "akka-mock-scheduler_2.11" % "0.5.1" % test,
-        "com.typesafe.akka" %% "akka-testkit" % "2.3.11" % test,
-        "uk.gov.hmrc" %% "stub-data-generator" % "0.4.0" % test
-    )
+    libraryDependencies ++= dependencies ++ testDependencies
   )
   .settings(version := "0.0.1",
     scalaVersion := "2.11.11",
