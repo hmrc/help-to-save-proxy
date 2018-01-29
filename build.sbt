@@ -1,6 +1,7 @@
 //import play.core.PlayVersion
 //import sbt.Keys.version
 //
+//val ScalatestVersion = "3.0.4"
 //val hmrcRepoHost = java.lang.System.getProperty("hmrc.repo.host", "https://nexus-preview.tax.service.gov.uk")
 //val test = "test"
 //
@@ -38,6 +39,7 @@
 //      "com.typesafe.akka" %% "akka-testkit" % "2.3.11" % test,
 //      "uk.gov.hmrc" %% "stub-data-generator" % "0.4.0" % test
 //    ),
+//    //inConfig(Defaults.testTasks),
 //    unmanagedSourceDirectories in Test += baseDirectory.value / "src/test/scala",
 //    unmanagedResourceDirectories in Test += baseDirectory.value / "src/test/resources"
 //  )
