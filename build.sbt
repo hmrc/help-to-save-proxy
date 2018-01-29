@@ -130,11 +130,6 @@ lazy val microservice = Project(appName, file("."))
   .settings(
     libraryDependencies ++= dependencies ++ testDependencies
   )
-  .settings(version := "0.0.1",
-    scalaVersion := "2.11.11",
-    credentials += Credentials(Path.userHome / ".sbt" / ".credentials"),
-    scalacOptions ++= Seq("-unchecked", "-deprecation")
-  )
   .settings(
     retrieveManaged := true,
     evictionWarningOptions in update := EvictionWarningOptions.default.withWarnScalaVersionEviction(false),
