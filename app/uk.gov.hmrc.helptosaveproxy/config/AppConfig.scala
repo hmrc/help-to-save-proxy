@@ -40,4 +40,6 @@ object AppConfig extends ServicesConfig {
 
   val nsiCreateAccountUrl: String = s"${baseUrl("nsi")}/nsi-services/account"
 
+  def dwpUCClaimantCheckUrl(nino: String): String = s"${baseUrl("dwp")}/v1/isEligible/:$nino"
+
 }

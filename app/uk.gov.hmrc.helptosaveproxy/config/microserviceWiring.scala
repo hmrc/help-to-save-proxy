@@ -18,7 +18,7 @@ package uk.gov.hmrc.helptosaveproxy.config
 
 import com.google.inject.{ImplementedBy, Inject, Singleton}
 import play.api.Configuration
-import play.api.libs.json.{Json, Writes}
+import play.api.libs.json.{Json, Reads, Writes}
 import play.api.libs.ws.WSProxyServer
 import uk.gov.hmrc.auth.core.PlayAuthConnector
 import uk.gov.hmrc.http.hooks.HttpHook
@@ -83,6 +83,7 @@ class WSHttpExtension extends WSHttp with HttpAuditing with ServicesConfig {
 class WSHttpProxy @Inject() (config: Configuration)
   extends HttpPost with WSPost
   with HttpPut with WSPut
+  with HttpGet with WSGet
   with WSProxy
   with RunMode
   with HttpAuditing
@@ -124,6 +125,15 @@ class WSHttpProxy @Inject() (config: Configuration)
       mapErrors(PUT, url, httpResponse).map(response ⇒ httpReads.read(PUT, url, response))
     }
   }
+
+  /**
+    * Returns a [[Future[HttpResponse]] without throwing exceptions if the status us not `2xx`. Needed
+    * to replace [[GET]] method provided by the hmrc library which will throw exceptions in such cases.
+    */
+  def get[A](url:     String,
+             headers: Map[String, String] = Map.empty[String, String]
+  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
+    super.GET(url)(httpReads, hc.withExtraHeaders(headers.toSeq: _*), ec)
 }
 
 class RawHttpReads extends HttpReads[HttpResponse] {
