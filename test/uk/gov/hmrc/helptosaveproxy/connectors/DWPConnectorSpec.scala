@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.helptosaveproxy.connectors
 
+import java.util.UUID
+
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.EitherValues
 import play.api.Configuration
@@ -24,7 +26,7 @@ import uk.gov.hmrc.helptosaveproxy.TestSupport
 import uk.gov.hmrc.helptosaveproxy.config.WSHttpProxy
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.http.logging.Authorization
-import uk.gov.hmrc.helptosaveproxy.config.AppConfig.dwpUCClaimantCheckUrl
+import uk.gov.hmrc.helptosaveproxy.config.AppConfig.dwpUrl
 import uk.gov.hmrc.helptosaveproxy.testutil.UCClaimantTestSupport
 
 import scala.concurrent.duration._
@@ -38,6 +40,8 @@ class DWPConnectorSpec extends TestSupport with MockFactory with EitherValues wi
     fakeApplication.configuration ++ Configuration()) {
     override val httpProxy = mockHTTPProxy
   }
+
+  val transactionId = UUID.randomUUID()
 
   // put in fake authorization details - these should be removed by the call to create an account
   implicit val hc: HeaderCarrier = HeaderCarrier(authorization = Some(Authorization("auth")))
@@ -54,47 +58,44 @@ class DWPConnectorSpec extends TestSupport with MockFactory with EitherValues wi
   "the ucClaimantCheck call" must {
     "return a Right with HttpResponse(200, Some(Y, Y)) when given an eligible NINO of a UC Claimant within the threshold" in {
       val ucDetails = HttpResponse(200, Some(Json.toJson(eUCDetails))) // scalastyle:ignore magic.number
-      mockGet(dwpUCClaimantCheckUrl("WP010123A"))(Right(ucDetails))
+      mockGet(dwpUrl("WP010123A", transactionId))(Right(ucDetails))
 
-      val result = testDWPConnectorImpl.ucClaimantCheck("WP010123A")
+      val result = testDWPConnectorImpl.ucClaimantCheck("WP010123A", transactionId)
       val resultValue = Await.result(result.value, 3.seconds)
-      resultValue.isRight shouldBe true
       resultValue.right.value.body shouldBe ucDetails.body
     }
 
     "return a Right with HttpResponse(200, Some(Y, N)) when given a NINO of a UC Claimant that is not within the threshold" in {
       val ucDetails = HttpResponse(200, Some(Json.toJson(nonEUCDetails))) // scalastyle:ignore magic.number
-      mockGet(dwpUCClaimantCheckUrl("WP020123A"))(Right(ucDetails))
+      mockGet(dwpUrl("WP020123A", transactionId))(Right(ucDetails))
 
-      val result = testDWPConnectorImpl.ucClaimantCheck("WP020123A")
+      val result = testDWPConnectorImpl.ucClaimantCheck("WP020123A", transactionId)
       val resultValue = Await.result(result.value, 3.seconds)
-      resultValue.isRight shouldBe true
       resultValue.right.value.body shouldBe ucDetails.body
     }
 
     "return a Right with HttpResponse(200, Some(N)) when given a NINO of a non UC Claimant" in {
       val ucDetails = HttpResponse(200, Some(Json.toJson(nonUCClaimantDetails))) // scalastyle:ignore magic.number
-      mockGet(dwpUCClaimantCheckUrl("WP030123A"))(Right(ucDetails))
+      mockGet(dwpUrl("WP030123A", transactionId))(Right(ucDetails))
 
-      val result = testDWPConnectorImpl.ucClaimantCheck("WP030123A")
+      val result = testDWPConnectorImpl.ucClaimantCheck("WP030123A", transactionId)
       val resultValue = Await.result(result.value, 3.seconds)
-      resultValue.isRight shouldBe true
       resultValue.right.value.body shouldBe ucDetails.body
     }
 
     "return a Left when the ucClaimant call comes back with a status other than 200" in {
       val ucDetails = HttpResponse(500, Some(Json.toJson(nonUCClaimantDetails))) // scalastyle:ignore magic.number
-      mockGet(dwpUCClaimantCheckUrl("WP030123A"))(Right(ucDetails))
+      mockGet(dwpUrl("WP030123A", transactionId))(Right(ucDetails))
 
-      val result = testDWPConnectorImpl.ucClaimantCheck("WP030123A")
+      val result = testDWPConnectorImpl.ucClaimantCheck("WP030123A", transactionId)
       val resultValue = Await.result(result.value, 3.seconds)
       resultValue.isLeft shouldBe true
     }
 
     "return a Left when the ucClaimant call fails" in {
-      mockGet(dwpUCClaimantCheckUrl("WP030123A"))(Left("the call failed"))
+      mockGet(dwpUrl("WP030123A", transactionId))(Left("the call failed"))
 
-      val result = testDWPConnectorImpl.ucClaimantCheck("WP030123A")
+      val result = testDWPConnectorImpl.ucClaimantCheck("WP030123A", transactionId)
       val resultValue = Await.result(result.value, 3.seconds)
       resultValue.isLeft shouldBe true
     }

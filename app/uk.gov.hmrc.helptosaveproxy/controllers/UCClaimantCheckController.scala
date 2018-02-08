@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.helptosaveproxy.controllers
 
-import java.util.Base64
+import java.util.{Base64, UUID}
 
 import cats.instances.future._
 import com.google.inject.Inject
@@ -25,8 +25,8 @@ import uk.gov.hmrc.helptosaveproxy.connectors.DWPConnector
 import uk.gov.hmrc.helptosaveproxy.util.TryOps._
 import uk.gov.hmrc.helptosaveproxy.util.{Logging, NINO, NINOLogMessageTransformer}
 import uk.gov.hmrc.play.microservice.controller.BaseController
-import scala.concurrent.ExecutionContext.Implicits.global
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.Try
 
@@ -34,10 +34,10 @@ class UCClaimantCheckController @Inject() (dwpConnector: DWPConnector)(implicit 
 
   val base64Decoder: Base64.Decoder = Base64.getDecoder()
 
-  def ucClaimantCheck(encodedNino: String): Action[AnyContent] = Action.async { implicit request ⇒
+  def ucClaimantCheck(encodedNino: String, transactionId: UUID): Action[AnyContent] = Action.async { implicit request ⇒
     withBase64DecodedNINO(encodedNino) {
       decodedNino ⇒
-        dwpConnector.ucClaimantCheck(decodedNino).fold(
+        dwpConnector.ucClaimantCheck(decodedNino, transactionId).fold(
           {
             e ⇒
               logger.warn(s"Could not perform UC Claimant check: $e")

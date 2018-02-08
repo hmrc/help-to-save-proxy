@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.helptosaveproxy.config
 
-import java.util.Base64
+import java.util.{Base64, UUID}
 
 import uk.gov.hmrc.play.config.ServicesConfig
 
@@ -40,7 +40,7 @@ object AppConfig extends ServicesConfig {
 
   val nsiCreateAccountUrl: String = s"${baseUrl("nsi")}/nsi-services/account"
 
-  def dwpUCClaimantCheckUrl(nino: String): String =
-    s"${baseUrl("dwp")}/v1/isEligible/$nino?systemId=607&thresholdAmount=650&transactionId=2a07d761-70ea-4a10-ae00-00d4dd53dea9"
+  def dwpUrl(nino: String, transactionId: UUID): String =
+    s"${baseUrl("dwp")}/v1/isEligible/$nino?systemId=607&thresholdAmount=650&transactionId=$transactionId"
 
 }
