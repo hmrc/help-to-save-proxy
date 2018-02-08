@@ -127,9 +127,9 @@ class WSHttpProxy @Inject() (config: Configuration)
   }
 
   /**
-    * Returns a [[Future[HttpResponse]] without throwing exceptions if the status us not `2xx`. Needed
-    * to replace [[GET]] method provided by the hmrc library which will throw exceptions in such cases.
-    */
+   * Returns a [[Future[HttpResponse]] without throwing exceptions if the status us not `2xx`. Needed
+   * to replace [[GET]] method provided by the hmrc library which will throw exceptions in such cases.
+   */
   def get[A](url:     String,
              headers: Map[String, String] = Map.empty[String, String]
   )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =

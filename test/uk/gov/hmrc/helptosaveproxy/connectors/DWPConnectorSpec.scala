@@ -1,18 +1,36 @@
+/*
+ * Copyright 2018 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package uk.gov.hmrc.helptosaveproxy.connectors
 
 import org.scalamock.scalatest.MockFactory
+import org.scalatest.EitherValues
 import play.api.Configuration
 import play.api.libs.json.Json
 import uk.gov.hmrc.helptosaveproxy.TestSupport
 import uk.gov.hmrc.helptosaveproxy.config.WSHttpProxy
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.http.logging.Authorization
-import uk.gov.hmrc.helptosaveproxy.config.AppConfig.{dwpUCClaimantCheckUrl, nsiAuthHeaderKey, nsiBasicAuth}
+import uk.gov.hmrc.helptosaveproxy.config.AppConfig.dwpUCClaimantCheckUrl
+import uk.gov.hmrc.helptosaveproxy.testutil.UCClaimantTestSupport
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
 
-class DWPConnectorSpec extends TestSupport with MockFactory {
+class DWPConnectorSpec extends TestSupport with MockFactory with EitherValues with UCClaimantTestSupport {
 
   lazy val mockHTTPProxy = mock[WSHttpProxy]
 
@@ -24,29 +42,61 @@ class DWPConnectorSpec extends TestSupport with MockFactory {
   // put in fake authorization details - these should be removed by the call to create an account
   implicit val hc: HeaderCarrier = HeaderCarrier(authorization = Some(Authorization("auth")))
 
-  def mockGet[I](url: String)(result: Either[String, HttpResponse]): Unit =
-    (mockHTTPProxy.get(_: String)(_: HeaderCarrier, _: ExecutionContext))
-      .expects(url, *, *)
+  def mockGet(url: String)(result: Either[String, HttpResponse]): Unit =
+    (mockHTTPProxy.get(_: String, _: Map[String, String])(_: HeaderCarrier, _: ExecutionContext))
+      .expects(url, *, *, *)
       .returning(
         result.fold(
           e ⇒ Future.failed(new Exception(e)),
           r ⇒ Future.successful(r)
         ))
 
-  val eligibleUCDetails = Json.toJson("""{"ucClaimant":"Y", "withinThreshold":"Y"}""")
-  val nonEligibleUCDetails = Json.toJson("""{"ucClaimant":"Y", "withinThreshold":"N"}""")
-  val nonUCClaimantDetails = Json.toJson("""{"ucClaimant":"N"}""")
-
   "the ucClaimantCheck call" must {
-    "return a Right with HttpResponse(200, Some(Y, Y)) when given an eligible NINO" in {
-      mockGet(dwpUCClaimantCheckUrl("WP010123A"))(Right(HttpResponse(200, Some(eligibleUCDetails)))) // scalastyle:ignore magic.number
+    "return a Right with HttpResponse(200, Some(Y, Y)) when given an eligible NINO of a UC Claimant within the threshold" in {
+      val ucDetails = HttpResponse(200, Some(Json.toJson(eUCDetails))) // scalastyle:ignore magic.number
+      mockGet(dwpUCClaimantCheckUrl("WP010123A"))(Right(ucDetails))
 
       val result = testDWPConnectorImpl.ucClaimantCheck("WP010123A")
-      Await.result(result.value, 3.seconds) shouldBe Right(Some(eligibleUCDetails))
+      val resultValue = Await.result(result.value, 3.seconds)
+      resultValue.isRight shouldBe true
+      resultValue.right.value.body shouldBe ucDetails.body
     }
 
-    "return a Right with HttpResponse(200, Some(N)) when given an iligible NINO" in {
+    "return a Right with HttpResponse(200, Some(Y, N)) when given a NINO of a UC Claimant that is not within the threshold" in {
+      val ucDetails = HttpResponse(200, Some(Json.toJson(nonEUCDetails))) // scalastyle:ignore magic.number
+      mockGet(dwpUCClaimantCheckUrl("WP020123A"))(Right(ucDetails))
 
+      val result = testDWPConnectorImpl.ucClaimantCheck("WP020123A")
+      val resultValue = Await.result(result.value, 3.seconds)
+      resultValue.isRight shouldBe true
+      resultValue.right.value.body shouldBe ucDetails.body
+    }
+
+    "return a Right with HttpResponse(200, Some(N)) when given a NINO of a non UC Claimant" in {
+      val ucDetails = HttpResponse(200, Some(Json.toJson(nonUCClaimantDetails))) // scalastyle:ignore magic.number
+      mockGet(dwpUCClaimantCheckUrl("WP030123A"))(Right(ucDetails))
+
+      val result = testDWPConnectorImpl.ucClaimantCheck("WP030123A")
+      val resultValue = Await.result(result.value, 3.seconds)
+      resultValue.isRight shouldBe true
+      resultValue.right.value.body shouldBe ucDetails.body
+    }
+
+    "return a Left when the ucClaimant call comes back with a status other than 200" in {
+      val ucDetails = HttpResponse(500, Some(Json.toJson(nonUCClaimantDetails))) // scalastyle:ignore magic.number
+      mockGet(dwpUCClaimantCheckUrl("WP030123A"))(Right(ucDetails))
+
+      val result = testDWPConnectorImpl.ucClaimantCheck("WP030123A")
+      val resultValue = Await.result(result.value, 3.seconds)
+      resultValue.isLeft shouldBe true
+    }
+
+    "return a Left when the ucClaimant call fails" in {
+      mockGet(dwpUCClaimantCheckUrl("WP030123A"))(Left("the call failed"))
+
+      val result = testDWPConnectorImpl.ucClaimantCheck("WP030123A")
+      val resultValue = Await.result(result.value, 3.seconds)
+      resultValue.isLeft shouldBe true
     }
 
   }
