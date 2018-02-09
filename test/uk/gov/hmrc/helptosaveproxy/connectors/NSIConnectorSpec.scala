@@ -22,23 +22,20 @@ import org.scalamock.scalatest.MockFactory
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
 import play.api.Configuration
 import play.api.http.Status
-import play.api.libs.json.{JsObject, Json, Writes}
+import play.api.libs.json.{JsObject, Writes}
 import uk.gov.hmrc.helptosaveproxy.TestSupport
-import uk.gov.hmrc.helptosaveproxy.config.WSHttpProxy
+import uk.gov.hmrc.helptosaveproxy.config.AppConfig.{nsiAuthHeaderKey, nsiBasicAuth, nsiCreateAccountUrl}
+import uk.gov.hmrc.helptosaveproxy.models.SubmissionResult.{SubmissionFailure, SubmissionSuccess}
 import uk.gov.hmrc.helptosaveproxy.testutil.MockPagerDuty
 import uk.gov.hmrc.helptosaveproxy.testutil.TestData.UserData.validNSIUserInfo
 import uk.gov.hmrc.http.logging.Authorization
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
-import uk.gov.hmrc.helptosaveproxy.config.AppConfig.{nsiAuthHeaderKey, nsiBasicAuth, nsiCreateAccountUrl}
-import uk.gov.hmrc.helptosaveproxy.models.SubmissionResult.{SubmissionFailure, SubmissionSuccess}
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.Random
 
 class NSIConnectorSpec extends TestSupport with MockFactory with GeneratorDrivenPropertyChecks with MockPagerDuty {
-
-  lazy val mockHTTPProxy = mock[WSHttpProxy]
 
   def testNSAndIConnectorImpl = new NSIConnectorImpl(
     fakeApplication.configuration ++ Configuration("feature-toggles.log-account-creation-json.enabled" → Random.nextBoolean()),

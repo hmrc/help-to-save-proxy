@@ -20,10 +20,8 @@ import java.util.UUID
 
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.EitherValues
-import play.api.Configuration
 import play.api.libs.json.Json
 import uk.gov.hmrc.helptosaveproxy.TestSupport
-import uk.gov.hmrc.helptosaveproxy.config.WSHttpProxy
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.http.logging.Authorization
 import uk.gov.hmrc.helptosaveproxy.config.AppConfig.dwpUrl
@@ -34,10 +32,8 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 
 class DWPConnectorSpec extends TestSupport with MockFactory with EitherValues with UCClaimantTestSupport {
 
-  lazy val mockHTTPProxy = mock[WSHttpProxy]
+  def testDWPConnectorImpl = new DWPConnectorImpl(configuration) {
 
-  def testDWPConnectorImpl = new DWPConnectorImpl(
-    fakeApplication.configuration ++ Configuration()) {
     override val httpProxy = mockHTTPProxy
   }
 
