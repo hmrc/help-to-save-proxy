@@ -61,10 +61,10 @@ class DWPConnectorImpl @Inject() (conf: Configuration, metrics: Metrics, pagerDu
             logger.info(s"ucClaimantCheck returned 200 (OK) with UCDetails: ${response.json}, transactionId: " +
               s"$transactionId, ${timeString(time)}, $nino")
             Right(HttpResponse(200, Some(response.json))) // scalastyle:ignore magic.number
-          case _ ⇒
+          case other ⇒
             pagerDutyAlerting.alert("Received unexpected http status in response to uc claimant check")
             Left(s"ucClaimantCheck returned a status other than 200, with response body: ${response.body}, " +
-              s"transactionId: $transactionId, ${timeString(time)}, $nino")
+              s"status: $other, transactionId: $transactionId, ${timeString(time)}, $nino")
         }
       }.recover {
         case e ⇒
