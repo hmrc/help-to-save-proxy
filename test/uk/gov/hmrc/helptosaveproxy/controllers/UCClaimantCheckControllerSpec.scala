@@ -51,7 +51,7 @@ class UCClaimantCheckControllerSpec extends TestSupport with UCClaimantTestSuppo
 
   "ucClaimantCheck" must {
     "return a 200 status with the expected json when given a NINO starting with WP01" in {
-      val ucDetails = HttpResponse(200, Some(Json.toJson(eUCDetails))) // scalastyle:ignore magic.number
+      val ucDetails = HttpResponse(200, Some(Json.toJson(eUCDetails)))
       mockUCClaimantCheck(nino, transactionId)(Right(ucDetails))
 
       val result = doUCClaimantCheck(controller, encodedNino)
