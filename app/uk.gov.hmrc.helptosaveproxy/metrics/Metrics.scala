@@ -46,7 +46,7 @@ class Metrics @Inject() (val metrics: com.kenshoo.play.metrics.Metrics) {
 
   val dwpClaimantCheckTimer: Timer = timer("proxy.dwp-claimant-check-time")
 
-  val dwpClaimantErrorCounter: Counter = counter("proxy.dwp-claimant-check-counter")
+  val dwpClaimantErrorCounter: Counter = counter("proxy.dwp-claimant-check-error-counter")
 
 }
 
