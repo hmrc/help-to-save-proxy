@@ -40,9 +40,9 @@ object AppConfig extends ServicesConfig {
 
   val nsiCreateAccountUrl: String = s"${baseUrl("nsi")}/nsi-services/account"
 
-  val systemId = getString("microservice.services.dwp.system-id")
+  val systemId: String = getString("microservice.services.dwp.system-id")
 
-  val thresholdAmount = getInt("microservice.services.dwp.threshold-amount")
+  val thresholdAmount: Int = getInt("microservice.services.dwp.threshold-amount")
 
   def dwpUrl(nino: String, transactionId: UUID): String =
     s"${baseUrl("dwp")}/v1/isEligible/$nino?systemId=$systemId&thresholdAmount=$thresholdAmount&transactionId=$transactionId"
