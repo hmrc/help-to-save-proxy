@@ -63,6 +63,7 @@ class DWPConnectorImpl @Inject() (conf: Configuration, metrics: Metrics, pagerDu
             Right(HttpResponse(200, Some(response.json))) // scalastyle:ignore magic.number
           case other ⇒
             pagerDutyAlerting.alert("Received unexpected http status in response to uc claimant check")
+            metrics.dwpClaimantErrorCounter.inc()
             Left(s"ucClaimantCheck returned a status other than 200, with response body: ${response.body}, " +
               s"status: $other, transactionId: $transactionId, ${timeString(time)}, $nino")
         }
@@ -70,6 +71,7 @@ class DWPConnectorImpl @Inject() (conf: Configuration, metrics: Metrics, pagerDu
         case e ⇒
           val time = timeContext.stop()
           pagerDutyAlerting.alert("Failed to make call to uc claimant check")
+          metrics.dwpClaimantErrorCounter.inc()
           Left(s"Encountered error while trying to make ucClaimantCheck call, with message: ${e.getMessage}, " +
             s"transactionId: $transactionId, ${timeString(time)}, $nino")
       })
