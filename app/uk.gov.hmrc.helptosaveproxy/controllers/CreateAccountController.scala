@@ -16,14 +16,15 @@
 
 package uk.gov.hmrc.helptosaveproxy.controllers
 
-import CreateAccountController.Error
 import cats.data.EitherT
 import cats.instances.future._
 import com.google.inject.Inject
 import play.api.libs.json.{JsError, JsSuccess, Json}
 import play.api.mvc.{Action, AnyContent, Request, Result}
+import uk.gov.hmrc.helptosaveproxy.audit.HTSAuditor
 import uk.gov.hmrc.helptosaveproxy.connectors.NSIConnector
-import uk.gov.hmrc.helptosaveproxy.models.NSIUserInfo
+import uk.gov.hmrc.helptosaveproxy.controllers.CreateAccountController.Error
+import uk.gov.hmrc.helptosaveproxy.models.{AccountCreated, NSIUserInfo}
 import uk.gov.hmrc.helptosaveproxy.models.SubmissionResult.{SubmissionFailure, SubmissionSuccess}
 import uk.gov.hmrc.helptosaveproxy.services.JSONSchemaValidationService
 import uk.gov.hmrc.helptosaveproxy.util.JsErrorOps._
@@ -34,18 +35,22 @@ import uk.gov.hmrc.play.microservice.controller.BaseController
 import scala.concurrent.{ExecutionContext, Future}
 
 class CreateAccountController @Inject() (nsiConnector:                NSIConnector,
-                                         jsonSchemaValidationService: JSONSchemaValidationService) extends BaseController {
+                                         jsonSchemaValidationService: JSONSchemaValidationService,
+                                         auditor:                     HTSAuditor) extends BaseController {
 
   import CreateAccountController.Error._
 
   implicit def mdcExecutionContext(implicit loggingDetails: LoggingDetails): ExecutionContext = MdcLoggingExecutionContext.fromLoggingDetails
 
   def createAccount(): Action[AnyContent] = Action.async { implicit request ⇒
-    processRequest[SubmissionSuccess](nsiConnector.createAccount(_).leftMap[Error](NSIError)){
-      submissionSuccess ⇒
+    processRequest[SubmissionSuccess] {
+      nsiConnector.createAccount(_).leftMap[Error](NSIError)
+    } {
+      (submissionSuccess, nSIUserInfo) ⇒
         if (submissionSuccess.accountAlreadyCreated) {
           Conflict
         } else {
+          auditor.sendEvent(AccountCreated(nSIUserInfo), nSIUserInfo.nino)
           Created
         }
     }
@@ -53,32 +58,34 @@ class CreateAccountController @Inject() (nsiConnector:                NSIConnect
 
   def updateEmail(): Action[AnyContent] = Action.async { implicit request ⇒
     processRequest[Unit](
-      nsiConnector.updateEmail(_).leftMap[Error](e ⇒ NSIError(SubmissionFailure(e, "Could not update email")))){
-        _ ⇒ Ok
+      nsiConnector.updateEmail(_).leftMap[Error](e ⇒ NSIError(SubmissionFailure(e, "Could not update email")))) {
+        (_, _) ⇒ Ok
       }
   }
 
-  private def processRequest[T](doRequest: NSIUserInfo ⇒ EitherT[Future, Error, T])(handleResult: T ⇒ Result)(implicit request: Request[AnyContent]): Future[Result] = {
-    val result: EitherT[Future, Error, T] = for {
+  private def processRequest[T](doRequest: NSIUserInfo ⇒ EitherT[Future, Error, T])(handleResult: (T, NSIUserInfo) ⇒ Result)(implicit request: Request[AnyContent]): Future[Result] = {
+    val result: EitherT[Future, Error, (T, NSIUserInfo)] = for {
       userInfo ← EitherT.fromEither[Future](extractNSIUSerInfo(request))
       _ ← EitherT.fromEither[Future](jsonSchemaValidationService.validate(Json.toJson(userInfo)))
         .leftMap(e ⇒ InvalidRequest("Invalid data found in request", e))
       response ← doRequest(userInfo)
-    } yield response
+    } yield (response, userInfo)
 
     result.fold[Result]({
       case InvalidRequest(m, d) ⇒
         BadRequest(SubmissionFailure(m, d).toJson)
       case NSIError(f) ⇒
         InternalServerError(f.toJson)
-    }, handleResult
+    }, {
+      case (subResult, nsiUserInfo) ⇒ handleResult(subResult, nsiUserInfo)
+    }
     )
   }
 
   private def extractNSIUSerInfo(request: Request[AnyContent]): Either[InvalidRequest, NSIUserInfo] = {
     request.body.asJson.map(_.validate[NSIUserInfo]) match {
       case Some(JsSuccess(userInfo, _)) ⇒ Right(userInfo)
-      case Some(e: JsError)             ⇒ Left(InvalidRequest("Could not parse JSON in request", e.prettyPrint))
+      case Some(e: JsError)             ⇒ Left(InvalidRequest("Could not parse JSON in request", e.prettyPrint()))
       case None                         ⇒ Left(InvalidRequest("No JSON found in request", "JSON body required"))
 
     }
