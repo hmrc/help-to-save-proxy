@@ -24,12 +24,15 @@ import play.api.mvc.{Action, AnyContent}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.helptosaveproxy.TestSupport
+import uk.gov.hmrc.helptosaveproxy.audit.HTSAuditor
 import uk.gov.hmrc.helptosaveproxy.connectors.NSIConnector
-import uk.gov.hmrc.helptosaveproxy.models.NSIUserInfo
+import uk.gov.hmrc.helptosaveproxy.models.{AccountCreated, NSIUserInfo}
 import uk.gov.hmrc.helptosaveproxy.models.SubmissionResult.{SubmissionFailure, SubmissionSuccess}
 import uk.gov.hmrc.helptosaveproxy.services.JSONSchemaValidationService
 import uk.gov.hmrc.helptosaveproxy.testutil.TestData.UserData.validNSIUserInfo
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
+import uk.gov.hmrc.play.audit.model.DataEvent
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -37,8 +40,13 @@ class CreateAccountControllerSpec extends TestSupport {
 
   val mockNSIConnector = mock[NSIConnector]
   val mockJsonSchema = mock[JSONSchemaValidationService]
+  val mockAuditor = mock[AuditConnector]
 
-  val controller = new CreateAccountController(mockNSIConnector, mockJsonSchema)
+  val htsAuditor = new HTSAuditor {
+    override val auditConnector: AuditConnector = mockAuditor
+  }
+
+  val controller = new CreateAccountController(mockNSIConnector, mockJsonSchema, htsAuditor)
 
   def mockJSONSchemaValidationService(expectedInfo: NSIUserInfo)(result: Either[String, Unit]) =
     (mockJsonSchema.validate(_: JsValue))
@@ -55,6 +63,11 @@ class CreateAccountControllerSpec extends TestSupport {
       .expects(expectedInfo, *, *)
       .returning(EitherT.fromEither[Future](result))
 
+  def mockAuditAccountCreated() =
+    (mockAuditor.sendEvent(_: DataEvent)(_: HeaderCarrier, _: ExecutionContext))
+      .expects(where { (dataEvent, _, _) ⇒ dataEvent.auditType === "AccountCreated" })
+      .returning(Future.successful(AuditResult.Success))
+
   "The createAccount method" must {
 
       def doCreateAccountRequest(userInfo: NSIUserInfo) =
@@ -68,6 +81,7 @@ class CreateAccountControllerSpec extends TestSupport {
       inSequence {
         mockJSONSchemaValidationService(validNSIUserInfo)(Right(()))
         mockCreateAccount(validNSIUserInfo)(Right(SubmissionSuccess(false)))
+        mockAuditAccountCreated()
       }
 
       val result = doCreateAccountRequest(validNSIUserInfo)
