@@ -44,7 +44,7 @@ class CreateAccountController @Inject() (nsiConnector:                NSIConnect
 
   implicit def mdcExecutionContext(implicit loggingDetails: LoggingDetails): ExecutionContext = MdcLoggingExecutionContext.fromLoggingDetails
 
-  def createAccount(correlationId: UUID): Action[AnyContent] = Action.async { implicit request ⇒
+  def createAccount(correlationId: Option[UUID]): Action[AnyContent] = Action.async { implicit request ⇒
     processRequest[SubmissionSuccess] { userInfo ⇒
       nsiConnector.createAccount(userInfo, correlationId).leftMap[Error](NSIError)
     } {
