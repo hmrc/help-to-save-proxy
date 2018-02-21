@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.helptosaveproxy.controllers
 
+import java.util.UUID
+
 import cats.data.EitherT
 import cats.instances.future._
 import com.google.inject.Inject
@@ -42,9 +44,9 @@ class CreateAccountController @Inject() (nsiConnector:                NSIConnect
 
   implicit def mdcExecutionContext(implicit loggingDetails: LoggingDetails): ExecutionContext = MdcLoggingExecutionContext.fromLoggingDetails
 
-  def createAccount(): Action[AnyContent] = Action.async { implicit request ⇒
-    processRequest[SubmissionSuccess] {
-      nsiConnector.createAccount(_).leftMap[Error](NSIError)
+  def createAccount(correlationId: UUID): Action[AnyContent] = Action.async { implicit request ⇒
+    processRequest[SubmissionSuccess] { userInfo ⇒
+      nsiConnector.createAccount(userInfo, correlationId).leftMap[Error](NSIError)
     } {
       (submissionSuccess, nSIUserInfo) ⇒
         if (submissionSuccess.accountAlreadyCreated) {

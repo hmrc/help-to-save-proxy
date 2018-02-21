@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.helptosaveproxy.connectors
 
+import java.util.UUID
 import javax.inject.{Inject, Singleton}
 
 import cats.data.EitherT
@@ -31,7 +32,6 @@ import uk.gov.hmrc.helptosaveproxy.metrics.Metrics.nanosToPrettyString
 import uk.gov.hmrc.helptosaveproxy.models.NSIUserInfo.nsiUserInfoFormat
 import uk.gov.hmrc.helptosaveproxy.models.SubmissionResult._
 import uk.gov.hmrc.helptosaveproxy.models.NSIUserInfo
-
 import uk.gov.hmrc.helptosaveproxy.util.HttpResponseOps._
 import uk.gov.hmrc.helptosaveproxy.util.Logging._
 import uk.gov.hmrc.helptosaveproxy.util.{Logging, NINO, NINOLogMessageTransformer, PagerDutyAlerting, Result, maskNino}
@@ -42,7 +42,8 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @ImplementedBy(classOf[NSIConnectorImpl])
 trait NSIConnector {
-  def createAccount(userInfo: NSIUserInfo)(implicit hc: HeaderCarrier, ex: ExecutionContext): EitherT[Future, SubmissionFailure, SubmissionSuccess]
+  def createAccount(userInfo: NSIUserInfo, correlationId: UUID)(implicit hc: HeaderCarrier, ex: ExecutionContext):
+  EitherT[Future, SubmissionFailure, SubmissionSuccess]
 
   def updateEmail(userInfo: NSIUserInfo)(implicit hc: HeaderCarrier, ex: ExecutionContext): Result[Unit]
 
@@ -57,12 +58,13 @@ class NSIConnectorImpl @Inject() (conf: Configuration, metrics: Metrics, pagerDu
 
   val httpProxy: WSHttpProxy = new WSHttpProxy(conf)
 
-  override def createAccount(userInfo: NSIUserInfo)(implicit hc: HeaderCarrier, ec: ExecutionContext): EitherT[Future, SubmissionFailure, SubmissionSuccess] = {
+  override def createAccount(userInfo: NSIUserInfo, correlationId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext):
+  EitherT[Future, SubmissionFailure, SubmissionSuccess] = {
     import uk.gov.hmrc.helptosaveproxy.util.Toggles._
 
     val nino = userInfo.nino
 
-    logger.info(s"Trying to create an account using NSI endpoint $nsiCreateAccountUrl", nino)
+    logger.info(s"Trying to create an account using NSI endpoint $nsiCreateAccountUrl, correlationId: $correlationId", nino)
 
     FEATURE("log-account-creation-json", conf, logger).thenOrElse(
       logger.info(s"CreateAccount JSON is ${Json.toJson(userInfo)}", nino),
@@ -77,17 +79,17 @@ class NSIConnectorImpl @Inject() (conf: Configuration, metrics: Metrics, pagerDu
 
         response.status match {
           case Status.CREATED ⇒
-            logger.info(s"createAccount/insert returned 201 (Created) ${timeString(time)}", nino)
+            logger.info(s"createAccount/insert returned 201 (Created) ${timeString(time)}, correlationId: $correlationId", nino)
             Right(SubmissionSuccess(accountAlreadyCreated = false))
 
           case Status.CONFLICT ⇒
             logger.info(s"createAccount/insert returned 409 (Conflict). Account had already been created - " +
-              s"proceeding as normal ${timeString(time)}", nino)
+              s"proceeding as normal ${timeString(time)}, correlationId: $correlationId", nino)
             Right(SubmissionSuccess(accountAlreadyCreated = true))
 
           case other ⇒
             pagerDutyAlerting.alert("Received unexpected http status in response to create account")
-            Left(handleErrorStatus(other, response, userInfo.nino, time))
+            Left(handleErrorStatus(other, response, userInfo.nino, time, correlationId))
         }
       }.recover {
         case e ⇒
@@ -95,7 +97,7 @@ class NSIConnectorImpl @Inject() (conf: Configuration, metrics: Metrics, pagerDu
           pagerDutyAlerting.alert("Failed to make call to create account")
           metrics.nsiAccountCreationErrorCounter.inc()
 
-          logger.warn(s"Encountered error while trying to create account ${timeString(time)}", e, nino)
+          logger.warn(s"Encountered error while trying to create account ${timeString(time)}, correlationId: $correlationId", e, nino)
           Left(SubmissionFailure(None, "Encountered error while trying to create account", e.getMessage))
       })
   }
@@ -143,24 +145,26 @@ class NSIConnectorImpl @Inject() (conf: Configuration, metrics: Metrics, pagerDu
       }
   }
 
-  private def handleErrorStatus(status: Int, response: HttpResponse, nino: NINO, time: Long) = {
+  private def handleErrorStatus(status: Int, response: HttpResponse, nino: NINO, time: Long, correlationId: UUID) = {
     metrics.nsiAccountCreationErrorCounter.inc()
 
     status match {
       case Status.BAD_REQUEST ⇒
-        logger.warn(s"Failed to create account as NSI, received status 400 (Bad Request) from NSI ${timeString(time)}", nino)
+        logger.warn(s"Failed to create account as NSI, received status 400 (Bad Request) from NSI ${timeString(time)}, correlationId: $correlationId", nino)
         handleError(response)
 
       case Status.INTERNAL_SERVER_ERROR ⇒
-        logger.warn(s"Failed to create account as NSI, received status 500 (Internal Server Error) from NSI ${timeString(time)}", nino)
+        logger.warn(s"Failed to create account as NSI, received status 500 (Internal Server Error) from NSI ${timeString(time)}, " +
+          s"correlationId: $correlationId", nino)
         handleError(response)
 
       case Status.SERVICE_UNAVAILABLE ⇒
-        logger.warn(s"Failed to create account as NSI, received status 503 (Service Unavailable) from NSI ${timeString(time)}", nino)
+        logger.warn(s"Failed to create account as NSI, received status 503 (Service Unavailable) from NSI ${timeString(time)}, " +
+          s"correlationId: $correlationId", nino)
         handleError(response)
 
       case other ⇒
-        logger.warn(s"Unexpected error during creating account, received status $other ${timeString(time)}", nino)
+        logger.warn(s"Unexpected error during creating account, received status $other ${timeString(time)}, correlationId: $correlationId", nino)
         handleError(response)
     }
   }
