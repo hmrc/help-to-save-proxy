@@ -16,12 +16,14 @@
 
 package uk.gov.hmrc.helptosaveproxy.testutil
 
-import uk.gov.hmrc.helptosaveproxy.util.{NINO, NINOLogMessageTransformer}
+import java.util.UUID
 
-object TestNINOLogMessageTransformer {
+import uk.gov.hmrc.helptosaveproxy.util.{NINO, LogMessageTransformer}
 
-  implicit val transformer: NINOLogMessageTransformer = new NINOLogMessageTransformer {
-    override def transform(message: String, nino: NINO): String = s"$nino - $message"
+object TestLogMessageTransformer {
+
+  implicit val transformer: LogMessageTransformer = new LogMessageTransformer {
+    override def transform(message: String, nino: NINO, correlationId: Option[UUID]): String = s"$nino - $message - $correlationId"
   }
 
 }

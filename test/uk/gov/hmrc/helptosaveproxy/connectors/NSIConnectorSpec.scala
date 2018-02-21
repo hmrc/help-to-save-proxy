@@ -27,7 +27,7 @@ import uk.gov.hmrc.helptosaveproxy.TestSupport
 import uk.gov.hmrc.helptosaveproxy.config.AppConfig.{nsiAuthHeaderKey, nsiBasicAuth, nsiCreateAccountUrl}
 import uk.gov.hmrc.helptosaveproxy.models.SubmissionResult.{SubmissionFailure, SubmissionSuccess}
 import uk.gov.hmrc.helptosaveproxy.testutil.MockPagerDuty
-import uk.gov.hmrc.helptosaveproxy.testutil.TestData.UserData.validNSIUserInfo
+import uk.gov.hmrc.helptosaveproxy.testutil.TestData.UserData.{validNSIUserInfo, correlationId}
 import uk.gov.hmrc.http.logging.Authorization
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 
@@ -107,13 +107,13 @@ class NSIConnectorSpec extends TestSupport with MockFactory with GeneratorDriven
 
     "Return a SubmissionSuccess when the status is Created" in {
       mockPost(validNSIUserInfo, nsiCreateAccountUrl)(Right(HttpResponse(Status.CREATED)))
-      val result = testNSAndIConnectorImpl.createAccount(validNSIUserInfo)
+      val result = testNSAndIConnectorImpl.createAccount(validNSIUserInfo, correlationId)
       Await.result(result.value, 3.seconds) shouldBe Right(SubmissionSuccess(false))
     }
 
     "Return a SubmissionSuccess when the status is CONFLICT" in {
       mockPost(validNSIUserInfo, nsiCreateAccountUrl)(Right(HttpResponse(Status.CONFLICT)))
-      val result = testNSAndIConnectorImpl.createAccount(validNSIUserInfo)
+      val result = testNSAndIConnectorImpl.createAccount(validNSIUserInfo, correlationId)
       Await.result(result.value, 3.seconds) shouldBe Right(SubmissionSuccess(true))
     }
 
@@ -126,7 +126,7 @@ class NSIConnectorSpec extends TestSupport with MockFactory with GeneratorDriven
           // WARNING: do not change the message in the following check - this needs to stay in line with the configuration in alert-config
           mockPagerDutyAlert("Received unexpected http status in response to create account")
         }
-        val result = testNSAndIConnectorImpl.createAccount(validNSIUserInfo)
+        val result = testNSAndIConnectorImpl.createAccount(validNSIUserInfo, correlationId)
         Await.result(result.value, 3.seconds) shouldBe Left(submissionFailure)
       }
 
@@ -138,7 +138,7 @@ class NSIConnectorSpec extends TestSupport with MockFactory with GeneratorDriven
           // WARNING: do not change the message in the following check - this needs to stay in line with the configuration in alert-config
           mockPagerDutyAlert("Received unexpected http status in response to create account")
         }
-        val result = testNSAndIConnectorImpl.createAccount(validNSIUserInfo)
+        val result = testNSAndIConnectorImpl.createAccount(validNSIUserInfo, correlationId)
         Await.result(result.value, 3.seconds) shouldBe Left(submissionFailure)
       }
 
@@ -150,7 +150,7 @@ class NSIConnectorSpec extends TestSupport with MockFactory with GeneratorDriven
           // WARNING: do not change the message in the following check - this needs to stay in line with the configuration in alert-config
           mockPagerDutyAlert("Received unexpected http status in response to create account")
         }
-        val result = testNSAndIConnectorImpl.createAccount(validNSIUserInfo)
+        val result = testNSAndIConnectorImpl.createAccount(validNSIUserInfo, correlationId)
         Await.result(result.value, 3.seconds) shouldBe Left(submissionFailure)
       }
 
@@ -161,7 +161,7 @@ class NSIConnectorSpec extends TestSupport with MockFactory with GeneratorDriven
           mockPagerDutyAlert("Received unexpected http status in response to create account")
 
         }
-        val result = testNSAndIConnectorImpl.createAccount(validNSIUserInfo).value
+        val result = testNSAndIConnectorImpl.createAccount(validNSIUserInfo, correlationId).value
         Await.result(result, 3.seconds) match {
           case Right(_) ⇒ fail()
           case Left(_)  ⇒ ()
@@ -174,7 +174,7 @@ class NSIConnectorSpec extends TestSupport with MockFactory with GeneratorDriven
           // WARNING: do not change the message in the following check - this needs to stay in line with the configuration in alert-config
           mockPagerDutyAlert("Failed to make call to create account")
         }
-        val result = testNSAndIConnectorImpl.createAccount(validNSIUserInfo)
+        val result = testNSAndIConnectorImpl.createAccount(validNSIUserInfo, correlationId)
         Await.result(result.value, 3.seconds).isLeft shouldBe true
       }
     }

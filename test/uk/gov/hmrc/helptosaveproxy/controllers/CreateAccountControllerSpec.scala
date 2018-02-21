@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.helptosaveproxy.controllers
 
+import java.util.UUID
+
 import cats.data.EitherT
 import cats.instances.future._
 import cats.syntax.either._
@@ -29,7 +31,7 @@ import uk.gov.hmrc.helptosaveproxy.connectors.NSIConnector
 import uk.gov.hmrc.helptosaveproxy.models.{AccountCreated, NSIUserInfo}
 import uk.gov.hmrc.helptosaveproxy.models.SubmissionResult.{SubmissionFailure, SubmissionSuccess}
 import uk.gov.hmrc.helptosaveproxy.services.JSONSchemaValidationService
-import uk.gov.hmrc.helptosaveproxy.testutil.TestData.UserData.validNSIUserInfo
+import uk.gov.hmrc.helptosaveproxy.testutil.TestData.UserData.{validNSIUserInfo, correlationId}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.audit.model.DataEvent
@@ -53,9 +55,9 @@ class CreateAccountControllerSpec extends TestSupport {
       .expects(Json.toJson(expectedInfo))
       .returning(result.map(_ ⇒ Json.toJson(expectedInfo)))
 
-  def mockCreateAccount(expectedInfo: NSIUserInfo)(result: Either[SubmissionFailure, SubmissionSuccess]): Unit =
-    (mockNSIConnector.createAccount(_: NSIUserInfo)(_: HeaderCarrier, _: ExecutionContext))
-      .expects(expectedInfo, *, *)
+  def mockCreateAccount(expectedInfo: NSIUserInfo, correlationId: Option[UUID])(result: Either[SubmissionFailure, SubmissionSuccess]): Unit =
+    (mockNSIConnector.createAccount(_: NSIUserInfo, _: Option[UUID])(_: HeaderCarrier, _: ExecutionContext))
+      .expects(expectedInfo, *, *, *)
       .returning(EitherT.fromEither[Future](result))
 
   def mockUpdateEmail(expectedInfo: NSIUserInfo)(result: Either[String, Unit]) =
@@ -71,16 +73,16 @@ class CreateAccountControllerSpec extends TestSupport {
   "The createAccount method" must {
 
       def doCreateAccountRequest(userInfo: NSIUserInfo) =
-        controller.createAccount()(FakeRequest().withJsonBody(Json.toJson(userInfo)))
+        controller.createAccount(correlationId)(FakeRequest().withJsonBody(Json.toJson(userInfo)))
 
     behave like commonBehaviour(
-      controller.createAccount,
-      () ⇒ mockCreateAccount(validNSIUserInfo)(Left(SubmissionFailure("", ""))))
+      () ⇒ controller.createAccount(correlationId),
+      () ⇒ mockCreateAccount(validNSIUserInfo, correlationId)(Left(SubmissionFailure("", ""))))
 
     "return a Created status when valid json is given for an eligible new user" in {
       inSequence {
         mockJSONSchemaValidationService(validNSIUserInfo)(Right(()))
-        mockCreateAccount(validNSIUserInfo)(Right(SubmissionSuccess(false)))
+        mockCreateAccount(validNSIUserInfo, correlationId)(Right(SubmissionSuccess(false)))
         mockAuditAccountCreated()
       }
 
@@ -91,7 +93,7 @@ class CreateAccountControllerSpec extends TestSupport {
     "return a Conflict status when valid json is given for an existing user" in {
       inSequence {
         mockJSONSchemaValidationService(validNSIUserInfo)(Right(()))
-        mockCreateAccount(validNSIUserInfo)(Right(SubmissionSuccess(true)))
+        mockCreateAccount(validNSIUserInfo, correlationId)(Right(SubmissionSuccess(true)))
       }
 
       val result = doCreateAccountRequest(validNSIUserInfo)

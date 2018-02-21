@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.helptosaveproxy.health
 
+import java.util.UUID
+
 import akka.actor.{Actor, ActorRef, Props}
 import akka.pattern.{ask, pipe}
 import akka.testkit.TestProbe
@@ -328,7 +330,7 @@ object HealthTestSpec {
   class TestNSIConnector(reportTo: ActorRef) extends NSIConnector {
     implicit val timeout: Timeout = Timeout(3.seconds)
 
-    override def createAccount(userInfo: NSIUserInfo)(implicit hc: HeaderCarrier, ex: ExecutionContext): EitherT[Future, SubmissionFailure, SubmissionSuccess] =
+    override def createAccount(userInfo: NSIUserInfo, correlationId: Option[UUID])(implicit hc: HeaderCarrier, ex: ExecutionContext): EitherT[Future, SubmissionFailure, SubmissionSuccess] =
       sys.error("Not used")
 
     override def updateEmail(userInfo: NSIUserInfo)(implicit hc: HeaderCarrier, ex: ExecutionContext): Result[Unit] =

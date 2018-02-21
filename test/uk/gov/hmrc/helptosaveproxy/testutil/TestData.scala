@@ -17,6 +17,7 @@
 package uk.gov.hmrc.helptosaveproxy.testutil
 
 import java.time.LocalDate
+import java.util.UUID
 
 import uk.gov.hmrc.smartstub.AutoGen.{GenProvider, instance}
 import uk.gov.hmrc.smartstub._
@@ -63,6 +64,8 @@ object TestData {
 
       (nsiValidContactDetails, nsiUserInfo)
     }
+
+    val correlationId: Option[UUID] = Option(UUID.fromString("6f20ae18-38e9-4054-ac30-2ef294fa5279"))
   }
 
 }
