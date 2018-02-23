@@ -20,6 +20,7 @@ import com.typesafe.config.Config
 import play.api.{Configuration, Logger}
 import uk.gov.hmrc.helptosaveproxy.metrics.Metrics.nanosToPrettyString
 import uk.gov.hmrc.helptosaveproxy.util.Logging._
+import uk.gov.hmrc.http.HeaderCarrier
 
 object Toggles {
 
@@ -37,7 +38,7 @@ object Toggles {
 
     @inline private def time(): Long = System.nanoTime()
 
-    def thenOrElse[A](ifEnabled: ⇒ A, ifDisabled: ⇒ A)(implicit transformer: NINOLogMessageTransformer): A = {
+    def thenOrElse[A](ifEnabled: ⇒ A, ifDisabled: ⇒ A)(implicit transformer: LogMessageTransformer, hc: HeaderCarrier): A = {
       val start = time()
       val result = if (enabled) ifEnabled else ifDisabled
       val end = time()

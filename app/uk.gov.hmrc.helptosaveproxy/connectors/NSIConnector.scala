@@ -19,8 +19,6 @@ package uk.gov.hmrc.helptosaveproxy.connectors
 import javax.inject.{Inject, Singleton}
 
 import cats.data.EitherT
-import cats.instances.string._
-import cats.syntax.eq._
 import com.codahale.metrics.Timer
 import com.google.inject.ImplementedBy
 import play.api.Configuration
@@ -30,13 +28,12 @@ import uk.gov.hmrc.helptosaveproxy.config.AppConfig.{nsiAuthHeaderKey, nsiBasicA
 import uk.gov.hmrc.helptosaveproxy.config.WSHttpProxy
 import uk.gov.hmrc.helptosaveproxy.metrics.Metrics
 import uk.gov.hmrc.helptosaveproxy.metrics.Metrics.nanosToPrettyString
+import uk.gov.hmrc.helptosaveproxy.models.NSIUserInfo
 import uk.gov.hmrc.helptosaveproxy.models.NSIUserInfo.nsiUserInfoFormat
 import uk.gov.hmrc.helptosaveproxy.models.SubmissionResult._
-import uk.gov.hmrc.helptosaveproxy.models.NSIUserInfo
-
 import uk.gov.hmrc.helptosaveproxy.util.HttpResponseOps._
 import uk.gov.hmrc.helptosaveproxy.util.Logging._
-import uk.gov.hmrc.helptosaveproxy.util.{Logging, NINO, NINOLogMessageTransformer, PagerDutyAlerting, Result, maskNino}
+import uk.gov.hmrc.helptosaveproxy.util.{LogMessageTransformer, Logging, NINO, PagerDutyAlerting, Result, maskNino}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.play.config.AppName
 
@@ -55,7 +52,7 @@ trait NSIConnector {
 @Singleton
 class NSIConnectorImpl @Inject() (conf: Configuration, metrics: Metrics, pagerDutyAlerting: PagerDutyAlerting)(
     implicit
-    transformer: NINOLogMessageTransformer) extends NSIConnector with Logging with AppName {
+    transformer: LogMessageTransformer) extends NSIConnector with Logging with AppName {
 
   val httpProxy: WSHttpProxy = new WSHttpProxy(conf)
 
@@ -63,9 +60,6 @@ class NSIConnectorImpl @Inject() (conf: Configuration, metrics: Metrics, pagerDu
     import uk.gov.hmrc.helptosaveproxy.util.Toggles._
 
     val nino = userInfo.nino
-
-    val correlationId = hc.headers.find(p ⇒ p._1 === "X-CorrelationId").map(_._2)
-    logger.info(s"X-CorrelationId of the user is : ${correlationId.getOrElse("")}")
 
     logger.info(s"Trying to create an account using NSI endpoint $nsiCreateAccountUrl", nino)
 
@@ -148,7 +142,7 @@ class NSIConnectorImpl @Inject() (conf: Configuration, metrics: Metrics, pagerDu
       }
   }
 
-  private def handleErrorStatus(status: Int, response: HttpResponse, nino: NINO, time: Long) = {
+  private def handleErrorStatus(status: Int, response: HttpResponse, nino: NINO, time: Long)(implicit hc: HeaderCarrier) = {
     metrics.nsiAccountCreationErrorCounter.inc()
 
     status match {

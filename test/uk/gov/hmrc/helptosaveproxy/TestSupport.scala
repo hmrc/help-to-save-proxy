@@ -28,8 +28,8 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.{Application, Configuration, Play}
 import uk.gov.hmrc.helptosaveproxy.config.WSHttpProxy
 import uk.gov.hmrc.helptosaveproxy.metrics.Metrics
-import uk.gov.hmrc.helptosaveproxy.testutil.TestNINOLogMessageTransformer
-import uk.gov.hmrc.helptosaveproxy.util.NINOLogMessageTransformer
+import uk.gov.hmrc.helptosaveproxy.testutil.TestLogMessageTransformer
+import uk.gov.hmrc.helptosaveproxy.util.LogMessageTransformer
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.logging.SessionId
 import uk.gov.hmrc.play.test.UnitSpec
@@ -79,6 +79,6 @@ trait TestSupport extends UnitSpec with MockFactory with BeforeAndAfterAll with 
     override def histogram(name: String): Histogram = new Histogram(new UniformReservoir())
   }
 
-  implicit val transformer: NINOLogMessageTransformer = TestNINOLogMessageTransformer.transformer
+  implicit val transformer: LogMessageTransformer = TestLogMessageTransformer.transformer
 
 }
