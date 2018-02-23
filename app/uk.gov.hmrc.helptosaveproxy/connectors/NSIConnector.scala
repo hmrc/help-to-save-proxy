@@ -19,6 +19,8 @@ package uk.gov.hmrc.helptosaveproxy.connectors
 import javax.inject.{Inject, Singleton}
 
 import cats.data.EitherT
+import cats.instances.string._
+import cats.syntax.eq._
 import com.codahale.metrics.Timer
 import com.google.inject.ImplementedBy
 import play.api.Configuration
@@ -61,6 +63,9 @@ class NSIConnectorImpl @Inject() (conf: Configuration, metrics: Metrics, pagerDu
     import uk.gov.hmrc.helptosaveproxy.util.Toggles._
 
     val nino = userInfo.nino
+
+    val correlationId = hc.headers.find(p ⇒ p._1 === "X-CorrelationId").map(_._2)
+    logger.info(s"X-CorrelationId of the user is : ${correlationId.getOrElse("")}")
 
     logger.info(s"Trying to create an account using NSI endpoint $nsiCreateAccountUrl", nino)
 
