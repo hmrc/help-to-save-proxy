@@ -37,14 +37,14 @@ object Toggles {
 
     @inline private def time(): Long = System.nanoTime()
 
-    def thenOrElse[A](ifEnabled: ⇒ A, ifDisabled: ⇒ A)(implicit transformer: NINOLogMessageTransformer): A = {
+    def thenOrElse[A](ifEnabled: ⇒ A, ifDisabled: ⇒ A)(implicit transformer: LogMessageTransformer): A = {
       val start = time()
       val result = if (enabled) ifEnabled else ifDisabled
       val end = time()
       nino.fold(
         logger.info(s"Feature $name (enabled: $enabled) executed in ${nanosToPrettyString(end - start)}")
       )(n ⇒
-          logger.info(s"Feature $name (enabled: $enabled) executed in ${nanosToPrettyString(end - start)}", n)
+          logger.info(s"Feature $name (enabled: $enabled) executed in ${nanosToPrettyString(end - start)}", n, None)
         )
       result
     }

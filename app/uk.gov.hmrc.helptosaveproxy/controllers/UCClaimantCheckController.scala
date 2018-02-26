@@ -23,14 +23,14 @@ import com.google.inject.Inject
 import play.api.mvc.{Action, AnyContent, Request, Result}
 import uk.gov.hmrc.helptosaveproxy.connectors.DWPConnector
 import uk.gov.hmrc.helptosaveproxy.util.TryOps._
-import uk.gov.hmrc.helptosaveproxy.util.{Logging, NINO, NINOLogMessageTransformer}
+import uk.gov.hmrc.helptosaveproxy.util.{Logging, NINO, LogMessageTransformer}
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.Try
 
-class UCClaimantCheckController @Inject() (dwpConnector: DWPConnector)(implicit transformer: NINOLogMessageTransformer) extends BaseController with Logging {
+class UCClaimantCheckController @Inject() (dwpConnector: DWPConnector)(implicit transformer: LogMessageTransformer) extends BaseController with Logging {
 
   val base64Decoder: Base64.Decoder = Base64.getDecoder()
 

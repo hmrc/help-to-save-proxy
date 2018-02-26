@@ -28,7 +28,7 @@ import uk.gov.hmrc.helptosaveproxy.config.AppConfig.dwpUrl
 import uk.gov.hmrc.helptosaveproxy.config.WSHttpProxy
 import uk.gov.hmrc.helptosaveproxy.metrics.Metrics
 import uk.gov.hmrc.helptosaveproxy.metrics.Metrics._
-import uk.gov.hmrc.helptosaveproxy.util.{Logging, NINOLogMessageTransformer, PagerDutyAlerting}
+import uk.gov.hmrc.helptosaveproxy.util.{Logging, LogMessageTransformer, PagerDutyAlerting}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.play.config.AppName
 
@@ -44,7 +44,7 @@ trait DWPConnector {
 @Singleton
 class DWPConnectorImpl @Inject() (conf: Configuration, metrics: Metrics, pagerDutyAlerting: PagerDutyAlerting)(
     implicit
-    transformer: NINOLogMessageTransformer)
+    transformer: LogMessageTransformer)
   extends DWPConnector with Logging with AppName {
 
   val httpProxy: WSHttpProxy = new WSHttpProxy(conf)
