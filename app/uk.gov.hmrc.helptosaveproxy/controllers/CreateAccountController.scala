@@ -29,6 +29,7 @@ import uk.gov.hmrc.helptosaveproxy.models.SubmissionResult.{SubmissionFailure, S
 import uk.gov.hmrc.helptosaveproxy.services.JSONSchemaValidationService
 import uk.gov.hmrc.helptosaveproxy.util.JsErrorOps._
 import uk.gov.hmrc.http.logging.LoggingDetails
+import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
@@ -36,13 +37,18 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class CreateAccountController @Inject() (nsiConnector:                NSIConnector,
                                          jsonSchemaValidationService: JSONSchemaValidationService,
-                                         auditor:                     HTSAuditor) extends BaseController {
+                                         auditor:                     HTSAuditor) extends BaseController with ServicesConfig {
 
   import CreateAccountController.Error._
 
   implicit def mdcExecutionContext(implicit loggingDetails: LoggingDetails): ExecutionContext = MdcLoggingExecutionContext.fromLoggingDetails
 
+  lazy val correlationIdHeaderName: String = getString("microservice.correlationIdHeaderName")
+
   def createAccount(): Action[AnyContent] = Action.async { implicit request ⇒
+
+    val correlationId = request.headers.get(correlationIdHeaderName)
+
     processRequest[SubmissionSuccess] {
       nsiConnector.createAccount(_).leftMap[Error](NSIError)
     } {
@@ -50,7 +56,7 @@ class CreateAccountController @Inject() (nsiConnector:                NSIConnect
         if (submissionSuccess.accountAlreadyCreated) {
           Conflict
         } else {
-          auditor.sendEvent(AccountCreated(nSIUserInfo), nSIUserInfo.nino)
+          auditor.sendEvent(AccountCreated(nSIUserInfo), nSIUserInfo.nino, correlationId)
           Created
         }
     }
