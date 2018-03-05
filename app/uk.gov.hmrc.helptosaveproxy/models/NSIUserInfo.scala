@@ -16,9 +16,6 @@
 
 package uk.gov.hmrc.helptosaveproxy.models
 
-import cats.instances.string._
-import cats.syntax.eq._
-
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -92,7 +89,7 @@ object NSIUserInfo {
           c.address4.map(_.cleanupSpecialCharacters),
           c.address5.map(_.cleanupSpecialCharacters),
           c.postcode.cleanupSpecialCharacters.removeAllSpaces,
-          c.countryCode.map(_.cleanupSpecialCharacters.removeAllSpaces).filter(_.toLowerCase =!= "other").map(_.take(2)),
+          c.countryCode,
           c.email,
           c.phoneNumber,
           c.communicationPreference.cleanupSpecialCharacters.removeAllSpaces

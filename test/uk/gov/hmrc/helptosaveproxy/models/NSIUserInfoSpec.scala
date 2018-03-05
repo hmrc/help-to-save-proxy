@@ -24,7 +24,7 @@ import play.api.libs.json._
 import uk.gov.hmrc.helptosaveproxy.models.NSIUserInfo.ContactDetails
 import uk.gov.hmrc.helptosaveproxy.testutil.TestData.UserData.validNSIUserInfo
 
-class NSIUserInfoSpec extends WordSpec with Matchers {
+class NSIUserInfoSpec extends WordSpec with Matchers { // scalastyle:off magic.number
 
   val email = validNSIUserInfo.contactDetails.email
 
@@ -151,7 +151,7 @@ class NSIUserInfoSpec extends WordSpec with Matchers {
           Some("   Address\t\n\r   line4\t\n\r   "),
           Some("   Address\t\n\r             line5\t\n\r   "),
           "BN43XXX  \t\r\n",
-          Some("GB    \n\r\t"),
+          Some("GB"),
           None,
           None,
           "comms"
@@ -170,19 +170,6 @@ class NSIUserInfoSpec extends WordSpec with Matchers {
         result.contactDetails.postcode shouldBe "BN43XXX"
         result.contactDetails.countryCode shouldBe Some("GB")
       }
-
-      "filters out country codes equal to the string 'other'" in {
-        Set("other", "OTHER", "Other").foreach { other ⇒
-          val result = performReads(validNSIUserInfo.copy(contactDetails = validNSIUserInfo.contactDetails.copy(countryCode = Some(other))))
-          result.contactDetails.countryCode shouldBe None
-        }
-      }
-
-      "takes the first two characters only of country codes" in {
-        val result = performReads(validNSIUserInfo.copy(contactDetails = validNSIUserInfo.contactDetails.copy(countryCode = Some("ABCDEF"))))
-        result.contactDetails.countryCode shouldBe Some("AB")
-      }
-
     }
   }
 
