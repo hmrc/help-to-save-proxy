@@ -20,11 +20,10 @@ import java.time.LocalDate
 
 import org.scalatest.{Matchers, WordSpec}
 import play.api.libs.json._
-
 import uk.gov.hmrc.helptosaveproxy.models.NSIUserInfo.ContactDetails
 import uk.gov.hmrc.helptosaveproxy.testutil.TestData.UserData.validNSIUserInfo
 
-class NSIUserInfoSpec extends WordSpec with Matchers {
+class NSIUserInfoSpec extends WordSpec with Matchers { // scalastyle:off magic.number
 
   val email = validNSIUserInfo.contactDetails.email
 
@@ -177,12 +176,6 @@ class NSIUserInfoSpec extends WordSpec with Matchers {
           result.contactDetails.countryCode shouldBe None
         }
       }
-
-      "takes the first two characters only of country codes" in {
-        val result = performReads(validNSIUserInfo.copy(contactDetails = validNSIUserInfo.contactDetails.copy(countryCode = Some("ABCDEF"))))
-        result.contactDetails.countryCode shouldBe Some("AB")
-      }
-
     }
   }
 
