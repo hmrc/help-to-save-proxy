@@ -20,7 +20,6 @@ import java.time.LocalDate
 
 import org.scalatest.{Matchers, WordSpec}
 import play.api.libs.json._
-
 import uk.gov.hmrc.helptosaveproxy.models.NSIUserInfo.ContactDetails
 import uk.gov.hmrc.helptosaveproxy.testutil.TestData.UserData.validNSIUserInfo
 
@@ -169,6 +168,13 @@ class NSIUserInfoSpec extends WordSpec with Matchers { // scalastyle:off magic.n
         result.contactDetails.address5 shouldBe Some("Address line5")
         result.contactDetails.postcode shouldBe "BN43XXX"
         result.contactDetails.countryCode shouldBe Some("GB")
+      }
+
+      "filters out country codes equal to the string 'other'" in {
+        Set("other", "OTHER", "Other").foreach { other ⇒
+          val result = performReads(validNSIUserInfo.copy(contactDetails = validNSIUserInfo.contactDetails.copy(countryCode = Some(other))))
+          result.contactDetails.countryCode shouldBe None
+        }
       }
     }
   }

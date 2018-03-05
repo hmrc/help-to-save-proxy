@@ -19,6 +19,8 @@ package uk.gov.hmrc.helptosaveproxy.models
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
+import cats.instances.string._
+import cats.syntax.eq._
 import play.api.libs.json._
 import uk.gov.hmrc.helptosaveproxy.models.NSIUserInfo.ContactDetails
 
@@ -75,7 +77,7 @@ object NSIUserInfo {
 
     override def writes(o: NSIUserInfo): JsValue = writes.writes(o)
 
-    override def reads(json: JsValue): JsResult[NSIUserInfo] = reads.reads(json).map{ u ⇒
+    override def reads(json: JsValue): JsResult[NSIUserInfo] = reads.reads(json).map { u ⇒
       val c = u.contactDetails
       NSIUserInfo(
         u.forename.cleanupSpecialCharacters,
@@ -89,7 +91,7 @@ object NSIUserInfo {
           c.address4.map(_.cleanupSpecialCharacters),
           c.address5.map(_.cleanupSpecialCharacters),
           c.postcode.cleanupSpecialCharacters.removeAllSpaces,
-          c.countryCode.map(_.cleanupSpecialCharacters.removeAllSpaces),
+          c.countryCode.map(_.cleanupSpecialCharacters.removeAllSpaces).filter(_.toLowerCase =!= "other"),
           c.email,
           c.phoneNumber,
           c.communicationPreference.cleanupSpecialCharacters.removeAllSpaces
