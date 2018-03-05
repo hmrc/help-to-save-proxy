@@ -89,7 +89,7 @@ object NSIUserInfo {
           c.address4.map(_.cleanupSpecialCharacters),
           c.address5.map(_.cleanupSpecialCharacters),
           c.postcode.cleanupSpecialCharacters.removeAllSpaces,
-          c.countryCode,
+          c.countryCode.map(_.cleanupSpecialCharacters.removeAllSpaces),
           c.email,
           c.phoneNumber,
           c.communicationPreference.cleanupSpecialCharacters.removeAllSpaces

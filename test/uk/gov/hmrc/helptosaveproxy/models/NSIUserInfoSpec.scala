@@ -151,7 +151,7 @@ class NSIUserInfoSpec extends WordSpec with Matchers { // scalastyle:off magic.n
           Some("   Address\t\n\r   line4\t\n\r   "),
           Some("   Address\t\n\r             line5\t\n\r   "),
           "BN43XXX  \t\r\n",
-          Some("GB"),
+          Some("GB    \n\r\t"),
           None,
           None,
           "comms"
