@@ -22,7 +22,7 @@ import org.scalamock.scalatest.MockFactory
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
 import play.api.Configuration
 import play.api.http.Status
-import play.api.libs.json.{JsObject, Writes}
+import play.api.libs.json.{JsObject, JsString, Writes}
 import uk.gov.hmrc.helptosaveproxy.TestSupport
 import uk.gov.hmrc.helptosaveproxy.config.AppConfig.{nsiAuthHeaderKey, nsiBasicAuth, nsiCreateAccountUrl}
 import uk.gov.hmrc.helptosaveproxy.models.SubmissionResult.{SubmissionFailure, SubmissionSuccess}
@@ -130,28 +130,37 @@ class NSIConnectorSpec extends TestSupport with MockFactory with GeneratorDriven
         Await.result(result.value, 3.seconds) shouldBe Left(submissionFailure)
       }
 
-      "the status is INTERNAL_SERVER_ERROR" in {
-        val submissionFailure = SubmissionFailure(Some("id"), "message", "detail")
+      "the status is BAD_REQUEST but fails to parse json in the response body" in {
         inSequence {
           mockPost(validNSIUserInfo, nsiCreateAccountUrl)(Right(
-            HttpResponse(Status.INTERNAL_SERVER_ERROR, Some(JsObject(Seq("error" → submissionFailure.toJson))))))
+            HttpResponse(Status.BAD_REQUEST, Some(JsString("no json in the response")))))
           // WARNING: do not change the message in the following check - this needs to stay in line with the configuration in alert-config
           mockPagerDutyAlert("Received unexpected http status in response to create account")
         }
         val result = testNSAndIConnectorImpl.createAccount(validNSIUserInfo)
-        Await.result(result.value, 3.seconds) shouldBe Left(submissionFailure)
+        Await.result(result.value, 3.seconds) shouldBe Left(SubmissionFailure("Bad request", ""))
+      }
+
+      "the status is INTERNAL_SERVER_ERROR" in {
+        inSequence {
+          mockPost(validNSIUserInfo, nsiCreateAccountUrl)(Right(
+            HttpResponse(Status.INTERNAL_SERVER_ERROR, Some(JsString("500 Internal Server Error")))))
+          // WARNING: do not change the message in the following check - this needs to stay in line with the configuration in alert-config
+          mockPagerDutyAlert("Received unexpected http status in response to create account")
+        }
+        val result = testNSAndIConnectorImpl.createAccount(validNSIUserInfo)
+        Await.result(result.value, 3.seconds) shouldBe Left(SubmissionFailure("Server error", ""))
       }
 
       "the status is SERVICE_UNAVAILABLE" in {
-        val submissionFailure = SubmissionFailure(Some("id"), "message", "detail")
         inSequence {
           mockPost(validNSIUserInfo, nsiCreateAccountUrl)(Right(
-            HttpResponse(Status.SERVICE_UNAVAILABLE, Some(JsObject(Seq("error" → submissionFailure.toJson))))))
+            HttpResponse(Status.SERVICE_UNAVAILABLE, Some(JsString("502 Bad Gateway")))))
           // WARNING: do not change the message in the following check - this needs to stay in line with the configuration in alert-config
           mockPagerDutyAlert("Received unexpected http status in response to create account")
         }
         val result = testNSAndIConnectorImpl.createAccount(validNSIUserInfo)
-        Await.result(result.value, 3.seconds) shouldBe Left(submissionFailure)
+        Await.result(result.value, 3.seconds) shouldBe Left(SubmissionFailure("Server error", ""))
       }
 
       "the status is anything else" in {

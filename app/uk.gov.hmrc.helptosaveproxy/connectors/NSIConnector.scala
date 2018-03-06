@@ -31,12 +31,12 @@ import uk.gov.hmrc.helptosaveproxy.metrics.Metrics.nanosToPrettyString
 import uk.gov.hmrc.helptosaveproxy.models.NSIUserInfo
 import uk.gov.hmrc.helptosaveproxy.models.NSIUserInfo.nsiUserInfoFormat
 import uk.gov.hmrc.helptosaveproxy.models.SubmissionResult._
+import uk.gov.hmrc.helptosaveproxy.util.HeaderCarrierOps._
 import uk.gov.hmrc.helptosaveproxy.util.HttpResponseOps._
 import uk.gov.hmrc.helptosaveproxy.util.Logging._
 import uk.gov.hmrc.helptosaveproxy.util.{LogMessageTransformer, Logging, NINO, PagerDutyAlerting, Result, maskNino}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.play.config.AppName
-import uk.gov.hmrc.helptosaveproxy.util.HeaderCarrierOps._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -73,7 +73,7 @@ class NSIConnectorImpl @Inject() (conf: Configuration, metrics: Metrics, pagerDu
     val timeContext: Timer.Context = metrics.nsiAccountCreationTimer.time()
 
     EitherT(httpProxy.post(nsiCreateAccountUrl, userInfo, Map(nsiAuthHeaderKey → nsiBasicAuth))(nsiUserInfoFormat, hc.copy(authorization = None), ec)
-      .map[Either[SubmissionFailure, SubmissionSuccess]]{ response ⇒
+      .map[Either[SubmissionFailure, SubmissionSuccess]] { response ⇒
         val time = timeContext.stop()
 
         response.status match {
@@ -101,7 +101,7 @@ class NSIConnectorImpl @Inject() (conf: Configuration, metrics: Metrics, pagerDu
       })
   }
 
-  override def updateEmail(userInfo: NSIUserInfo)(implicit hc: HeaderCarrier, ec: ExecutionContext): Result[Unit] = EitherT[Future, String, Unit]{
+  override def updateEmail(userInfo: NSIUserInfo)(implicit hc: HeaderCarrier, ec: ExecutionContext): Result[Unit] = EitherT[Future, String, Unit] {
     val nino = userInfo.nino
 
     val timeContext: Timer.Context = metrics.nsiUpdateEmailTimer.time()
@@ -151,7 +151,7 @@ class NSIConnectorImpl @Inject() (conf: Configuration, metrics: Metrics, pagerDu
     status match {
       case Status.BAD_REQUEST ⇒
         logger.warn(s"Failed to create account as NSI, received status 400 (Bad Request) from NSI ${timeString(time)}", nino, correlationId)
-        handleError(response)
+        handleBadRequest(response)
 
       case Status.INTERNAL_SERVER_ERROR ⇒
         logger.warn(s"Failed to create account as NSI, received status 500 (Internal Server Error) from NSI ${timeString(time)}", nino, correlationId)
@@ -169,11 +169,17 @@ class NSIConnectorImpl @Inject() (conf: Configuration, metrics: Metrics, pagerDu
 
   private def timeString(nanos: Long): String = s"(round-trip time: ${nanosToPrettyString(nanos)})"
 
-  private def handleError(response: HttpResponse): SubmissionFailure = {
-    logger.warn(s"response body from NSI=${maskNino(response.body)}")
+  private def handleBadRequest(response: HttpResponse): SubmissionFailure = {
     response.parseJSON[SubmissionFailure](Some("error")) match {
       case Right(submissionFailure) ⇒ submissionFailure
-      case Left(error)              ⇒ SubmissionFailure(None, "", error)
+      case Left(error) ⇒
+        logger.warn(s"error parsing bad request response from NSI, error = $error, response body is = ${maskNino(response.body)}")
+        SubmissionFailure("Bad request", "")
     }
+  }
+
+  private def handleError(response: HttpResponse): SubmissionFailure = {
+    logger.warn(s"response body from NSI=${maskNino(response.body)}")
+    SubmissionFailure("Server error", "")
   }
 }
