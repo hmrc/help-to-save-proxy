@@ -16,9 +16,12 @@
 
 package uk.gov.hmrc.helptosaveproxy.controllers
 
+import java.util.UUID
+
 import cats.data.EitherT
 import cats.instances.future._
 import cats.syntax.either._
+import play.api.http.Status
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.{Action, AnyContent}
 import play.api.test.FakeRequest
@@ -26,11 +29,12 @@ import play.api.test.Helpers._
 import uk.gov.hmrc.helptosaveproxy.TestSupport
 import uk.gov.hmrc.helptosaveproxy.audit.HTSAuditor
 import uk.gov.hmrc.helptosaveproxy.connectors.NSIConnector
-import uk.gov.hmrc.helptosaveproxy.models.{AccountCreated, NSIUserInfo}
+import uk.gov.hmrc.helptosaveproxy.models.NSIUserInfo
 import uk.gov.hmrc.helptosaveproxy.models.SubmissionResult.{SubmissionFailure, SubmissionSuccess}
 import uk.gov.hmrc.helptosaveproxy.services.JSONSchemaValidationService
 import uk.gov.hmrc.helptosaveproxy.testutil.TestData.UserData.validNSIUserInfo
-import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.helptosaveproxy.util.NINO
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.audit.model.DataEvent
 
@@ -67,6 +71,11 @@ class HelpToSaveControllerSpec extends TestSupport {
     (mockAuditor.sendEvent(_: DataEvent)(_: HeaderCarrier, _: ExecutionContext))
       .expects(where { (dataEvent, _, _) ⇒ dataEvent.auditType === "AccountCreated" })
       .returning(Future.successful(AuditResult.Success))
+
+  def mockGetAccountByNino(nino: NINO, version: String, systemId: String, correlationID: UUID)(result: Either[String, HttpResponse]): Unit =
+    (mockNSIConnector.getAccountByNino(_: NINO, _: String, _: String, _: UUID)(_: HeaderCarrier, _: ExecutionContext))
+      .expects(nino, version, systemId, correlationID, *, *)
+      .returning(EitherT.fromEither[Future](result))
 
   "The createAccount method" must {
 
@@ -119,6 +128,34 @@ class HelpToSaveControllerSpec extends TestSupport {
       status(result) shouldBe OK
     }
 
+  }
+
+  "the getAccountByNino function" must {
+
+    val nino = "AE123456C"
+    val version = "1.0"
+    val systemId = "mobile-help-to-save"
+    val correlationId = UUID.randomUUID()
+
+    "handle successful response" in {
+
+      val responseBody = s"""{"version":$version,"correlationId":"$correlationId"}"""
+      val httpResponse = HttpResponse(Status.OK, responseString = Some(responseBody))
+
+      mockGetAccountByNino(nino, version, systemId, correlationId)(Right(httpResponse))
+
+      val result = controller.getAccountByNino(nino, version, systemId, correlationId)(FakeRequest())
+
+      status(result) shouldBe OK
+      contentAsString(result) shouldBe responseBody
+    }
+
+    "handle unexpected errors from NS&I" in {
+      mockGetAccountByNino(nino, version, systemId, correlationId)(Left("boom"))
+      val result = controller.getAccountByNino(nino, version, systemId, correlationId)(FakeRequest())
+
+      status(result) shouldBe INTERNAL_SERVER_ERROR
+    }
   }
 
   def commonBehaviour(doCall:         () ⇒ Action[AnyContent],

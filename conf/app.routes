@@ -1,5 +1,8 @@
 # microservice specific routes
 
-POST        /create-account                    @uk.gov.hmrc.helptosaveproxy.controllers.CreateAccountController.createAccount()
-PUT         /update-email                      @uk.gov.hmrc.helptosaveproxy.controllers.CreateAccountController.updateEmail()
+POST        /create-account                    @uk.gov.hmrc.helptosaveproxy.controllers.HelpToSaveController.createAccount()
+PUT         /update-email                      @uk.gov.hmrc.helptosaveproxy.controllers.HelpToSaveController.updateEmail()
+GET         /getAccountByNino                  @uk.gov.hmrc.helptosaveproxy.controllers.HelpToSaveController.getAccountByNino(nino: String, version: String, systemId: String, correlationId: java.util.UUID)
+
+
 GET         /uc-claimant-check                 @uk.gov.hmrc.helptosaveproxy.controllers.UCClaimantCheckController.ucClaimantCheck(nino, transactionId: java.util.UUID)

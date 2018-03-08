@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.helptosaveproxy.controllers
 
+import java.util.UUID
+
 import cats.data.EitherT
 import cats.instances.future._
 import com.google.inject.Inject
@@ -24,10 +26,12 @@ import play.api.mvc.{Action, AnyContent, Request, Result}
 import uk.gov.hmrc.helptosaveproxy.audit.HTSAuditor
 import uk.gov.hmrc.helptosaveproxy.connectors.NSIConnector
 import uk.gov.hmrc.helptosaveproxy.controllers.HelpToSaveController.Error
-import uk.gov.hmrc.helptosaveproxy.models.{AccountCreated, NSIUserInfo}
 import uk.gov.hmrc.helptosaveproxy.models.SubmissionResult.{SubmissionFailure, SubmissionSuccess}
+import uk.gov.hmrc.helptosaveproxy.models.{AccountCreated, NSIUserInfo}
 import uk.gov.hmrc.helptosaveproxy.services.JSONSchemaValidationService
 import uk.gov.hmrc.helptosaveproxy.util.JsErrorOps._
+import uk.gov.hmrc.helptosaveproxy.util.Logging.LoggerOps
+import uk.gov.hmrc.helptosaveproxy.util.{LogMessageTransformer, Logging, NINO}
 import uk.gov.hmrc.http.logging.LoggingDetails
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext
@@ -35,9 +39,9 @@ import uk.gov.hmrc.play.microservice.controller.BaseController
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class HelpToSaveController @Inject()(nsiConnector:                NSIConnector,
-                                     jsonSchemaValidationService: JSONSchemaValidationService,
-                                     auditor:                     HTSAuditor) extends BaseController with ServicesConfig {
+class HelpToSaveController @Inject() (nsiConnector:                NSIConnector,
+                                      jsonSchemaValidationService: JSONSchemaValidationService,
+                                      auditor:                     HTSAuditor)(implicit transformer: LogMessageTransformer) extends BaseController with ServicesConfig with Logging {
 
   import HelpToSaveController.Error._
 
@@ -67,6 +71,18 @@ class HelpToSaveController @Inject()(nsiConnector:                NSIConnector,
       nsiConnector.updateEmail(_).leftMap[Error](e ⇒ NSIError(SubmissionFailure(e, "Could not update email")))) {
         (_, _) ⇒ Ok
       }
+  }
+
+  def getAccountByNino(nino: NINO, version: String, systemId: String, correlationId: UUID): Action[AnyContent] = Action.async { implicit request ⇒
+    nsiConnector.getAccountByNino(nino, version, systemId, correlationId)
+      .fold({
+        e ⇒
+          val message = s"Could not get account details due to : $e"
+          logger.warn(message, nino, Some(correlationId.toString))
+          Status(500)(message)
+      }, {
+        response ⇒ Option(response.body).fold[Result](Status(response.status))(body ⇒ Status(response.status)(body))
+      })
   }
 
   private def processRequest[T](doRequest: NSIUserInfo ⇒ EitherT[Future, Error, T])(handleResult: (T, NSIUserInfo) ⇒ Result)(implicit request: Request[AnyContent]): Future[Result] = {

@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.helptosaveproxy.health
 
+import java.util.UUID
+
 import akka.actor.{Actor, ActorRef, Props}
 import akka.pattern.{ask, pipe}
 import akka.testkit.TestProbe
@@ -33,8 +35,8 @@ import uk.gov.hmrc.helptosaveproxy.health.HealthTestSpec.ProxyActor.Created
 import uk.gov.hmrc.helptosaveproxy.health.HealthTestSpec.TestNSIConnector.{GetTestResult, GetTestResultResponse}
 import uk.gov.hmrc.helptosaveproxy.models.SubmissionResult.{SubmissionFailure, SubmissionSuccess}
 import uk.gov.hmrc.helptosaveproxy.models.{NSIUserInfo, SubmissionResult}
-import uk.gov.hmrc.helptosaveproxy.util.{PagerDutyAlerting, Result}
-import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.helptosaveproxy.util.{NINO, PagerDutyAlerting, Result}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
@@ -339,6 +341,10 @@ object HealthTestSpec {
       EitherT(result.flatMap{
         _.fold[Future[Either[String, Unit]]](Future.failed(new Exception("")))(Future.successful)
       })
+    }
+
+    override def getAccountByNino(nino: NINO, version: String, systemId: String, correlationId: UUID)(implicit hc: HeaderCarrier, ex: ExecutionContext): Result[HttpResponse] = {
+      sys.error("Not used")
     }
   }
 
