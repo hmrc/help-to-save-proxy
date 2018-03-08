@@ -23,7 +23,7 @@ import play.api.libs.json.{JsError, JsSuccess, Json}
 import play.api.mvc.{Action, AnyContent, Request, Result}
 import uk.gov.hmrc.helptosaveproxy.audit.HTSAuditor
 import uk.gov.hmrc.helptosaveproxy.connectors.NSIConnector
-import uk.gov.hmrc.helptosaveproxy.controllers.CreateAccountController.Error
+import uk.gov.hmrc.helptosaveproxy.controllers.HelpToSaveController.Error
 import uk.gov.hmrc.helptosaveproxy.models.{AccountCreated, NSIUserInfo}
 import uk.gov.hmrc.helptosaveproxy.models.SubmissionResult.{SubmissionFailure, SubmissionSuccess}
 import uk.gov.hmrc.helptosaveproxy.services.JSONSchemaValidationService
@@ -35,11 +35,11 @@ import uk.gov.hmrc.play.microservice.controller.BaseController
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class CreateAccountController @Inject() (nsiConnector:                NSIConnector,
-                                         jsonSchemaValidationService: JSONSchemaValidationService,
-                                         auditor:                     HTSAuditor) extends BaseController with ServicesConfig {
+class HelpToSaveController @Inject()(nsiConnector:                NSIConnector,
+                                     jsonSchemaValidationService: JSONSchemaValidationService,
+                                     auditor:                     HTSAuditor) extends BaseController with ServicesConfig {
 
-  import CreateAccountController.Error._
+  import HelpToSaveController.Error._
 
   implicit def mdcExecutionContext(implicit loggingDetails: LoggingDetails): ExecutionContext = MdcLoggingExecutionContext.fromLoggingDetails
 
@@ -99,7 +99,7 @@ class CreateAccountController @Inject() (nsiConnector:                NSIConnect
 
 }
 
-object CreateAccountController {
+object HelpToSaveController {
 
   private sealed trait Error
 

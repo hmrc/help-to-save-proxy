@@ -36,7 +36,7 @@ import uk.gov.hmrc.play.audit.model.DataEvent
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class CreateAccountControllerSpec extends TestSupport {
+class HelpToSaveControllerSpec extends TestSupport {
 
   val mockNSIConnector = mock[NSIConnector]
   val mockJsonSchema = mock[JSONSchemaValidationService]
@@ -46,7 +46,7 @@ class CreateAccountControllerSpec extends TestSupport {
     override val auditConnector: AuditConnector = mockAuditor
   }
 
-  val controller = new CreateAccountController(mockNSIConnector, mockJsonSchema, htsAuditor)
+  val controller = new HelpToSaveController(mockNSIConnector, mockJsonSchema, htsAuditor)
 
   def mockJSONSchemaValidationService(expectedInfo: NSIUserInfo)(result: Either[String, Unit]) =
     (mockJsonSchema.validate(_: JsValue))
