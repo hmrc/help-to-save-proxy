@@ -225,6 +225,9 @@ class NSIConnectorSpec extends TestSupport with MockFactory with GeneratorDriven
     val systemId = "mobile-help-to-save"
     val correlationId = UUID.randomUUID()
 
+    val queryString = s"nino=$nino&version=$version&systemId=$systemId&correlationId=$correlationId"
+    def doRequest = nsiConnector.getAccountByNino(queryString)
+
     "handle the successful response and return it" in {
       val responseBody = s"""{"version":$version,"correlationId":"$correlationId"}"""
       val httpResponse = HttpResponse(Status.OK, responseString = Some(responseBody))
@@ -232,8 +235,7 @@ class NSIConnectorSpec extends TestSupport with MockFactory with GeneratorDriven
 
       mockGet(url)(Right(httpResponse))
 
-      val result = nsiConnector.getAccountByNino(nino, version, systemId, correlationId)
-      Await.result(result.value, 3.seconds) shouldBe Right(httpResponse)
+      Await.result(doRequest.value, 3.seconds) shouldBe Right(httpResponse)
     }
 
     "handle unexpected errors" in {
@@ -241,8 +243,7 @@ class NSIConnectorSpec extends TestSupport with MockFactory with GeneratorDriven
 
       mockGet(url)(Left("unexpected failure"))
 
-      val result = nsiConnector.getAccountByNino(nino, version, systemId, correlationId)
-      Await.result(result.value, 3.seconds).isLeft shouldBe true
+      Await.result(doRequest.value, 3.seconds).isLeft shouldBe true
     }
   }
 }

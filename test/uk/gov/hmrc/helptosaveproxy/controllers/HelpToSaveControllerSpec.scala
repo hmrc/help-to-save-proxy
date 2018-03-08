@@ -33,7 +33,6 @@ import uk.gov.hmrc.helptosaveproxy.models.NSIUserInfo
 import uk.gov.hmrc.helptosaveproxy.models.SubmissionResult.{SubmissionFailure, SubmissionSuccess}
 import uk.gov.hmrc.helptosaveproxy.services.JSONSchemaValidationService
 import uk.gov.hmrc.helptosaveproxy.testutil.TestData.UserData.validNSIUserInfo
-import uk.gov.hmrc.helptosaveproxy.util.NINO
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.audit.model.DataEvent
@@ -72,9 +71,9 @@ class HelpToSaveControllerSpec extends TestSupport {
       .expects(where { (dataEvent, _, _) ⇒ dataEvent.auditType === "AccountCreated" })
       .returning(Future.successful(AuditResult.Success))
 
-  def mockGetAccountByNino(nino: NINO, version: String, systemId: String, correlationID: UUID)(result: Either[String, HttpResponse]): Unit =
-    (mockNSIConnector.getAccountByNino(_: NINO, _: String, _: String, _: UUID)(_: HeaderCarrier, _: ExecutionContext))
-      .expects(nino, version, systemId, correlationID, *, *)
+  def mockGetAccountByNino(queryString: String)(result: Either[String, HttpResponse]): Unit =
+    (mockNSIConnector.getAccountByNino(_: String)(_: HeaderCarrier, _: ExecutionContext))
+      .expects(queryString, *, *)
       .returning(EitherT.fromEither[Future](result))
 
   "The createAccount method" must {
@@ -137,24 +136,25 @@ class HelpToSaveControllerSpec extends TestSupport {
     val systemId = "mobile-help-to-save"
     val correlationId = UUID.randomUUID()
 
+    val queryString = s"nino=$nino&version=$version&systemId=$systemId&correlationId=$correlationId"
+    def doRequest() = controller.getAccountByNino()(FakeRequest("GET", s"/nsi-services/account?$queryString"))
+
     "handle successful response" in {
 
       val responseBody = s"""{"version":$version,"correlationId":"$correlationId"}"""
       val httpResponse = HttpResponse(Status.OK, responseString = Some(responseBody))
 
-      mockGetAccountByNino(nino, version, systemId, correlationId)(Right(httpResponse))
+      mockGetAccountByNino(queryString)(Right(httpResponse))
 
-      val result = controller.getAccountByNino(nino, version, systemId, correlationId)(FakeRequest())
+      val result = doRequest()
 
       status(result) shouldBe OK
       contentAsString(result) shouldBe responseBody
     }
 
     "handle unexpected errors from NS&I" in {
-      mockGetAccountByNino(nino, version, systemId, correlationId)(Left("boom"))
-      val result = controller.getAccountByNino(nino, version, systemId, correlationId)(FakeRequest())
-
-      status(result) shouldBe INTERNAL_SERVER_ERROR
+      mockGetAccountByNino(queryString)(Left("boom"))
+      status(doRequest()) shouldBe INTERNAL_SERVER_ERROR
     }
   }
 

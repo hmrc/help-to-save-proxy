@@ -16,8 +16,6 @@
 
 package uk.gov.hmrc.helptosaveproxy.controllers
 
-import java.util.UUID
-
 import cats.data.EitherT
 import cats.instances.future._
 import com.google.inject.Inject
@@ -30,8 +28,7 @@ import uk.gov.hmrc.helptosaveproxy.models.SubmissionResult.{SubmissionFailure, S
 import uk.gov.hmrc.helptosaveproxy.models.{AccountCreated, NSIUserInfo}
 import uk.gov.hmrc.helptosaveproxy.services.JSONSchemaValidationService
 import uk.gov.hmrc.helptosaveproxy.util.JsErrorOps._
-import uk.gov.hmrc.helptosaveproxy.util.Logging.LoggerOps
-import uk.gov.hmrc.helptosaveproxy.util.{LogMessageTransformer, Logging, NINO}
+import uk.gov.hmrc.helptosaveproxy.util.{LogMessageTransformer, Logging}
 import uk.gov.hmrc.http.logging.LoggingDetails
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext
@@ -73,12 +70,12 @@ class HelpToSaveController @Inject() (nsiConnector:                NSIConnector,
       }
   }
 
-  def getAccountByNino(nino: NINO, version: String, systemId: String, correlationId: UUID): Action[AnyContent] = Action.async { implicit request ⇒
-    nsiConnector.getAccountByNino(nino, version, systemId, correlationId)
+  def getAccountByNino: Action[AnyContent] = Action.async { implicit request ⇒
+    nsiConnector.getAccountByNino(request.rawQueryString)
       .fold({
         e ⇒
           val message = s"Could not get account details due to : $e"
-          logger.warn(message, nino, Some(correlationId.toString))
+          logger.warn(message)
           Status(500)(message)
       }, {
         response ⇒ Option(response.body).fold[Result](Status(response.status))(body ⇒ Status(response.status)(body))

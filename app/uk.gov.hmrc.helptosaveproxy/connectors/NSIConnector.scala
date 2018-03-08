@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.helptosaveproxy.connectors
 
-import java.util.UUID
 import javax.inject.{Inject, Singleton}
 
 import cats.data.EitherT
@@ -49,7 +48,7 @@ trait NSIConnector {
 
   def healthCheck(userInfo: NSIUserInfo)(implicit hc: HeaderCarrier, ex: ExecutionContext): Result[Unit]
 
-  def getAccountByNino(nino: NINO, version: String, systemId: String, correlationId: UUID)(implicit hc: HeaderCarrier, ex: ExecutionContext): Result[HttpResponse]
+  def getAccountByNino(queryString: String)(implicit hc: HeaderCarrier, ex: ExecutionContext): Result[HttpResponse]
 
 }
 
@@ -148,14 +147,14 @@ class NSIConnectorImpl @Inject() (conf: Configuration, metrics: Metrics, pagerDu
       }
   }
 
-  override def getAccountByNino(nino: NINO, version: String, systemId: String, correlationId: UUID)(implicit hc: HeaderCarrier, ex: ExecutionContext): Result[HttpResponse] = {
+  override def getAccountByNino(queryString: String)(implicit hc: HeaderCarrier, ex: ExecutionContext): Result[HttpResponse] = {
 
-    val url = s"$nsiGetAccountByNinoUrl?nino=$nino&version=$version&systemId=$systemId&correlationId=$correlationId"
+    val url = s"$nsiGetAccountByNinoUrl?$queryString"
 
     EitherT(httpProxy.get(url, Map(nsiAuthHeaderKey → nsiBasicAuth))
       .map[Either[String, HttpResponse]](Right(_))
       .recover {
-        case e ⇒ Left(s"unexpected error during getAccountByNino, error:${e.getMessage}")
+        case e ⇒ Left(e.getMessage)
       })
   }
 
