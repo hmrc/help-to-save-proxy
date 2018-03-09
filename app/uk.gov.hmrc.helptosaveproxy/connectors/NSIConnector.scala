@@ -24,7 +24,7 @@ import com.google.inject.ImplementedBy
 import play.api.Configuration
 import play.api.http.Status
 import play.api.libs.json.Json
-import uk.gov.hmrc.helptosaveproxy.config.AppConfig.{nsiAuthHeaderKey, nsiBasicAuth, nsiCreateAccountUrl}
+import uk.gov.hmrc.helptosaveproxy.config.AppConfig.{nsiAuthHeaderKey, nsiBasicAuth, nsiCreateAccountUrl, nsiGetAccountByNinoUrl}
 import uk.gov.hmrc.helptosaveproxy.config.WSHttpProxy
 import uk.gov.hmrc.helptosaveproxy.metrics.Metrics
 import uk.gov.hmrc.helptosaveproxy.metrics.Metrics.nanosToPrettyString
@@ -47,6 +47,8 @@ trait NSIConnector {
   def updateEmail(userInfo: NSIUserInfo)(implicit hc: HeaderCarrier, ex: ExecutionContext): Result[Unit]
 
   def healthCheck(userInfo: NSIUserInfo)(implicit hc: HeaderCarrier, ex: ExecutionContext): Result[Unit]
+
+  def getAccountByNino(queryString: String)(implicit hc: HeaderCarrier, ex: ExecutionContext): Result[HttpResponse]
 
 }
 
@@ -133,7 +135,7 @@ class NSIConnectorImpl @Inject() (conf: Configuration, metrics: Metrics, pagerDu
       }
   }
 
-  override def healthCheck(userInfo: NSIUserInfo)(implicit hc: HeaderCarrier, ex: ExecutionContext): Result[Unit] = EitherT[Future, String, Unit]{
+  override def healthCheck(userInfo: NSIUserInfo)(implicit hc: HeaderCarrier, ex: ExecutionContext): Result[Unit] = EitherT[Future, String, Unit] {
     httpProxy.put(nsiCreateAccountUrl, userInfo, false, Map(nsiAuthHeaderKey → nsiBasicAuth))(nsiUserInfoFormat, hc.copy(authorization = None), ex)
       .map[Either[String, Unit]] { response ⇒
         response.status match {
@@ -143,6 +145,17 @@ class NSIConnectorImpl @Inject() (conf: Configuration, metrics: Metrics, pagerDu
       }.recover {
         case e ⇒ Left(s"Encountered error while trying to create account: ${e.getMessage}")
       }
+  }
+
+  override def getAccountByNino(queryString: String)(implicit hc: HeaderCarrier, ex: ExecutionContext): Result[HttpResponse] = {
+
+    val url = s"$nsiGetAccountByNinoUrl?$queryString"
+
+    EitherT(httpProxy.get(url, Map(nsiAuthHeaderKey → nsiBasicAuth))
+      .map[Either[String, HttpResponse]](Right(_))
+      .recover {
+        case e ⇒ Left(e.getMessage)
+      })
   }
 
   private def handleErrorStatus(status: Int, response: HttpResponse, nino: NINO, time: Long, correlationId: Option[String])(implicit hc: HeaderCarrier) = {

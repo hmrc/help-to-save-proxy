@@ -16,9 +16,12 @@
 
 package uk.gov.hmrc.helptosaveproxy.controllers
 
+import java.util.UUID
+
 import cats.data.EitherT
 import cats.instances.future._
 import cats.syntax.either._
+import play.api.http.Status
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.{Action, AnyContent}
 import play.api.test.FakeRequest
@@ -26,17 +29,17 @@ import play.api.test.Helpers._
 import uk.gov.hmrc.helptosaveproxy.TestSupport
 import uk.gov.hmrc.helptosaveproxy.audit.HTSAuditor
 import uk.gov.hmrc.helptosaveproxy.connectors.NSIConnector
-import uk.gov.hmrc.helptosaveproxy.models.{AccountCreated, NSIUserInfo}
+import uk.gov.hmrc.helptosaveproxy.models.NSIUserInfo
 import uk.gov.hmrc.helptosaveproxy.models.SubmissionResult.{SubmissionFailure, SubmissionSuccess}
 import uk.gov.hmrc.helptosaveproxy.services.JSONSchemaValidationService
 import uk.gov.hmrc.helptosaveproxy.testutil.TestData.UserData.validNSIUserInfo
-import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.audit.model.DataEvent
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class CreateAccountControllerSpec extends TestSupport {
+class HelpToSaveControllerSpec extends TestSupport {
 
   val mockNSIConnector = mock[NSIConnector]
   val mockJsonSchema = mock[JSONSchemaValidationService]
@@ -46,7 +49,7 @@ class CreateAccountControllerSpec extends TestSupport {
     override val auditConnector: AuditConnector = mockAuditor
   }
 
-  val controller = new CreateAccountController(mockNSIConnector, mockJsonSchema, htsAuditor)
+  val controller = new HelpToSaveController(mockNSIConnector, mockJsonSchema, htsAuditor)
 
   def mockJSONSchemaValidationService(expectedInfo: NSIUserInfo)(result: Either[String, Unit]) =
     (mockJsonSchema.validate(_: JsValue))
@@ -67,6 +70,11 @@ class CreateAccountControllerSpec extends TestSupport {
     (mockAuditor.sendEvent(_: DataEvent)(_: HeaderCarrier, _: ExecutionContext))
       .expects(where { (dataEvent, _, _) ⇒ dataEvent.auditType === "AccountCreated" })
       .returning(Future.successful(AuditResult.Success))
+
+  def mockGetAccountByNino(queryString: String)(result: Either[String, HttpResponse]): Unit =
+    (mockNSIConnector.getAccountByNino(_: String)(_: HeaderCarrier, _: ExecutionContext))
+      .expects(queryString, *, *)
+      .returning(EitherT.fromEither[Future](result))
 
   "The createAccount method" must {
 
@@ -119,6 +127,35 @@ class CreateAccountControllerSpec extends TestSupport {
       status(result) shouldBe OK
     }
 
+  }
+
+  "the getAccountByNino function" must {
+
+    val nino = "AE123456C"
+    val version = "1.0"
+    val systemId = "mobile-help-to-save"
+    val correlationId = UUID.randomUUID()
+
+    val queryString = s"nino=$nino&version=$version&systemId=$systemId&correlationId=$correlationId"
+    def doRequest() = controller.getAccountByNino()(FakeRequest("GET", s"/nsi-services/account?$queryString"))
+
+    "handle successful response" in {
+
+      val responseBody = s"""{"version":$version,"correlationId":"$correlationId"}"""
+      val httpResponse = HttpResponse(Status.OK, responseString = Some(responseBody))
+
+      mockGetAccountByNino(queryString)(Right(httpResponse))
+
+      val result = doRequest()
+
+      status(result) shouldBe OK
+      contentAsString(result) shouldBe responseBody
+    }
+
+    "handle unexpected errors from NS&I" in {
+      mockGetAccountByNino(queryString)(Left("boom"))
+      status(doRequest()) shouldBe INTERNAL_SERVER_ERROR
+    }
   }
 
   def commonBehaviour(doCall:         () ⇒ Action[AnyContent],
