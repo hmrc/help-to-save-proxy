@@ -71,9 +71,9 @@ class HelpToSaveControllerSpec extends TestSupport {
       .expects(where { (dataEvent, _, _) ⇒ dataEvent.auditType === "AccountCreated" })
       .returning(Future.successful(AuditResult.Success))
 
-  def mockGetAccountByNino(queryString: String)(result: Either[String, HttpResponse]): Unit =
-    (mockNSIConnector.getAccountByNino(_: String)(_: HeaderCarrier, _: ExecutionContext))
-      .expects(queryString, *, *)
+  def mockGetAccountByNino(resource: String, queryString: String)(result: Either[String, HttpResponse]): Unit =
+    (mockNSIConnector.queryAccount(_: String, _: String)(_: HeaderCarrier, _: ExecutionContext))
+      .expects(resource, queryString, *, *)
       .returning(EitherT.fromEither[Future](result))
 
   "The createAccount method" must {
@@ -129,22 +129,24 @@ class HelpToSaveControllerSpec extends TestSupport {
 
   }
 
-  "the getAccountByNino function" must {
+  "the queryAccount endpoint" must {
 
     val nino = "AE123456C"
     val version = "1.0"
     val systemId = "mobile-help-to-save"
     val correlationId = UUID.randomUUID()
 
+    val resource = "account"
+
     val queryString = s"nino=$nino&version=$version&systemId=$systemId&correlationId=$correlationId"
-    def doRequest() = controller.getAccountByNino()(FakeRequest("GET", s"/nsi-services/account?$queryString"))
+      def doRequest() = controller.queryAccount(resource)(FakeRequest("GET", s"/nsi-services/account?$queryString"))
 
     "handle successful response" in {
 
       val responseBody = s"""{"version":$version,"correlationId":"$correlationId"}"""
       val httpResponse = HttpResponse(Status.OK, responseString = Some(responseBody))
 
-      mockGetAccountByNino(queryString)(Right(httpResponse))
+      mockGetAccountByNino(resource, queryString)(Right(httpResponse))
 
       val result = doRequest()
 
@@ -153,7 +155,7 @@ class HelpToSaveControllerSpec extends TestSupport {
     }
 
     "handle unexpected errors from NS&I" in {
-      mockGetAccountByNino(queryString)(Left("boom"))
+      mockGetAccountByNino(resource, queryString)(Left("boom"))
       status(doRequest()) shouldBe INTERNAL_SERVER_ERROR
     }
   }

@@ -343,7 +343,7 @@ object HealthTestSpec {
       })
     }
 
-    override def getAccountByNino(queryString: String)(implicit hc: HeaderCarrier, ex: ExecutionContext): Result[HttpResponse] = {
+    override def queryAccount(resource: String, queryString: String)(implicit hc: HeaderCarrier, ex: ExecutionContext): Result[HttpResponse] = {
       sys.error("Not used")
     }
   }
