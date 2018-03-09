@@ -40,7 +40,7 @@ object AppConfig extends ServicesConfig {
 
   val nsiCreateAccountUrl: String = s"${baseUrl("nsi")}/nsi-services/account"
 
-  val nsiGetAccountByNinoUrl: String = s"${baseUrl("nsi-query-account")}/nsi-services/account"
+  val nsiQueryAccountUrl: String = s"${baseUrl("nsi")}/nsi-services"
 
   val systemId: String = getString("microservice.services.dwp.system-id")
 

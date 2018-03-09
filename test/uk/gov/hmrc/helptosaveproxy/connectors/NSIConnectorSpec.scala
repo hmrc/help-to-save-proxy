@@ -26,7 +26,7 @@ import play.api.Configuration
 import play.api.http.Status
 import play.api.libs.json.{JsObject, JsString, Writes}
 import uk.gov.hmrc.helptosaveproxy.TestSupport
-import uk.gov.hmrc.helptosaveproxy.config.AppConfig.{nsiAuthHeaderKey, nsiBasicAuth, nsiCreateAccountUrl, nsiGetAccountByNinoUrl}
+import uk.gov.hmrc.helptosaveproxy.config.AppConfig.{nsiAuthHeaderKey, nsiBasicAuth, nsiCreateAccountUrl, nsiQueryAccountUrl}
 import uk.gov.hmrc.helptosaveproxy.models.SubmissionResult.{SubmissionFailure, SubmissionSuccess}
 import uk.gov.hmrc.helptosaveproxy.testutil.MockPagerDuty
 import uk.gov.hmrc.helptosaveproxy.testutil.TestData.UserData.validNSIUserInfo
@@ -218,20 +218,23 @@ class NSIConnectorSpec extends TestSupport with MockFactory with GeneratorDriven
     }
   }
 
-  "getAccountByNino method" must {
+  "queryAccount" must {
 
     val nino = "AE123456C"
     val version = "1.0"
     val systemId = "mobile-help-to-save"
     val correlationId = UUID.randomUUID()
 
+    val resource = "account"
+
     val queryString = s"nino=$nino&version=$version&systemId=$systemId&correlationId=$correlationId"
-    def doRequest = nsiConnector.getAccountByNino(queryString)
+      def doRequest = nsiConnector.queryAccount(resource, queryString)
+
+      def url = s"$nsiQueryAccountUrl/$resource?nino=$nino&version=$version&systemId=$systemId&correlationId=$correlationId"
 
     "handle the successful response and return it" in {
       val responseBody = s"""{"version":$version,"correlationId":"$correlationId"}"""
       val httpResponse = HttpResponse(Status.OK, responseString = Some(responseBody))
-      val url = s"$nsiGetAccountByNinoUrl?nino=$nino&version=$version&systemId=$systemId&correlationId=$correlationId"
 
       mockGet(url)(Right(httpResponse))
 
@@ -239,7 +242,6 @@ class NSIConnectorSpec extends TestSupport with MockFactory with GeneratorDriven
     }
 
     "handle unexpected errors" in {
-      val url = s"$nsiGetAccountByNinoUrl?nino=$nino&version=$version&systemId=$systemId&correlationId=$correlationId"
 
       mockGet(url)(Left("unexpected failure"))
 

@@ -70,11 +70,11 @@ class HelpToSaveController @Inject() (nsiConnector:                NSIConnector,
       }
   }
 
-  def getAccountByNino: Action[AnyContent] = Action.async { implicit request ⇒
-    nsiConnector.getAccountByNino(request.rawQueryString)
+  def queryAccount(resource: String): Action[AnyContent] = Action.async { implicit request ⇒
+    nsiConnector.queryAccount(resource, request.rawQueryString)
       .fold({
         e ⇒
-          val message = s"Could not get account details due to : $e"
+          val message = s"Could not retrieve $resource due to : $e"
           logger.warn(message)
           Status(500)(message)
       }, {
