@@ -34,11 +34,11 @@ class Metrics @Inject() (val metrics: com.kenshoo.play.metrics.Metrics) {
 
   val nsiAccountCreationTimer: Timer = timer("proxy.nsi-account-creation-time")
 
-  val nsiAccountCreationErrorCounter: Counter = counter("proxy.nsi-account-creation-error-counter")
+  val nsiAccountCreationErrorCounter: Counter = counter("proxy.nsi-account-creation-error.count")
 
   val nsiUpdateEmailTimer: Timer = timer("proxy.nsi-update-email-time")
 
-  val nsiUpdateEmailErrorCounter: Counter = counter("proxy.nsi-update-email-error-counter")
+  val nsiUpdateEmailErrorCounter: Counter = counter("proxy.nsi-update-email-error.count")
 
   val authTimer: Timer = timer("proxy.auth-timer")
 
@@ -46,7 +46,7 @@ class Metrics @Inject() (val metrics: com.kenshoo.play.metrics.Metrics) {
 
   val dwpClaimantCheckTimer: Timer = timer("proxy.dwp-claimant-check-time")
 
-  val dwpClaimantErrorCounter: Counter = counter("proxy.dwp-claimant-check-error-counter")
+  val dwpClaimantErrorCounter: Counter = counter("proxy.dwp-claimant-check-error.count")
 
 }
 
