@@ -38,7 +38,6 @@ class UCClaimantCheckControllerSpec extends TestSupport with UCClaimantTestSuppo
   val controller = new UCClaimantCheckController(mockDWPConnector)
 
   val nino = "WP010123A"
-  val encodedNino = "V1AwMTAxMjNB"
   val transactionId = UUID.randomUUID()
 
   def doUCClaimantCheck(controller: UCClaimantCheckController, encodedNino: String): Future[PlayResult] =
@@ -54,7 +53,7 @@ class UCClaimantCheckControllerSpec extends TestSupport with UCClaimantTestSuppo
       val ucDetails = HttpResponse(200, Some(Json.toJson(eUCDetails)))
       mockUCClaimantCheck(nino, transactionId)(Right(ucDetails))
 
-      val result = doUCClaimantCheck(controller, encodedNino)
+      val result = doUCClaimantCheck(controller, nino)
       status(result) shouldBe 200
       contentAsJson(result) shouldBe Json.toJson(eUCDetails)
 
@@ -63,7 +62,7 @@ class UCClaimantCheckControllerSpec extends TestSupport with UCClaimantTestSuppo
     "return a 500 status with no payload when the ucClaimantCheck call fails" in {
       mockUCClaimantCheck(nino, transactionId)(Left("uc claimant check failed"))
 
-      val result = doUCClaimantCheck(controller, encodedNino)
+      val result = doUCClaimantCheck(controller, nino)
       status(result) shouldBe 500
       contentAsString(result) shouldBe empty
     }

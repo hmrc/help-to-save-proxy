@@ -16,46 +16,35 @@
 
 package uk.gov.hmrc.helptosaveproxy.controllers
 
-import java.util.{Base64, UUID}
+import java.util.UUID
 
 import cats.instances.future._
+
 import com.google.inject.Inject
-import play.api.mvc.{Action, AnyContent, Request, Result}
+import play.api.mvc.{Action, AnyContent}
 import uk.gov.hmrc.helptosaveproxy.connectors.DWPConnector
-import uk.gov.hmrc.helptosaveproxy.util.TryOps._
-import uk.gov.hmrc.helptosaveproxy.util.{Logging, NINO, LogMessageTransformer}
+import uk.gov.hmrc.helptosaveproxy.util.{LogMessageTransformer, Logging}
+import uk.gov.hmrc.http.logging.LoggingDetails
+import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
-import scala.util.Try
+import scala.concurrent.ExecutionContext
 
 class UCClaimantCheckController @Inject() (dwpConnector: DWPConnector)(implicit transformer: LogMessageTransformer) extends BaseController with Logging {
 
-  val base64Decoder: Base64.Decoder = Base64.getDecoder()
+  implicit def mdcExecutionContext(implicit loggingDetails: LoggingDetails): ExecutionContext = MdcLoggingExecutionContext.fromLoggingDetails
 
-  def ucClaimantCheck(encodedNino: String, transactionId: UUID): Action[AnyContent] = Action.async { implicit request ⇒
-    withBase64DecodedNINO(encodedNino) {
-      decodedNino ⇒
-        dwpConnector.ucClaimantCheck(decodedNino, transactionId).fold(
-          {
-            e ⇒
-              logger.warn(s"Could not perform UC Claimant check: $e")
-              InternalServerError
-          }, {
-            r ⇒
-              Ok(r.json)
-          }
-        )
-    }
-  }
-
-  private def withBase64DecodedNINO(ninoParam: String)(f: NINO ⇒ Future[Result])(implicit request: Request[AnyContent]): Future[Result] =
-    Try(new String(base64Decoder.decode(ninoParam))).fold(
-      { error ⇒
-        logger.warn(s"Could not decode nino from encrypted param: $error")
-        InternalServerError
-      }, f
+  def ucClaimantCheck(nino: String, transactionId: UUID): Action[AnyContent] = Action.async { implicit request ⇒
+    dwpConnector.ucClaimantCheck(nino, transactionId).fold(
+      {
+        e ⇒
+          logger.warn(s"Could not perform UC Claimant check: $e")
+          InternalServerError
+      }, {
+        r ⇒
+          Ok(r.json)
+      }
     )
+  }
 
 }
