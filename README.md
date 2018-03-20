@@ -1,11 +1,11 @@
 
 [ ![Download](https://api.bintray.com/packages/hmrc/releases/help-to-save-proxy/images/download.svg) ](https://bintray.com/hmrc/releases/help-to-save-proxy/_latestVersion)
 
-## Help to Save Proxy
+## Help to Save Proxy 
 
 ## How to run
 
-Runs on port 7004 when started locally by the service manager. 
+Runs on port 7004 when started locally by the service manager.
 
 sbt "run 7004"
 
