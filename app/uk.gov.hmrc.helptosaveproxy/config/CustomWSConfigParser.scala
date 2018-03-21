@@ -144,9 +144,13 @@ class CustomWSConfigParser @Inject() (configuration: Configuration, env: Environ
     val (ksFilePath, _) = createTempFileForData(data)
     logger.info(s"Successfully wrote keystore data to file: $ksFilePath")
 
+    logger.info(s"base64 encoded password from config is:${ks.password}")
+
     val decryptedPass = ks.password
       .map(base64Decode)
       .map(new String(_))
+
+    logger.info(s"base64 decoded password is:$decryptedPass")
 
     ks.copy(data     = None, filePath = Some(ksFilePath), password = decryptedPass)
   }
