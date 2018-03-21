@@ -16,10 +16,11 @@
 
 package uk.gov.hmrc.helptosaveproxy.controllers
 
+import cats.Id
 import cats.data.EitherT
 import cats.instances.future._
 import com.google.inject.Inject
-import play.api.libs.json.{JsError, JsSuccess, Json}
+import play.api.libs.json.{JsError, JsSuccess, JsValue, Json}
 import play.api.mvc.{Action, AnyContent, Request, Result}
 import uk.gov.hmrc.helptosaveproxy.audit.HTSAuditor
 import uk.gov.hmrc.helptosaveproxy.connectors.NSIConnector
@@ -28,7 +29,8 @@ import uk.gov.hmrc.helptosaveproxy.models.SubmissionResult.{SubmissionFailure, S
 import uk.gov.hmrc.helptosaveproxy.models.{AccountCreated, NSIUserInfo}
 import uk.gov.hmrc.helptosaveproxy.services.JSONSchemaValidationService
 import uk.gov.hmrc.helptosaveproxy.util.JsErrorOps._
-import uk.gov.hmrc.helptosaveproxy.util.{LogMessageTransformer, Logging}
+import uk.gov.hmrc.helptosaveproxy.util.Toggles.FEATURE
+import uk.gov.hmrc.helptosaveproxy.util.{LogMessageTransformer, Logging, NINO}
 import uk.gov.hmrc.http.logging.LoggingDetails
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext
@@ -45,6 +47,8 @@ class HelpToSaveController @Inject() (nsiConnector:                NSIConnector,
   implicit def mdcExecutionContext(implicit loggingDetails: LoggingDetails): ExecutionContext = MdcLoggingExecutionContext.fromLoggingDetails
 
   lazy val correlationIdHeaderName: String = getString("microservice.correlationIdHeaderName")
+
+  def jsonSchemaValidationToggle(nino: NINO): FEATURE = FEATURE("create-account-json-validation", runModeConfiguration, logger, Some(nino))
 
   def createAccount(): Action[AnyContent] = Action.async { implicit request ⇒
 
@@ -98,6 +102,14 @@ class HelpToSaveController @Inject() (nsiConnector:                NSIConnector,
     }, {
       case (subResult, nsiUserInfo) ⇒ handleResult(subResult, nsiUserInfo)
     }
+    )
+  }
+
+  private def validateAgainstJSONSchema(userInfo: NSIUserInfo)(implicit ec: ExecutionContext): EitherT[Future, Error, JsValue] = {
+    val json = Json.toJson(userInfo)
+    jsonSchemaValidationToggle(userInfo.nino).thenOrElse(
+      EitherT.fromEither[Future](jsonSchemaValidationService.validate(json)).leftMap[Error](e ⇒ InvalidRequest("Invalid data found in request", e)),
+      EitherT.pure(json)
     )
   }
 
