@@ -112,7 +112,7 @@ object NSIConnectionHealthCheck {
     }
 
     override def performTest(): Future[HealthCheckResult] = {
-      val timer = metrics.healthCheckTimer.time()
+      val timer = metrics.nsiHealthCheckTimer.time()
 
       nsiConnector.healthCheck(payload.value).value
         .map { result ⇒

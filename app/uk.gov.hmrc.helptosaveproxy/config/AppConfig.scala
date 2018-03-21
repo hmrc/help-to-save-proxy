@@ -46,7 +46,12 @@ object AppConfig extends ServicesConfig {
 
   val thresholdAmount: Int = getInt("microservice.services.dwp.threshold-amount")
 
+  val dwpBaseUrl: String = baseUrl("dwp")
+
   def dwpUrl(nino: String, transactionId: UUID): String =
-    s"${baseUrl("dwp")}/hmrc/$nino?systemId=$systemId&thresholdAmount=$thresholdAmount&transactionId=$transactionId"
+    s"$dwpBaseUrl/hmrc/$nino?systemId=$systemId&thresholdAmount=$thresholdAmount&transactionId=$transactionId"
+
+  val dwpHealthCheckURL: String =
+    s"$dwpBaseUrl/hmrc/health"
 
 }

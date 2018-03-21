@@ -42,11 +42,13 @@ class Metrics @Inject() (val metrics: com.kenshoo.play.metrics.Metrics) {
 
   val authTimer: Timer = timer("proxy.auth-timer")
 
-  val healthCheckTimer: Timer = timer("health.nsi-connection.timer")
+  val nsiHealthCheckTimer: Timer = timer("health.nsi-connection.timer")
 
   val dwpClaimantCheckTimer: Timer = timer("proxy.dwp-claimant-check-time")
 
   val dwpClaimantErrorCounter: Counter = counter("proxy.dwp-claimant-check-error.count")
+
+  val dwpHealthCheckTimer: Timer = timer("health.dwp-connection.timer")
 
 }
 
