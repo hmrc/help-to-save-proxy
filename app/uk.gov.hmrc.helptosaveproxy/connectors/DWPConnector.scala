@@ -24,7 +24,7 @@ import com.codahale.metrics.Timer
 import com.google.inject.ImplementedBy
 import play.api.Configuration
 import play.api.http.Status
-import uk.gov.hmrc.helptosaveproxy.config.AppConfig.dwpUrl
+import uk.gov.hmrc.helptosaveproxy.config.AppConfig.{dwpHealthCheckURL, dwpUrl}
 import uk.gov.hmrc.helptosaveproxy.config.WSHttpProxy
 import uk.gov.hmrc.helptosaveproxy.metrics.Metrics
 import uk.gov.hmrc.helptosaveproxy.metrics.Metrics._
@@ -39,6 +39,7 @@ trait DWPConnector {
 
   def ucClaimantCheck(nino: String, transactionId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext): EitherT[Future, String, HttpResponse]
 
+  def healthCheck()(implicit hc: HeaderCarrier, ec: ExecutionContext): EitherT[Future, String, Unit]
 }
 
 @Singleton
@@ -76,6 +77,14 @@ class DWPConnectorImpl @Inject() (conf: Configuration, metrics: Metrics, pagerDu
             s"transactionId: $transactionId, ${timeString(time)}, $nino")
       })
   }
+
+  def healthCheck()(implicit hc: HeaderCarrier, ec: ExecutionContext): EitherT[Future, String, Unit] =
+    EitherT(httpProxy.get(dwpHealthCheckURL).map[Either[String, Unit]]{ response ⇒
+      response.status match {
+        case Status.OK ⇒ Right(())
+        case other     ⇒ Left(s"Received status $other from DWP health check. Response body was '${response.body}'")
+      }
+    })
 
   private def timeString(nanos: Long): String = s"(round-trip time: ${nanosToPrettyString(nanos)})"
 
