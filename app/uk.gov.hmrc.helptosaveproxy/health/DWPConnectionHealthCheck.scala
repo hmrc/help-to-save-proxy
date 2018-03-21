@@ -23,7 +23,7 @@ import play.api.Configuration
 import play.api.inject.ApplicationLifecycle
 import play.modules.reactivemongo.ReactiveMongoComponent
 import uk.gov.hmrc.helptosaveproxy.connectors.DWPConnector
-import uk.gov.hmrc.helptosaveproxy.health.DWPConnectionHealthCheck.DWPHealthCheckRunner
+import uk.gov.hmrc.helptosaveproxy.health.DWPConnectionHealthCheck.DWPConnectionHealthCheckRunner
 import uk.gov.hmrc.helptosaveproxy.metrics.Metrics
 import uk.gov.hmrc.helptosaveproxy.util.lock.Lock
 import uk.gov.hmrc.helptosaveproxy.util.{Logging, PagerDutyAlerting}
@@ -55,7 +55,7 @@ class DWPConnectionHealthCheck @Inject() (system:            ActorSystem,
       system.scheduler,
       metrics.metrics,
       () ⇒ pagerDutyAlerting.alert("DWP health check has failed"),
-      DWPHealthCheckRunner.props(dWPConnector, metrics)
+      DWPConnectionHealthCheckRunner.props(dWPConnector, metrics)
     )
   )
 
@@ -89,7 +89,7 @@ class DWPConnectionHealthCheck @Inject() (system:            ActorSystem,
 
 object DWPConnectionHealthCheck {
 
-  class DWPHealthCheckRunner(dwpConnector: DWPConnector, metrics: Metrics) extends Actor with HealthCheckRunner with Logging {
+  class DWPConnectionHealthCheckRunner(dwpConnector: DWPConnector, metrics: Metrics) extends Actor with HealthCheckRunner with Logging {
 
     import context.dispatcher
 
@@ -101,7 +101,7 @@ object DWPConnectionHealthCheck {
       dwpConnector.healthCheck().value
         .map { result ⇒
           val time = timer.stop()
-          result.fold[HealthCheckResult](e ⇒ HealthCheckResult.Failure(e, time), _ ⇒ HealthCheckResult.Success("health check returned 200 OK", time))
+          result.fold[HealthCheckResult](e ⇒ HealthCheckResult.Failure(e, time), _ ⇒ HealthCheckResult.Success("DWP health check returned 200 OK", time))
         }
         .recover{
           case NonFatal(e) ⇒
@@ -112,8 +112,8 @@ object DWPConnectionHealthCheck {
 
   }
 
-  object DWPHealthCheckRunner {
-    def props(dwpConnector: DWPConnector, metrics: Metrics): Props = Props(new DWPHealthCheckRunner(dwpConnector, metrics))
+  object DWPConnectionHealthCheckRunner {
+    def props(dwpConnector: DWPConnector, metrics: Metrics): Props = Props(new DWPConnectionHealthCheckRunner(dwpConnector, metrics))
   }
 
 }

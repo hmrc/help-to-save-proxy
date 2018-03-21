@@ -107,7 +107,7 @@ object NSIConnectionHealthCheck {
     implicit val hc: HeaderCarrier = HeaderCarrier()
 
     val successMessage: String = {
-      val message = "createAccount/health check returned 200 OK"
+      val message = "NS&I createAccount/health check returned 200 OK"
       if (ninoLoggingEnabled) { s"For NINO [${payload.value.nino}]: $message" } else { message }
     }
 
