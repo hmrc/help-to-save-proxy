@@ -55,7 +55,6 @@ class DWPConnectionHealthCheck @Inject() (system:            ActorSystem,
       system.scheduler,
       metrics.metrics,
       () ⇒ pagerDutyAlerting.alert("DWP health check has failed"),
-      DWPHealthCheckRunner.props(dWPConnector, metrics),
       DWPHealthCheckRunner.props(dWPConnector, metrics)
     )
   )
