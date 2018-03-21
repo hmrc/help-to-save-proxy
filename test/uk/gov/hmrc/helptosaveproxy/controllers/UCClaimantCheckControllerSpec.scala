@@ -45,7 +45,7 @@ class UCClaimantCheckControllerSpec extends TestSupport with UCClaimantTestSuppo
 
   def mockUCClaimantCheck(encodedNino: String, transactionId: UUID)(result: Either[String, HttpResponse]): Unit =
     (mockDWPConnector.ucClaimantCheck(_: String, _: UUID)(_: HeaderCarrier, _: ExecutionContext))
-      .expects(encodedNino, *, *, *)
+      .expects(encodedNino, transactionId, *, *)
       .returning(EitherT.fromEither[Future](result))
 
   "ucClaimantCheck" must {
