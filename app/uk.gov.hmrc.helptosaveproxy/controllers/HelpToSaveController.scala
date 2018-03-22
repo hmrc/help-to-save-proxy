@@ -70,8 +70,8 @@ class HelpToSaveController @Inject() (nsiConnector:                NSIConnector,
   def updateEmail(): Action[AnyContent] = Action.async { implicit request ⇒
     processRequest[Unit](
       nsiConnector.updateEmail(_).leftMap[Error](e ⇒ NSIError(SubmissionFailure(e, "Could not update email")))) {
-        (_, _) ⇒ Ok
-      }
+      (_, _) ⇒ Ok
+    }
   }
 
   def queryAccount(resource: String): Action[AnyContent] = Action.async { implicit request ⇒
@@ -86,11 +86,10 @@ class HelpToSaveController @Inject() (nsiConnector:                NSIConnector,
       })
   }
 
-  private def processRequest[T](doRequest: NSIUserInfo ⇒ EitherT[Future, Error, T])(handleResult: (T, NSIUserInfo) ⇒ Result)(implicit request: Request[AnyContent]): Future[Result] = {
+  private def processRequest[T](doRequest: NSIUserInfo ⇒ EitherT[Future, Error, T])(handleResult: (T, NSIUserInfo) ⇒ Result)(implicit request: Request[AnyContent]): Future[Result] = { // scalastyle:ignore
     val result: EitherT[Future, Error, (T, NSIUserInfo)] = for {
       userInfo ← EitherT.fromEither[Future](extractNSIUSerInfo(request))
-      _ ← EitherT.fromEither[Future](jsonSchemaValidationService.validate(Json.toJson(userInfo)))
-        .leftMap(e ⇒ InvalidRequest("Invalid data found in request", e))
+      _        ← validateAgainstJSONSchema(userInfo)
       response ← doRequest(userInfo)
     } yield (response, userInfo)
 
