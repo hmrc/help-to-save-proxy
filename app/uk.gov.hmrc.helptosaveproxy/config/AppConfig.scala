@@ -44,7 +44,7 @@ object AppConfig extends ServicesConfig {
 
   val systemId: String = getString("microservice.services.dwp.system-id")
 
-  val thresholdAmount: Int = getInt("microservice.services.dwp.threshold-amount")
+  val thresholdAmount: Double = runModeConfiguration.underlying.getDouble("microservice.services.dwp.threshold-amount")
 
   val dwpBaseUrl: String = baseUrl("dwp")
 
