@@ -54,7 +54,7 @@ class DWPConnectorImpl @Inject() (conf: Configuration, metrics: Metrics, pagerDu
 
     val timeContext: Timer.Context = metrics.dwpClaimantCheckTimer.time()
 
-    EitherT(httpProxy.get(dwpUrl(nino, transactionId))
+    EitherT(httpProxy.get(dwpUrl(nino, transactionId))(hc.copy(authorization = None, token = None), ec)
       .map[Either[String, HttpResponse]]{ response ⇒
         val time = timeContext.stop()
         response.status match {
