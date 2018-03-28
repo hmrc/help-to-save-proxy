@@ -48,7 +48,7 @@ class DWPConnectorImpl @Inject() (conf: Configuration, metrics: Metrics, pagerDu
     transformer: LogMessageTransformer)
   extends DWPConnector with Logging with AppName {
 
-  val httpProxy: WSHttpProxy = new WSHttpProxy(conf)
+  val httpProxy: WSHttpProxy = new WSHttpProxy(conf, "microservice.services.dwp.proxy")
 
   def ucClaimantCheck(nino: String, transactionId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext): EitherT[Future, String, HttpResponse] = {
 
