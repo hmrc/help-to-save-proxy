@@ -80,7 +80,7 @@ class WSHttpExtension extends WSHttp with HttpAuditing with ServicesConfig {
 
 }
 
-class WSHttpProxy @Inject() (config: Configuration)
+class WSHttpProxy @Inject() (config: Configuration, proxyConfigurationPath: String)
   extends HttpPost with WSPost
   with HttpPut with WSPut
   with HttpGet with WSGet
@@ -92,7 +92,7 @@ class WSHttpProxy @Inject() (config: Configuration)
   val httpReads: HttpReads[HttpResponse] = new RawHttpReads
 
   override lazy val appName: String = config.underlying.getString("appName")
-  override lazy val wsProxyServer: Option[WSProxyServer] = WSProxyConfiguration("proxy")
+  override lazy val wsProxyServer: Option[WSProxyServer] = WSProxyConfiguration(proxyConfigurationPath)
   override val hooks: Seq[HttpHook] = Seq(AuditingHook)
   override lazy val auditConnector: AuditConnector = HtsAuditConnector
 

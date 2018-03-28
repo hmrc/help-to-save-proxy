@@ -57,7 +57,7 @@ class NSIConnectorImpl @Inject() (conf: Configuration, metrics: Metrics, pagerDu
     implicit
     transformer: LogMessageTransformer) extends NSIConnector with Logging with AppName {
 
-  val httpProxy: WSHttpProxy = new WSHttpProxy(conf)
+  val httpProxy: WSHttpProxy = new WSHttpProxy(conf, "microservice.services.nsi.proxy")
 
   override def createAccount(userInfo: NSIUserInfo)(implicit hc: HeaderCarrier, ec: ExecutionContext): EitherT[Future, SubmissionFailure, SubmissionSuccess] = {
     import uk.gov.hmrc.helptosaveproxy.util.Toggles._
