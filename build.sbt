@@ -19,14 +19,14 @@ lazy val playSettings: Seq[Setting[_]] = Seq.empty
 lazy val dependencies = Seq(
   ws,
   "uk.gov.hmrc" %% "auth-client" % "2.5.0",
-  "uk.gov.hmrc" %% "microservice-bootstrap" % "6.15.0",
   "uk.gov.hmrc" %% "play-config" % "4.3.0",
   "uk.gov.hmrc" %% "domain" % "5.1.0",
   "org.typelevel" %% "cats" % "0.9.0",
   "com.github.kxbmap" %% "configs" % "0.4.4",
   "uk.gov.hmrc" %% "play-reactivemongo" % "6.2.0",
   "com.eclipsesource" %% "play-json-schema-validator" % "0.8.9",
-  "uk.gov.hmrc" %% "mongo-lock" % "5.1.0"
+  "uk.gov.hmrc" %% "mongo-lock" % "5.1.0",
+  "uk.gov.hmrc" %% "bootstrap-play-25" % "1.4.0"
 )
 
 lazy val testDependencies = Seq(

@@ -45,9 +45,7 @@ class HelpToSaveControllerSpec extends TestSupport {
   val mockJsonSchema = mock[JSONSchemaValidationService]
   val mockAuditor = mock[AuditConnector]
 
-  val htsAuditor = new HTSAuditor {
-    override val auditConnector: AuditConnector = mockAuditor
-  }
+  val htsAuditor = new HTSAuditor(mockAuditor)
 
   val controller = new HelpToSaveController(mockNSIConnector, mockJsonSchema, htsAuditor)
 

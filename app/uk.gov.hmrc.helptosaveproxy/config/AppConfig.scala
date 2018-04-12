@@ -17,10 +17,17 @@
 package uk.gov.hmrc.helptosaveproxy.config
 
 import java.util.{Base64, UUID}
+import javax.inject.Inject
 
+import com.google.inject.Singleton
+import play.api.Mode.Mode
+import play.api.{Configuration, Environment}
 import uk.gov.hmrc.play.config.ServicesConfig
 
-object AppConfig extends ServicesConfig {
+@Singleton
+class AppConfig @Inject() (override val runModeConfiguration: Configuration, val environment: Environment) extends ServicesConfig {
+
+  override protected def mode: Mode = environment.mode
 
   def base64Encode(input: String): Array[Byte] = Base64.getEncoder.encode(input.getBytes)
 
