@@ -26,13 +26,17 @@ import uk.gov.hmrc.helptosaveproxy.TestSupport
 import uk.gov.hmrc.helptosaveproxy.models.UCDetails
 import uk.gov.hmrc.helptosaveproxy.testutil.{MockPagerDuty, UCClaimantTestSupport}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
 
 class DWPConnectorSpec extends TestSupport with MockFactory with EitherValues with UCClaimantTestSupport with MockPagerDuty {
 
-  lazy val connector = new DWPConnectorImpl(mockHTTPProxy, mockMetrics, mockPagerDuty)
+  val mockAuditor = mock[AuditConnector]
+  lazy val connector = new DWPConnectorImpl(mockAuditor, mockMetrics, mockPagerDuty) {
+    override val httpProxy = mockHTTPProxy
+  }
 
   val transactionId = UUID.randomUUID()
 

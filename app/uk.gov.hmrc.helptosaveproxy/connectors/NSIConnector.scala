@@ -36,6 +36,7 @@ import uk.gov.hmrc.helptosaveproxy.util.Logging._
 import uk.gov.hmrc.helptosaveproxy.util.Toggles._
 import uk.gov.hmrc.helptosaveproxy.util.{LogMessageTransformer, Logging, NINO, PagerDutyAlerting, Result, maskNino}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -52,11 +53,13 @@ trait NSIConnector {
 }
 
 @Singleton
-class NSIConnectorImpl @Inject() (httpProxy:         WSHttpProxy,
+class NSIConnectorImpl @Inject() (auditConnector:    AuditConnector,
                                   metrics:           Metrics,
                                   pagerDutyAlerting: PagerDutyAlerting)(
     implicit
     transformer: LogMessageTransformer, appConfig: AppConfig) extends NSIConnector with Logging {
+
+  val httpProxy: WSHttpProxy = new WSHttpProxy(auditConnector, appConfig.runModeConfiguration, "microservice.services.nsi.proxy")
 
   private val nsiCreateAccountUrl = appConfig.nsiCreateAccountUrl
   private val nsiAuthHeaderKey = appConfig.nsiAuthHeaderKey

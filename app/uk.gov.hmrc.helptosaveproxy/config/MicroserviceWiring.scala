@@ -47,8 +47,6 @@ class WSHttpExtension @Inject() (override val auditConnector: AuditConnector, co
 
   override val hooks: Seq[HttpHook] = NoneRequired
 
-  //override def auditConnector: AuditConnector = HtsAuditConnector
-
   override def appName: String = config.getString("appName")
 
   override def mapErrors(httpMethod: String, url: String, f: Future[HttpResponse])(implicit ec: ExecutionContext): Future[HttpResponse] = f
@@ -65,8 +63,7 @@ class WSHttpExtension @Inject() (override val auditConnector: AuditConnector, co
 
 }
 
-@Singleton
-class WSHttpProxy @Inject() (override val auditConnector: AuditConnector, config: Configuration)
+class WSHttpProxy(override val auditConnector: AuditConnector, config: Configuration, proxyConfigPath: String)
   extends HttpPost with WSPost
   with HttpPut with WSPut
   with HttpGet with WSGet
@@ -77,7 +74,7 @@ class WSHttpProxy @Inject() (override val auditConnector: AuditConnector, config
   val httpReads: HttpReads[HttpResponse] = new RawHttpReads
 
   override lazy val appName: String = config.underlying.getString("appName")
-  override lazy val wsProxyServer: Option[WSProxyServer] = WSProxyConfiguration("microservice.services.dwp.proxy")
+  override lazy val wsProxyServer: Option[WSProxyServer] = WSProxyConfiguration(proxyConfigPath)
   override val hooks: Seq[HttpHook] = Seq(AuditingHook)
 
   override def mapErrors(httpMethod: String, url: String, f: Future[HttpResponse])(implicit ec: ExecutionContext): Future[HttpResponse] = f

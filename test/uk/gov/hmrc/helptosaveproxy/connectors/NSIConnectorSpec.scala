@@ -30,6 +30,7 @@ import uk.gov.hmrc.helptosaveproxy.models.SubmissionResult.{SubmissionFailure, S
 import uk.gov.hmrc.helptosaveproxy.testutil.MockPagerDuty
 import uk.gov.hmrc.helptosaveproxy.testutil.TestData.UserData.validNSIUserInfo
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
@@ -39,7 +40,10 @@ class NSIConnectorSpec extends TestSupport with MockFactory with GeneratorDriven
 
   override lazy val additionalConfig = Configuration("feature-toggles.log-account-creation-json.enabled" → Random.nextBoolean())
 
-  def nsiConnector = new NSIConnectorImpl(mockHTTPProxy, mockMetrics, mockPagerDuty)
+  val mockAuditor = mock[AuditConnector]
+  lazy val nsiConnector = new NSIConnectorImpl(mockAuditor, mockMetrics, mockPagerDuty) {
+    override val httpProxy = mockHTTPProxy
+  }
 
   val nsiCreateAccountUrl = appConfig.nsiCreateAccountUrl
   val nsiAuthHeaderKey = appConfig.nsiAuthHeaderKey

@@ -28,6 +28,7 @@ import uk.gov.hmrc.helptosaveproxy.metrics.Metrics
 import uk.gov.hmrc.helptosaveproxy.metrics.Metrics._
 import uk.gov.hmrc.helptosaveproxy.util.{LogMessageTransformer, Logging, PagerDutyAlerting}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -40,10 +41,12 @@ trait DWPConnector {
 }
 
 @Singleton
-class DWPConnectorImpl @Inject() (httpProxy:         WSHttpProxy,
+class DWPConnectorImpl @Inject() (auditConnector:    AuditConnector,
                                   metrics:           Metrics,
                                   pagerDutyAlerting: PagerDutyAlerting)(implicit transformer: LogMessageTransformer, appConfig: AppConfig)
   extends DWPConnector with Logging {
+
+  val httpProxy: WSHttpProxy = new WSHttpProxy(auditConnector, appConfig.runModeConfiguration, "microservice.services.dwp.proxy")
 
   def ucClaimantCheck(nino: String, transactionId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext): EitherT[Future, String, HttpResponse] = {
 
