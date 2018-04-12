@@ -16,25 +16,27 @@
 
 package uk.gov.hmrc.helptosaveproxy.models
 
+import uk.gov.hmrc.helptosaveproxy.config.AppConfig
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.AuditExtensions._
 import uk.gov.hmrc.play.audit.model.DataEvent
-import uk.gov.hmrc.play.config.AppName
 
 trait HTSEvent {
   val value: DataEvent
 }
 
-object HTSEvent extends AppName {
-  def apply(auditType: String,
+object HTSEvent {
+  def apply(appName:   String,
+            auditType: String,
             detail:    Map[String, String])(implicit hc: HeaderCarrier): DataEvent =
     DataEvent(appName, auditType = auditType, detail = detail, tags = hc.toAuditTags("", "N/A"))
 
 }
 
-case class AccountCreated(userInfo: NSIUserInfo)(implicit hc: HeaderCarrier) extends HTSEvent {
+case class AccountCreated(userInfo: NSIUserInfo)(implicit hc: HeaderCarrier, appConfig: AppConfig) extends HTSEvent {
 
   val value: DataEvent = HTSEvent(
+    appConfig.appName,
     "AccountCreated",
     Map[String, String](
       "forename" → userInfo.forename,

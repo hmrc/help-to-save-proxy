@@ -19,24 +19,23 @@ package uk.gov.hmrc.helptosaveproxy.connectors
 import javax.inject.{Inject, Singleton}
 
 import cats.data.EitherT
+import cats.instances.string._
+import cats.syntax.eq._
 import com.codahale.metrics.Timer
 import com.google.inject.ImplementedBy
-import play.api.Configuration
 import play.api.http.Status
 import play.api.libs.json.Json
-import uk.gov.hmrc.helptosaveproxy.config.AppConfig.{nsiAuthHeaderKey, nsiBasicAuth, nsiCreateAccountUrl, nsiQueryAccountUrl}
-import uk.gov.hmrc.helptosaveproxy.config.WSHttpProxy
+import uk.gov.hmrc.helptosaveproxy.config.{AppConfig, WSHttpProxy}
 import uk.gov.hmrc.helptosaveproxy.metrics.Metrics
 import uk.gov.hmrc.helptosaveproxy.metrics.Metrics.nanosToPrettyString
 import uk.gov.hmrc.helptosaveproxy.models.NSIUserInfo
 import uk.gov.hmrc.helptosaveproxy.models.NSIUserInfo.nsiUserInfoFormat
 import uk.gov.hmrc.helptosaveproxy.models.SubmissionResult._
-import uk.gov.hmrc.helptosaveproxy.util.HeaderCarrierOps._
 import uk.gov.hmrc.helptosaveproxy.util.HttpResponseOps._
 import uk.gov.hmrc.helptosaveproxy.util.Logging._
+import uk.gov.hmrc.helptosaveproxy.util.Toggles._
 import uk.gov.hmrc.helptosaveproxy.util.{LogMessageTransformer, Logging, NINO, PagerDutyAlerting, Result, maskNino}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
-import uk.gov.hmrc.play.config.AppName
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -53,21 +52,27 @@ trait NSIConnector {
 }
 
 @Singleton
-class NSIConnectorImpl @Inject() (conf: Configuration, metrics: Metrics, pagerDutyAlerting: PagerDutyAlerting)(
+class NSIConnectorImpl @Inject() (httpProxy:         WSHttpProxy,
+                                  metrics:           Metrics,
+                                  pagerDutyAlerting: PagerDutyAlerting)(
     implicit
-    transformer: LogMessageTransformer) extends NSIConnector with Logging with AppName {
+    transformer: LogMessageTransformer, appConfig: AppConfig) extends NSIConnector with Logging {
 
-  val httpProxy: WSHttpProxy = new WSHttpProxy(conf, "microservice.services.nsi.proxy")
+  private val nsiCreateAccountUrl = appConfig.nsiCreateAccountUrl
+  private val nsiAuthHeaderKey = appConfig.nsiAuthHeaderKey
+  private val nsiBasicAuth = appConfig.nsiBasicAuth
+  private val correlationIdHeaderName: String = appConfig.getString("microservice.correlationIdHeaderName")
+
+  private def getCorrelationId(implicit hc: HeaderCarrier) = hc.headers.find(p ⇒ p._1 === correlationIdHeaderName).map(_._2)
 
   override def createAccount(userInfo: NSIUserInfo)(implicit hc: HeaderCarrier, ec: ExecutionContext): EitherT[Future, SubmissionFailure, SubmissionSuccess] = {
-    import uk.gov.hmrc.helptosaveproxy.util.Toggles._
 
     val nino = userInfo.nino
-    val correlationId = hc.getCorrelationId
+    val correlationId = getCorrelationId
 
-    logger.info(s"Trying to create an account using NSI endpoint $nsiCreateAccountUrl", nino, correlationId)
+    logger.info(s"Trying to create an account using NSI endpoint ${appConfig.nsiCreateAccountUrl}", nino, correlationId)
 
-    FEATURE("log-account-creation-json", conf, logger).thenOrElse(
+    FEATURE("log-account-creation-json", appConfig.runModeConfiguration, logger).thenOrElse(
       logger.info(s"CreateAccount JSON is ${Json.toJson(userInfo)}", nino, correlationId),
       ()
     )
@@ -107,7 +112,7 @@ class NSIConnectorImpl @Inject() (conf: Configuration, metrics: Metrics, pagerDu
     val nino = userInfo.nino
 
     val timeContext: Timer.Context = metrics.nsiUpdateEmailTimer.time()
-    val correlationId = hc.getCorrelationId
+    val correlationId = getCorrelationId
 
     httpProxy.put(nsiCreateAccountUrl, userInfo, true, Map(nsiAuthHeaderKey → nsiBasicAuth))(nsiUserInfoFormat, hc.copy(authorization = None), ec)
       .map[Either[String, Unit]] { response ⇒
@@ -149,7 +154,7 @@ class NSIConnectorImpl @Inject() (conf: Configuration, metrics: Metrics, pagerDu
 
   override def queryAccount(resource: String, queryString: String)(implicit hc: HeaderCarrier, ex: ExecutionContext): Result[HttpResponse] = {
 
-    val url = s"$nsiQueryAccountUrl/$resource?$queryString"
+    val url = s"${appConfig.nsiQueryAccountUrl}/$resource?$queryString"
 
     EitherT(httpProxy.get(url, Map(nsiAuthHeaderKey → nsiBasicAuth))
       .map[Either[String, HttpResponse]](Right(_))

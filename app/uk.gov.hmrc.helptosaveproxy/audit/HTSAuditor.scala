@@ -18,7 +18,6 @@ package uk.gov.hmrc.helptosaveproxy.audit
 
 import javax.inject.{Inject, Singleton}
 
-import uk.gov.hmrc.helptosaveproxy.config.HtsAuditConnector
 import uk.gov.hmrc.helptosaveproxy.models.HTSEvent
 import uk.gov.hmrc.helptosaveproxy.util.Logging.LoggerOps
 import uk.gov.hmrc.helptosaveproxy.util.{LogMessageTransformer, Logging, NINO}
@@ -28,8 +27,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.control.NonFatal
 
 @Singleton
-class HTSAuditor @Inject() (implicit transformer: LogMessageTransformer) extends Logging {
-  val auditConnector: AuditConnector = HtsAuditConnector
+class HTSAuditor @Inject() (val auditConnector: AuditConnector)(implicit transformer: LogMessageTransformer) extends Logging {
 
   def sendEvent(event: HTSEvent, nino: NINO, correlationId: Option[String]): Unit = {
     val checkEventResult = auditConnector.sendEvent(event.value)

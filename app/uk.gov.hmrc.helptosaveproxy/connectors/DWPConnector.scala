@@ -22,15 +22,12 @@ import javax.inject.{Inject, Singleton}
 import cats.data.EitherT
 import com.codahale.metrics.Timer
 import com.google.inject.ImplementedBy
-import play.api.Configuration
 import play.api.http.Status
-import uk.gov.hmrc.helptosaveproxy.config.AppConfig.{dwpHealthCheckURL, dwpUrl}
-import uk.gov.hmrc.helptosaveproxy.config.WSHttpProxy
+import uk.gov.hmrc.helptosaveproxy.config.{AppConfig, WSHttpProxy}
 import uk.gov.hmrc.helptosaveproxy.metrics.Metrics
 import uk.gov.hmrc.helptosaveproxy.metrics.Metrics._
-import uk.gov.hmrc.helptosaveproxy.util.{Logging, LogMessageTransformer, PagerDutyAlerting}
+import uk.gov.hmrc.helptosaveproxy.util.{LogMessageTransformer, Logging, PagerDutyAlerting}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
-import uk.gov.hmrc.play.config.AppName
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -43,19 +40,17 @@ trait DWPConnector {
 }
 
 @Singleton
-class DWPConnectorImpl @Inject() (conf: Configuration, metrics: Metrics, pagerDutyAlerting: PagerDutyAlerting)(
-    implicit
-    transformer: LogMessageTransformer)
-  extends DWPConnector with Logging with AppName {
-
-  val httpProxy: WSHttpProxy = new WSHttpProxy(conf, "microservice.services.dwp.proxy")
+class DWPConnectorImpl @Inject() (httpProxy:         WSHttpProxy,
+                                  metrics:           Metrics,
+                                  pagerDutyAlerting: PagerDutyAlerting)(implicit transformer: LogMessageTransformer, appConfig: AppConfig)
+  extends DWPConnector with Logging {
 
   def ucClaimantCheck(nino: String, transactionId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext): EitherT[Future, String, HttpResponse] = {
 
     val timeContext: Timer.Context = metrics.dwpClaimantCheckTimer.time()
 
-    EitherT(httpProxy.get(dwpUrl(nino, transactionId))(hc.copy(authorization = None, token = None), ec)
-      .map[Either[String, HttpResponse]]{ response ⇒
+    EitherT(httpProxy.get(appConfig.dwpUrl(nino, transactionId))(hc.copy(authorization = None, token = None), ec)
+      .map[Either[String, HttpResponse]] { response ⇒
         val time = timeContext.stop()
         response.status match {
           case Status.OK ⇒
@@ -79,7 +74,7 @@ class DWPConnectorImpl @Inject() (conf: Configuration, metrics: Metrics, pagerDu
   }
 
   def healthCheck()(implicit hc: HeaderCarrier, ec: ExecutionContext): EitherT[Future, String, Unit] =
-    EitherT(httpProxy.get(dwpHealthCheckURL).map[Either[String, Unit]]{ response ⇒
+    EitherT(httpProxy.get(appConfig.dwpHealthCheckURL).map[Either[String, Unit]] { response ⇒
       response.status match {
         case Status.OK ⇒ Right(())
         case other     ⇒ Left(s"Received status $other from DWP health check. Response body was '${response.body}'")

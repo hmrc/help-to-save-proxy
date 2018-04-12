@@ -26,12 +26,12 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{BeforeAndAfterAll, Suite}
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.{Application, Configuration, Play}
-import uk.gov.hmrc.helptosaveproxy.config.WSHttpProxy
+import uk.gov.hmrc.helptosaveproxy.config.{AppConfig, WSHttpProxy}
 import uk.gov.hmrc.helptosaveproxy.metrics.Metrics
 import uk.gov.hmrc.helptosaveproxy.testutil.TestLogMessageTransformer
 import uk.gov.hmrc.helptosaveproxy.util.LogMessageTransformer
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.http.logging.SessionId
+import uk.gov.hmrc.http.logging.{Authorization, SessionId}
 import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.ExecutionContext
@@ -43,7 +43,7 @@ trait TestSupport extends UnitSpec with MockFactory with BeforeAndAfterAll with 
 
   lazy implicit val configuration: Configuration = fakeApplication.injector.instanceOf[Configuration]
 
-  lazy val fakeApplication: Application =
+  def buildFakeApplication(additionalConfig: Configuration): Application = {
     new GuiceApplicationBuilder()
       .configure(Configuration(
         ConfigFactory.parseString(
@@ -53,13 +53,16 @@ trait TestSupport extends UnitSpec with MockFactory with BeforeAndAfterAll with 
           """.stripMargin)
       ) ++ additionalConfig)
       .build()
+  }
+
+  lazy val fakeApplication: Application = buildFakeApplication(additionalConfig)
 
   val mockHTTPProxy = mock[WSHttpProxy]
 
   implicit lazy val ec: ExecutionContext = fakeApplication.injector.instanceOf[ExecutionContext]
 
   implicit val headerCarrier: HeaderCarrier =
-    HeaderCarrier(sessionId = Some(SessionId(UUID.randomUUID().toString)))
+    HeaderCarrier(sessionId     = Some(SessionId(UUID.randomUUID().toString)), authorization = Some(Authorization("auth")))
 
   override def beforeAll() {
     Play.start(fakeApplication)
@@ -79,6 +82,7 @@ trait TestSupport extends UnitSpec with MockFactory with BeforeAndAfterAll with 
     override def histogram(name: String): Histogram = new Histogram(new UniformReservoir())
   }
 
-  implicit val transformer: LogMessageTransformer = TestLogMessageTransformer.transformer
+  implicit lazy val transformer: LogMessageTransformer = TestLogMessageTransformer.transformer
 
+  implicit lazy val appConfig: AppConfig = fakeApplication.injector.instanceOf[AppConfig]
 }

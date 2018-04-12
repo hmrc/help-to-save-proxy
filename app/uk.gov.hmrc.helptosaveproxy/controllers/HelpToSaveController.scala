@@ -16,13 +16,13 @@
 
 package uk.gov.hmrc.helptosaveproxy.controllers
 
-import cats.Id
 import cats.data.EitherT
 import cats.instances.future._
 import com.google.inject.Inject
 import play.api.libs.json.{JsError, JsSuccess, JsValue, Json}
 import play.api.mvc.{Action, AnyContent, Request, Result}
 import uk.gov.hmrc.helptosaveproxy.audit.HTSAuditor
+import uk.gov.hmrc.helptosaveproxy.config.AppConfig
 import uk.gov.hmrc.helptosaveproxy.connectors.NSIConnector
 import uk.gov.hmrc.helptosaveproxy.controllers.HelpToSaveController.Error
 import uk.gov.hmrc.helptosaveproxy.models.SubmissionResult.{SubmissionFailure, SubmissionSuccess}
@@ -32,7 +32,6 @@ import uk.gov.hmrc.helptosaveproxy.util.JsErrorOps._
 import uk.gov.hmrc.helptosaveproxy.util.Toggles.FEATURE
 import uk.gov.hmrc.helptosaveproxy.util.{LogMessageTransformer, Logging, NINO}
 import uk.gov.hmrc.http.logging.LoggingDetails
-import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
@@ -40,15 +39,16 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class HelpToSaveController @Inject() (nsiConnector:                NSIConnector,
                                       jsonSchemaValidationService: JSONSchemaValidationService,
-                                      auditor:                     HTSAuditor)(implicit transformer: LogMessageTransformer) extends BaseController with ServicesConfig with Logging {
+                                      auditor:                     HTSAuditor)(implicit transformer: LogMessageTransformer, appConfig: AppConfig)
+  extends BaseController with Logging {
 
   import HelpToSaveController.Error._
 
   implicit def mdcExecutionContext(implicit loggingDetails: LoggingDetails): ExecutionContext = MdcLoggingExecutionContext.fromLoggingDetails
 
-  lazy val correlationIdHeaderName: String = getString("microservice.correlationIdHeaderName")
+  lazy val correlationIdHeaderName: String = appConfig.getString("microservice.correlationIdHeaderName")
 
-  def jsonSchemaValidationToggle(nino: NINO): FEATURE = FEATURE("create-account-json-validation", runModeConfiguration, logger, Some(nino))
+  def jsonSchemaValidationToggle(nino: NINO): FEATURE = FEATURE("create-account-json-validation", appConfig.runModeConfiguration, logger, Some(nino))
 
   def createAccount(): Action[AnyContent] = Action.async { implicit request ⇒
 

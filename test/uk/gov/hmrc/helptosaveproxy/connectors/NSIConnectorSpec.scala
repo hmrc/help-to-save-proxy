@@ -26,11 +26,9 @@ import play.api.Configuration
 import play.api.http.Status
 import play.api.libs.json.{JsObject, JsString, Writes}
 import uk.gov.hmrc.helptosaveproxy.TestSupport
-import uk.gov.hmrc.helptosaveproxy.config.AppConfig.{nsiAuthHeaderKey, nsiBasicAuth, nsiCreateAccountUrl, nsiQueryAccountUrl}
 import uk.gov.hmrc.helptosaveproxy.models.SubmissionResult.{SubmissionFailure, SubmissionSuccess}
 import uk.gov.hmrc.helptosaveproxy.testutil.MockPagerDuty
 import uk.gov.hmrc.helptosaveproxy.testutil.TestData.UserData.validNSIUserInfo
-import uk.gov.hmrc.http.logging.Authorization
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 
 import scala.concurrent.duration._
@@ -39,15 +37,13 @@ import scala.util.Random
 
 class NSIConnectorSpec extends TestSupport with MockFactory with GeneratorDrivenPropertyChecks with MockPagerDuty {
 
-  def nsiConnector = new NSIConnectorImpl(
-    fakeApplication.configuration ++ Configuration("feature-toggles.log-account-creation-json.enabled" → Random.nextBoolean()),
-    mockMetrics,
-    mockPagerDuty) {
-    override val httpProxy = mockHTTPProxy
-  }
+  override lazy val additionalConfig = Configuration("feature-toggles.log-account-creation-json.enabled" → Random.nextBoolean())
 
-  // put in fake authorization details - these should be removed by the call to create an account
-  implicit val hc: HeaderCarrier = HeaderCarrier(authorization = Some(Authorization("auth")))
+  def nsiConnector = new NSIConnectorImpl(mockHTTPProxy, mockMetrics, mockPagerDuty)
+
+  val nsiCreateAccountUrl = appConfig.nsiCreateAccountUrl
+  val nsiAuthHeaderKey = appConfig.nsiAuthHeaderKey
+  val nsiBasicAuth = appConfig.nsiBasicAuth
 
   def mockPost[I](body: I, url: String)(result: Either[String, HttpResponse]): Unit =
     (mockHTTPProxy.post(_: String, _: I, _: Map[String, String])(_: Writes[I], _: HeaderCarrier, _: ExecutionContext))
@@ -228,9 +224,10 @@ class NSIConnectorSpec extends TestSupport with MockFactory with GeneratorDriven
     val resource = "account"
 
     val queryString = s"nino=$nino&version=$version&systemId=$systemId&correlationId=$correlationId"
+
       def doRequest = nsiConnector.queryAccount(resource, queryString)
 
-      def url = s"$nsiQueryAccountUrl/$resource?nino=$nino&version=$version&systemId=$systemId&correlationId=$correlationId"
+      def url = s"${appConfig.nsiQueryAccountUrl}/$resource?nino=$nino&version=$version&systemId=$systemId&correlationId=$correlationId"
 
     "handle the successful response and return it" in {
       val responseBody = s"""{"version":$version,"correlationId":"$correlationId"}"""
