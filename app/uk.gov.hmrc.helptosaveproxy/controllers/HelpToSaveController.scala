@@ -33,7 +33,7 @@ import uk.gov.hmrc.helptosaveproxy.util.Toggles.FEATURE
 import uk.gov.hmrc.helptosaveproxy.util.{LogMessageTransformer, Logging, NINO}
 import uk.gov.hmrc.http.logging.LoggingDetails
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext
-import uk.gov.hmrc.play.microservice.controller.BaseController
+import uk.gov.hmrc.play.bootstrap.controller.BaseController
 
 import scala.concurrent.{ExecutionContext, Future}
 

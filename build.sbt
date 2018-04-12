@@ -19,7 +19,6 @@ lazy val playSettings: Seq[Setting[_]] = Seq.empty
 lazy val dependencies = Seq(
   ws,
   "uk.gov.hmrc" %% "auth-client" % "2.5.0",
-  "uk.gov.hmrc" %% "microservice-bootstrap" % "6.15.0",
   "uk.gov.hmrc" %% "play-config" % "4.3.0",
   "uk.gov.hmrc" %% "domain" % "5.1.0",
   "org.typelevel" %% "cats" % "0.9.0",
