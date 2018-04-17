@@ -49,9 +49,11 @@ class NSIConnectorSpec extends TestSupport with MockFactory with GeneratorDriven
   val nsiAuthHeaderKey = appConfig.nsiAuthHeaderKey
   val nsiBasicAuth = appConfig.nsiBasicAuth
 
+  private val headerCarrierWithoutAuthorization = argThat[HeaderCarrier](_.authorization.isEmpty)
+
   def mockPost[I](body: I, url: String)(result: Either[String, HttpResponse]): Unit =
     (mockHTTPProxy.post(_: String, _: I, _: Map[String, String])(_: Writes[I], _: HeaderCarrier, _: ExecutionContext))
-      .expects(url, body, Map(nsiAuthHeaderKey → nsiBasicAuth), *, *, *)
+      .expects(url, body, Map(nsiAuthHeaderKey → nsiBasicAuth), *, headerCarrierWithoutAuthorization, *)
       .returning(
         result.fold(
           e ⇒ Future.failed(new Exception(e)),
@@ -60,7 +62,7 @@ class NSIConnectorSpec extends TestSupport with MockFactory with GeneratorDriven
 
   def mockPut[I](body: I, url: String, needsAuditing: Boolean = true)(result: Either[String, HttpResponse]): Unit =
     (mockHTTPProxy.put(_: String, _: I, _: Boolean, _: Map[String, String])(_: Writes[I], _: HeaderCarrier, _: ExecutionContext))
-      .expects(url, body, needsAuditing, Map(nsiAuthHeaderKey → nsiBasicAuth), *, *, *)
+      .expects(url, body, needsAuditing, Map(nsiAuthHeaderKey → nsiBasicAuth), *, headerCarrierWithoutAuthorization, *)
       .returning(
         result.fold(
           e ⇒ Future.failed(new Exception(e)),
@@ -69,7 +71,7 @@ class NSIConnectorSpec extends TestSupport with MockFactory with GeneratorDriven
 
   def mockGet[I](url: String)(result: Either[String, HttpResponse]): Unit =
     (mockHTTPProxy.get(_: String, _: Map[String, String])(_: HeaderCarrier, _: ExecutionContext))
-      .expects(url, Map(nsiAuthHeaderKey → nsiBasicAuth), *, *)
+      .expects(url, Map(nsiAuthHeaderKey → nsiBasicAuth), headerCarrierWithoutAuthorization, *)
       .returning(
         result.fold(
           e ⇒ Future.failed(new Exception(e)),
