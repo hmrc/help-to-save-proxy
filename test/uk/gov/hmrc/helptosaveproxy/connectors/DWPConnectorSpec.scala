@@ -40,9 +40,11 @@ class DWPConnectorSpec extends TestSupport with MockFactory with EitherValues wi
 
   val transactionId = UUID.randomUUID()
 
+  private val headerCarrierWithoutAuthorizationAndToken = argThat[HeaderCarrier](h ⇒ h.authorization.isEmpty && h.token.isEmpty)
+
   def mockGet(url: String)(result: Either[String, HttpResponse]): Unit =
     (mockHTTPProxy.get(_: String, _: Map[String, String])(_: HeaderCarrier, _: ExecutionContext))
-      .expects(url, *, *, *)
+      .expects(url, Map.empty[String, String], headerCarrierWithoutAuthorizationAndToken, *)
       .returning(
         result.fold(
           e ⇒ Future.failed(new Exception(e)),

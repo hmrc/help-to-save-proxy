@@ -16,13 +16,12 @@
 
 package uk.gov.hmrc.helptosaveproxy.connectors
 
-import javax.inject.{Inject, Singleton}
-
 import cats.data.EitherT
 import cats.instances.string._
 import cats.syntax.eq._
 import com.codahale.metrics.Timer
 import com.google.inject.ImplementedBy
+import javax.inject.{Inject, Singleton}
 import play.api.http.Status
 import play.api.libs.json.Json
 import uk.gov.hmrc.helptosaveproxy.config.{AppConfig, WSHttpProxy}
@@ -159,7 +158,7 @@ class NSIConnectorImpl @Inject() (auditConnector:    AuditConnector,
 
     val url = s"${appConfig.nsiQueryAccountUrl}/$resource?$queryString"
 
-    EitherT(httpProxy.get(url, Map(nsiAuthHeaderKey → nsiBasicAuth))
+    EitherT(httpProxy.get(url, Map(nsiAuthHeaderKey → nsiBasicAuth))(hc.copy(authorization = None), implicitly[ExecutionContext])
       .map[Either[String, HttpResponse]](Right(_))
       .recover {
         case e ⇒ Left(e.getMessage)
