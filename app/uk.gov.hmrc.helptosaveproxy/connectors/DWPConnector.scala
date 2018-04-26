@@ -27,6 +27,7 @@ import uk.gov.hmrc.helptosaveproxy.config.{AppConfig, WSHttpProxy}
 import uk.gov.hmrc.helptosaveproxy.metrics.Metrics
 import uk.gov.hmrc.helptosaveproxy.metrics.Metrics._
 import uk.gov.hmrc.helptosaveproxy.util.{LogMessageTransformer, Logging, PagerDutyAlerting}
+import uk.gov.hmrc.helptosaveproxy.util.Logging._
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 
@@ -58,13 +59,13 @@ class DWPConnectorImpl @Inject() (auditConnector:    AuditConnector,
         response.status match {
           case Status.OK ⇒
             logger.info(s"ucClaimantCheck returned 200 (OK) with UCDetails: ${response.json}, transactionId: " +
-              s"$transactionId, ${timeString(time)}, $nino")
+              s"$transactionId, ${timeString(time)}", nino, None)
             Right(HttpResponse(200, Some(response.json))) // scalastyle:ignore magic.number
           case other ⇒
             pagerDutyAlerting.alert("Received unexpected http status in response to uc claimant check")
             metrics.dwpClaimantErrorCounter.inc()
             Left(s"ucClaimantCheck returned a status other than 200, with response body: ${response.body}, " +
-              s"status: $other, transactionId: $transactionId, ${timeString(time)}, $nino")
+              s"status: $other, transactionId: $transactionId, ${timeString(time)}")
         }
       }.recover {
         case e ⇒
@@ -72,7 +73,7 @@ class DWPConnectorImpl @Inject() (auditConnector:    AuditConnector,
           pagerDutyAlerting.alert("Failed to make call to uc claimant check")
           metrics.dwpClaimantErrorCounter.inc()
           Left(s"Encountered error while trying to make ucClaimantCheck call, with message: ${e.getMessage}, " +
-            s"transactionId: $transactionId, ${timeString(time)}, $nino")
+            s"transactionId: $transactionId, ${timeString(time)}")
       })
   }
 
