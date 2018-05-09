@@ -30,9 +30,7 @@ import uk.gov.hmrc.helptosaveproxy.models.{AccountCreated, NSIUserInfo}
 import uk.gov.hmrc.helptosaveproxy.services.JSONSchemaValidationService
 import uk.gov.hmrc.helptosaveproxy.util.JsErrorOps._
 import uk.gov.hmrc.helptosaveproxy.util.Toggles.FEATURE
-import uk.gov.hmrc.helptosaveproxy.util.{LogMessageTransformer, Logging, NINO}
-import uk.gov.hmrc.http.logging.LoggingDetails
-import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext
+import uk.gov.hmrc.helptosaveproxy.util.{LogMessageTransformer, Logging, NINO, WithMdcExecutionContext}
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -40,11 +38,9 @@ import scala.concurrent.{ExecutionContext, Future}
 class HelpToSaveController @Inject() (nsiConnector:                NSIConnector,
                                       jsonSchemaValidationService: JSONSchemaValidationService,
                                       auditor:                     HTSAuditor)(implicit transformer: LogMessageTransformer, appConfig: AppConfig)
-  extends BaseController with Logging {
+  extends BaseController with Logging with WithMdcExecutionContext {
 
   import HelpToSaveController.Error._
-
-  implicit def mdcExecutionContext(implicit loggingDetails: LoggingDetails): ExecutionContext = MdcLoggingExecutionContext.fromLoggingDetails
 
   lazy val correlationIdHeaderName: String = appConfig.getString("microservice.correlationIdHeaderName")
 

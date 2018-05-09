@@ -19,20 +19,14 @@ package uk.gov.hmrc.helptosaveproxy.controllers
 import java.util.UUID
 
 import cats.instances.future._
-
 import com.google.inject.Inject
 import play.api.mvc.{Action, AnyContent}
 import uk.gov.hmrc.helptosaveproxy.connectors.DWPConnector
-import uk.gov.hmrc.helptosaveproxy.util.{LogMessageTransformer, Logging}
-import uk.gov.hmrc.http.logging.LoggingDetails
-import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext
+import uk.gov.hmrc.helptosaveproxy.util.{LogMessageTransformer, Logging, WithMdcExecutionContext}
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
 
-import scala.concurrent.ExecutionContext
-
-class UCClaimantCheckController @Inject() (dwpConnector: DWPConnector)(implicit transformer: LogMessageTransformer) extends BaseController with Logging {
-
-  implicit def mdcExecutionContext(implicit loggingDetails: LoggingDetails): ExecutionContext = MdcLoggingExecutionContext.fromLoggingDetails
+class UCClaimantCheckController @Inject() (dwpConnector: DWPConnector)(implicit transformer: LogMessageTransformer)
+  extends BaseController with Logging with WithMdcExecutionContext {
 
   def ucClaimantCheck(nino: String, transactionId: UUID): Action[AnyContent] = Action.async { implicit request ⇒
     dwpConnector.ucClaimantCheck(nino, transactionId).fold(
