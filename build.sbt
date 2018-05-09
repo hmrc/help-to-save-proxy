@@ -21,7 +21,7 @@ lazy val dependencies = Seq(
   "uk.gov.hmrc" %% "auth-client" % "2.5.0",
   "uk.gov.hmrc" %% "play-config" % "4.3.0",
   "uk.gov.hmrc" %% "domain" % "5.1.0",
-  "org.typelevel" %% "cats" % "0.9.0",
+  "org.typelevel" %% "cats-core" % "1.1.0",
   "com.github.kxbmap" %% "configs" % "0.4.4",
   "uk.gov.hmrc" %% "play-reactivemongo" % "6.2.0",
   "com.eclipsesource" %% "play-json-schema-validator" % "0.8.9",
@@ -39,7 +39,7 @@ lazy val testDependencies = Seq(
   "org.scalatestplus.play" %% "scalatestplus-play" % "2.0.0" % test,
   "com.miguno.akka" % "akka-mock-scheduler_2.11" % "0.5.1" % test,
   "com.typesafe.akka" %% "akka-testkit" % "2.3.11" % test,
-  "uk.gov.hmrc" %% "stub-data-generator" % "0.4.0" % test
+  "uk.gov.hmrc" %% "stub-data-generator" % "0.5.3" % test
 )
 
 lazy val scoverageSettings = {
