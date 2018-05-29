@@ -17,7 +17,7 @@
 package uk.gov.hmrc.helptosaveproxy.health
 
 import java.time.format.DateTimeFormatter
-import java.time.{Clock, LocalDateTime}
+import java.time.{Clock, LocalDateTime, ZoneId, ZonedDateTime}
 
 import akka.actor.{Actor, ActorLogging, Cancellable, PoisonPill, Props, Scheduler}
 import akka.pattern.{after, ask, pipe}
@@ -87,9 +87,9 @@ class HealthCheck(name:           String,
   val numberOfChecksBetweenAlerts: Int =
     config.get[Int](s"health.$name.poll-count-between-pager-duty-alerts").value
 
-  val clock: Clock = Clock.systemUTC()
+  val zone: ZoneId = ZoneId.of("Europe/London")
 
-  val dateTimeFormatter: DateTimeFormatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
+  val dateTimeFormatter: DateTimeFormatter = DateTimeFormatter.ISO_ZONED_DATE_TIME
 
   val failureHistogram: Histogram = metrics.defaultRegistry.histogram(s"health.$name.number-of-failures")
 
@@ -99,7 +99,7 @@ class HealthCheck(name:           String,
 
   var performTestTask: Option[Cancellable] = None
 
-  def prettyString(d: LocalDateTime): String = d.format(dateTimeFormatter)
+  def prettyString(d: ZonedDateTime): String = d.format(dateTimeFormatter)
 
   override def receive: Receive = ok(0)
 
@@ -123,7 +123,7 @@ class HealthCheck(name:           String,
     case HealthCheckResult.Failure(message, nanos) ⇒
       log.warning(s"$loggingPrefix - just started to fail ${timeString(nanos)}. Missed-beat counter is 1. $message")
 
-      val now = LocalDateTime.now(clock)
+      val now = ZonedDateTime.now(zone)
 
       if (maximumConsecutiveFailures > 1) {
         becomeFailing(now)
@@ -138,7 +138,7 @@ class HealthCheck(name:           String,
    * In this state the previous check was a failure and the number of failures had
    * not reached the maximum allowed yet.
    */
-  def failing(downSince: LocalDateTime, fails: Int): Receive = performTest orElse {
+  def failing(downSince: ZonedDateTime, fails: Int): Receive = performTest orElse {
     case HealthCheckResult.Success(message, nanos) ⇒
       log.info(s"$loggingPrefix - was failing since ${prettyString(downSince)} but now OK ${timeString(nanos)}. Missed-beat counter is 0. $message")
       becomeOK()
@@ -160,7 +160,7 @@ class HealthCheck(name:           String,
    * In this state the previous check was a failure and the maximum allowed failures had
    * been reached
    */
-  def failed(downSince: LocalDateTime, fails: Int): Receive = performTest orElse {
+  def failed(downSince: ZonedDateTime, fails: Int): Receive = performTest orElse {
     case HealthCheckResult.Success(message, nanos) ⇒
       log.warning(s"$loggingPrefix - had failed since ${prettyString(downSince)} but now OK ${timeString(nanos)}. Missed-beat counter is 0. $message")
       becomeOK()
@@ -194,12 +194,12 @@ class HealthCheck(name:           String,
     context become ok(count)
   }
 
-  def becomeFailing(downSince: LocalDateTime, fails: Int = 1): Unit = {
+  def becomeFailing(downSince: ZonedDateTime, fails: Int = 1): Unit = {
     failureHistogram.update(fails)
     context become failing(downSince, fails)
   }
 
-  def becomeFailed(downSince: LocalDateTime, fails: Int = maximumConsecutiveFailures): Unit = {
+  def becomeFailed(downSince: ZonedDateTime, fails: Int = maximumConsecutiveFailures): Unit = {
     failureHistogram.update(fails)
     context become failed(downSince, fails)
   }
