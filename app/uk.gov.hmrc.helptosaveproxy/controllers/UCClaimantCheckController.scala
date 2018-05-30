@@ -28,8 +28,8 @@ import uk.gov.hmrc.play.bootstrap.controller.BaseController
 class UCClaimantCheckController @Inject() (dwpConnector: DWPConnector)(implicit transformer: LogMessageTransformer)
   extends BaseController with Logging with WithMdcExecutionContext {
 
-  def ucClaimantCheck(nino: String, transactionId: UUID): Action[AnyContent] = Action.async { implicit request ⇒
-    dwpConnector.ucClaimantCheck(nino, transactionId).fold(
+  def ucClaimantCheck(nino: String, transactionId: UUID, threshold: Double): Action[AnyContent] = Action.async { implicit request ⇒
+    dwpConnector.ucClaimantCheck(nino, transactionId, threshold).fold(
       {
         e ⇒
           logger.warn(s"Could not perform UC Claimant check: $e")
