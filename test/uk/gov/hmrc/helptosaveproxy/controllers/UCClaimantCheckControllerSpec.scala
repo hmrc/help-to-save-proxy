@@ -39,19 +39,20 @@ class UCClaimantCheckControllerSpec extends TestSupport with UCClaimantTestSuppo
 
   val nino = "WP010123A"
   val transactionId = UUID.randomUUID()
+  val threshold = 650.0
 
   def doUCClaimantCheck(controller: UCClaimantCheckController, encodedNino: String): Future[PlayResult] =
-    controller.ucClaimantCheck(encodedNino, transactionId)(FakeRequest())
+    controller.ucClaimantCheck(encodedNino, transactionId, threshold)(FakeRequest())
 
-  def mockUCClaimantCheck(encodedNino: String, transactionId: UUID)(result: Either[String, HttpResponse]): Unit =
-    (mockDWPConnector.ucClaimantCheck(_: String, _: UUID)(_: HeaderCarrier, _: ExecutionContext))
-      .expects(encodedNino, transactionId, *, *)
+  def mockUCClaimantCheck(encodedNino: String, transactionId: UUID, threshold: Double)(result: Either[String, HttpResponse]): Unit =
+    (mockDWPConnector.ucClaimantCheck(_: String, _: UUID, _: Double)(_: HeaderCarrier, _: ExecutionContext))
+      .expects(encodedNino, transactionId, threshold, *, *)
       .returning(EitherT.fromEither[Future](result))
 
   "ucClaimantCheck" must {
     "return a 200 status with the expected json when given a NINO starting with WP01" in {
       val ucDetails = HttpResponse(200, Some(Json.toJson(eUCDetails)))
-      mockUCClaimantCheck(nino, transactionId)(Right(ucDetails))
+      mockUCClaimantCheck(nino, transactionId, threshold)(Right(ucDetails))
 
       val result = doUCClaimantCheck(controller, nino)
       status(result) shouldBe 200
@@ -60,7 +61,7 @@ class UCClaimantCheckControllerSpec extends TestSupport with UCClaimantTestSuppo
     }
 
     "return a 500 status with no payload when the ucClaimantCheck call fails" in {
-      mockUCClaimantCheck(nino, transactionId)(Left("uc claimant check failed"))
+      mockUCClaimantCheck(nino, transactionId, threshold)(Left("uc claimant check failed"))
 
       val result = doUCClaimantCheck(controller, nino)
       status(result) shouldBe 500

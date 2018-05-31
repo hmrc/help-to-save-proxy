@@ -51,12 +51,10 @@ class AppConfig @Inject() (override val runModeConfiguration: Configuration, val
 
   val systemId: String = getString("microservice.services.dwp.system-id")
 
-  val thresholdAmount: Double = runModeConfiguration.underlying.getDouble("microservice.services.dwp.threshold-amount")
-
   val dwpBaseUrl: String = baseUrl("dwp")
 
-  def dwpUrl(nino: String, transactionId: UUID): String =
-    s"$dwpBaseUrl/hmrc/$nino?systemId=$systemId&thresholdAmount=$thresholdAmount&transactionId=$transactionId"
+  def dwpUrl(nino: String, transactionId: UUID, threshold: Double): String =
+    s"$dwpBaseUrl/hmrc/$nino?systemId=$systemId&thresholdAmount=$threshold&transactionId=$transactionId"
 
   val dwpHealthCheckURL: String = s"$dwpBaseUrl/hmrc-healthcheck"
 
