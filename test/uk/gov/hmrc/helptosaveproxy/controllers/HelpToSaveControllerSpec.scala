@@ -29,13 +29,12 @@ import play.api.test.Helpers._
 import uk.gov.hmrc.helptosaveproxy.TestSupport
 import uk.gov.hmrc.helptosaveproxy.audit.HTSAuditor
 import uk.gov.hmrc.helptosaveproxy.connectors.NSIConnector
-import uk.gov.hmrc.helptosaveproxy.models.NSIUserInfo
+import uk.gov.hmrc.helptosaveproxy.models.{AccountCreated, HTSEvent, NSIUserInfo}
 import uk.gov.hmrc.helptosaveproxy.models.SubmissionResult.{SubmissionFailure, SubmissionSuccess}
 import uk.gov.hmrc.helptosaveproxy.services.JSONSchemaValidationService
 import uk.gov.hmrc.helptosaveproxy.testutil.TestData.UserData.validNSIUserInfo
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
-import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
-import uk.gov.hmrc.play.audit.model.DataEvent
+import uk.gov.hmrc.play.audit.http.connector.AuditResult
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -43,11 +42,10 @@ class HelpToSaveControllerSpec extends TestSupport {
 
   val mockNSIConnector = mock[NSIConnector]
   val mockJsonSchema = mock[JSONSchemaValidationService]
-  val mockAuditor = mock[AuditConnector]
 
-  val htsAuditor = new HTSAuditor(mockAuditor)
+  val mockAuditor = mock[HTSAuditor]
 
-  val controller = new HelpToSaveController(mockNSIConnector, mockJsonSchema, htsAuditor)
+  val controller = new HelpToSaveController(mockNSIConnector, mockJsonSchema, mockAuditor)
 
   def mockJSONSchemaValidationService(expectedInfo: NSIUserInfo)(result: Either[String, Unit]) =
     (mockJsonSchema.validate(_: JsValue))
@@ -64,9 +62,9 @@ class HelpToSaveControllerSpec extends TestSupport {
       .expects(expectedInfo, *, *)
       .returning(EitherT.fromEither[Future](result))
 
-  def mockAuditAccountCreated() =
-    (mockAuditor.sendEvent(_: DataEvent)(_: HeaderCarrier, _: ExecutionContext))
-      .expects(where { (dataEvent, _, _) ⇒ dataEvent.auditType === "AccountCreated" })
+  def mockAuditAccountCreated(expectedEvent: AccountCreated, nino: String, correlationId: Option[String]) =
+    (mockAuditor.sendEvent(_: HTSEvent, _: String, _: Option[String])(_: ExecutionContext))
+      .expects(expectedEvent, nino, correlationId, *)
       .returning(Future.successful(AuditResult.Success))
 
   def mockGetAccountByNino(resource: String, queryString: String)(result: Either[String, HttpResponse]): Unit =
@@ -76,8 +74,14 @@ class HelpToSaveControllerSpec extends TestSupport {
 
   "The createAccount method" must {
 
+    val correlationId = "correlationId"
+    val clientId = "clientId"
+
       def doCreateAccountRequest(userInfo: NSIUserInfo) =
-        controller.createAccount()(FakeRequest().withJsonBody(Json.toJson(userInfo)))
+        controller.createAccount()(FakeRequest().withJsonBody(Json.toJson(userInfo)).withHeaders(
+          "X-Correlation-Id" → correlationId,
+          "X-Client-Id" → clientId
+        ))
 
     behave like commonBehaviour(
       controller.createAccount,
@@ -87,7 +91,7 @@ class HelpToSaveControllerSpec extends TestSupport {
       inSequence {
         mockJSONSchemaValidationService(validNSIUserInfo)(Right(()))
         mockCreateAccount(validNSIUserInfo)(Right(SubmissionSuccess(false)))
-        mockAuditAccountCreated()
+        mockAuditAccountCreated(AccountCreated(validNSIUserInfo, Some(clientId)), validNSIUserInfo.nino, Some(correlationId))
       }
 
       val result = doCreateAccountRequest(validNSIUserInfo)

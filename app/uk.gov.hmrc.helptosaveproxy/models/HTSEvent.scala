@@ -33,7 +33,7 @@ object HTSEvent {
 
 }
 
-case class AccountCreated(userInfo: NSIUserInfo)(implicit hc: HeaderCarrier, appConfig: AppConfig) extends HTSEvent {
+case class AccountCreated(userInfo: NSIUserInfo, source: Option[String])(implicit hc: HeaderCarrier, appConfig: AppConfig) extends HTSEvent {
 
   val value: DataEvent = HTSEvent(
     appConfig.appName,
@@ -53,7 +53,8 @@ case class AccountCreated(userInfo: NSIUserInfo)(implicit hc: HeaderCarrier, app
       "email" → userInfo.contactDetails.email.fold("")(identity),
       "phoneNumber" → userInfo.contactDetails.phoneNumber.fold("")(identity),
       "communicationPreference" → userInfo.contactDetails.communicationPreference,
-      "registrationChannel" → userInfo.registrationChannel
+      "registrationChannel" → userInfo.registrationChannel,
+      "source" → source.getOrElse("")
     )
   )
 }
