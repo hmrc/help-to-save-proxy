@@ -21,12 +21,11 @@ import cats.instances.future._
 import com.google.inject.Inject
 import play.api.libs.json.{JsError, JsSuccess, JsValue, Json}
 import play.api.mvc.{Action, AnyContent, Request, Result}
-import uk.gov.hmrc.helptosaveproxy.audit.HTSAuditor
 import uk.gov.hmrc.helptosaveproxy.config.AppConfig
 import uk.gov.hmrc.helptosaveproxy.connectors.NSIConnector
 import uk.gov.hmrc.helptosaveproxy.controllers.HelpToSaveController.Error
 import uk.gov.hmrc.helptosaveproxy.models.SubmissionResult.{SubmissionFailure, SubmissionSuccess}
-import uk.gov.hmrc.helptosaveproxy.models.{AccountCreated, NSIUserInfo}
+import uk.gov.hmrc.helptosaveproxy.models.NSIUserInfo
 import uk.gov.hmrc.helptosaveproxy.services.JSONSchemaValidationService
 import uk.gov.hmrc.helptosaveproxy.util.JsErrorOps._
 import uk.gov.hmrc.helptosaveproxy.util.Toggles.FEATURE
@@ -36,8 +35,8 @@ import uk.gov.hmrc.play.bootstrap.controller.BaseController
 import scala.concurrent.{ExecutionContext, Future}
 
 class HelpToSaveController @Inject() (nsiConnector:                NSIConnector,
-                                      jsonSchemaValidationService: JSONSchemaValidationService,
-                                      auditor:                     HTSAuditor)(implicit transformer: LogMessageTransformer, appConfig: AppConfig)
+                                      jsonSchemaValidationService: JSONSchemaValidationService
+)(implicit transformer: LogMessageTransformer, appConfig: AppConfig)
   extends BaseController with Logging with WithMdcExecutionContext {
 
   import HelpToSaveController.Error._
@@ -60,7 +59,6 @@ class HelpToSaveController @Inject() (nsiConnector:                NSIConnector,
         if (submissionSuccess.accountAlreadyCreated) {
           Conflict
         } else {
-          auditor.sendEvent(AccountCreated(nSIUserInfo, clientId), nSIUserInfo.nino, correlationId)
           Created
         }
     }
