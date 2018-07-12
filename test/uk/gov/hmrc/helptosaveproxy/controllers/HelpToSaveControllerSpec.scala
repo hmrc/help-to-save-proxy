@@ -27,15 +27,12 @@ import play.api.mvc.{Action, AnyContent}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.helptosaveproxy.TestSupport
-import uk.gov.hmrc.helptosaveproxy.audit.HTSAuditor
 import uk.gov.hmrc.helptosaveproxy.connectors.NSIConnector
 import uk.gov.hmrc.helptosaveproxy.models.NSIUserInfo
 import uk.gov.hmrc.helptosaveproxy.models.SubmissionResult.{SubmissionFailure, SubmissionSuccess}
 import uk.gov.hmrc.helptosaveproxy.services.JSONSchemaValidationService
 import uk.gov.hmrc.helptosaveproxy.testutil.TestData.UserData.validNSIUserInfo
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
-import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
-import uk.gov.hmrc.play.audit.model.DataEvent
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -43,11 +40,8 @@ class HelpToSaveControllerSpec extends TestSupport {
 
   val mockNSIConnector = mock[NSIConnector]
   val mockJsonSchema = mock[JSONSchemaValidationService]
-  val mockAuditor = mock[AuditConnector]
 
-  val htsAuditor = new HTSAuditor(mockAuditor)
-
-  val controller = new HelpToSaveController(mockNSIConnector, mockJsonSchema, htsAuditor)
+  val controller = new HelpToSaveController(mockNSIConnector, mockJsonSchema)
 
   def mockJSONSchemaValidationService(expectedInfo: NSIUserInfo)(result: Either[String, Unit]) =
     (mockJsonSchema.validate(_: JsValue))
@@ -64,11 +58,6 @@ class HelpToSaveControllerSpec extends TestSupport {
       .expects(expectedInfo, *, *)
       .returning(EitherT.fromEither[Future](result))
 
-  def mockAuditAccountCreated() =
-    (mockAuditor.sendEvent(_: DataEvent)(_: HeaderCarrier, _: ExecutionContext))
-      .expects(where { (dataEvent, _, _) ⇒ dataEvent.auditType === "AccountCreated" })
-      .returning(Future.successful(AuditResult.Success))
-
   def mockGetAccountByNino(resource: String, queryString: String)(result: Either[String, HttpResponse]): Unit =
     (mockNSIConnector.queryAccount(_: String, _: String)(_: HeaderCarrier, _: ExecutionContext))
       .expects(resource, queryString, *, *)
@@ -76,8 +65,10 @@ class HelpToSaveControllerSpec extends TestSupport {
 
   "The createAccount method" must {
 
-      def doCreateAccountRequest(userInfo: NSIUserInfo) =
-        controller.createAccount()(FakeRequest().withJsonBody(Json.toJson(userInfo)))
+    val correlationId = "correlationId"
+
+    def doCreateAccountRequest(userInfo: NSIUserInfo) =
+      controller.createAccount()(FakeRequest().withJsonBody(Json.toJson(userInfo)).withHeaders("X-Correlation-Id" → correlationId))
 
     behave like commonBehaviour(
       controller.createAccount,
@@ -87,7 +78,6 @@ class HelpToSaveControllerSpec extends TestSupport {
       inSequence {
         mockJSONSchemaValidationService(validNSIUserInfo)(Right(()))
         mockCreateAccount(validNSIUserInfo)(Right(SubmissionSuccess(false)))
-        mockAuditAccountCreated()
       }
 
       val result = doCreateAccountRequest(validNSIUserInfo)
