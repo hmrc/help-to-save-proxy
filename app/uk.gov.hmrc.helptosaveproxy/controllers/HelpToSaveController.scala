@@ -43,14 +43,10 @@ class HelpToSaveController @Inject() (nsiConnector:                NSIConnector,
 
   lazy val correlationIdHeaderName: String = appConfig.getString("microservice.correlationIdHeaderName")
 
-  lazy val clientIdHeaderName: String = appConfig.getString("microservice.clientIdHeaderName")
-
   def jsonSchemaValidationToggle(nino: NINO): FEATURE = FEATURE("create-account-json-validation", appConfig.runModeConfiguration, logger, Some(nino))
 
   def createAccount(): Action[AnyContent] = Action.async { implicit request ⇒
-
     val correlationId = request.headers.get(correlationIdHeaderName)
-    val clientId = request.headers.get(clientIdHeaderName)
 
     processRequest[SubmissionSuccess] {
       nsiConnector.createAccount(_).leftMap[Error](NSIError)
