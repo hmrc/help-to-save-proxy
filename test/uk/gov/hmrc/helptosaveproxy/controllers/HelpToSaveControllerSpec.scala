@@ -67,8 +67,8 @@ class HelpToSaveControllerSpec extends TestSupport {
 
     val correlationId = "correlationId"
 
-    def doCreateAccountRequest(userInfo: NSIUserInfo) =
-      controller.createAccount()(FakeRequest().withJsonBody(Json.toJson(userInfo)).withHeaders("X-Correlation-Id" → correlationId))
+      def doCreateAccountRequest(userInfo: NSIUserInfo) =
+        controller.createAccount()(FakeRequest().withJsonBody(Json.toJson(userInfo)).withHeaders("X-Correlation-Id" → correlationId))
 
     behave like commonBehaviour(
       controller.createAccount,

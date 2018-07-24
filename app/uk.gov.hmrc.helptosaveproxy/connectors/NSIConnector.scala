@@ -155,8 +155,8 @@ class NSIConnectorImpl @Inject() (auditConnector:    AuditConnector,
   }
 
   override def queryAccount(resource: String, queryString: String)(implicit hc: HeaderCarrier, ex: ExecutionContext): Result[HttpResponse] = {
-
     val url = s"${appConfig.nsiQueryAccountUrl}/$resource?$queryString"
+    logger.info(s"Trying to query account: $url")
 
     EitherT(httpProxy.get(url, Map(nsiAuthHeaderKey → nsiBasicAuth))(hc.copy(authorization = None), implicitly[ExecutionContext])
       .map[Either[String, HttpResponse]](Right(_))
