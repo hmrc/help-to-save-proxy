@@ -145,6 +145,7 @@ class CustomWSConfigParser @Inject() (configuration: Configuration, env: Environ
     logger.info(s"Successfully wrote keystore data to file: $ksFilePath")
 
     val decryptedPass = ks.password
+      .filter(_.nonEmpty)
       .map(base64Decode)
       .map(new String(_))
 
