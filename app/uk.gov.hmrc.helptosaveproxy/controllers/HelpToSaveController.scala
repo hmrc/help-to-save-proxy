@@ -52,10 +52,9 @@ class HelpToSaveController @Inject() (nsiConnector:                NSIConnector,
       nsiConnector.createAccount(_).leftMap[Error](NSIError)
     } {
       (submissionSuccess, nSIUserInfo) ⇒
-        if (submissionSuccess.accountAlreadyCreated) {
-          Conflict
-        } else {
-          Created
+        submissionSuccess.accountNumber match {
+          case None          ⇒ Conflict
+          case Some(account) ⇒ Created(Json.toJson(account))
         }
     }
   }
