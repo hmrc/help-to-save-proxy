@@ -36,6 +36,7 @@ import uk.gov.hmrc.helptosaveproxy.util.Toggles._
 import uk.gov.hmrc.helptosaveproxy.util.{LogMessageTransformer, Logging, NINO, PagerDutyAlerting, Result, maskNino}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
+import uk.gov.hmrc.helptosaveproxy.models.AccountNumber
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -88,12 +89,16 @@ class NSIConnectorImpl @Inject() (auditConnector:    AuditConnector,
         response.status match {
           case Status.CREATED ⇒
             logger.info(s"createAccount/insert returned 201 (Created) ${timeString(time)}", nino, correlationId)
-            Right(SubmissionSuccess(accountAlreadyCreated = false))
+            response.parseJSON[AccountNumber]() match {
+
+              case Right(AccountNumber(number)) ⇒ Right(SubmissionSuccess(Some(AccountNumber(number))))
+              case _                            ⇒ Left(SubmissionFailure(None, "account created but no account number was returned", ""))
+            }
 
           case Status.CONFLICT ⇒
             logger.info(s"createAccount/insert returned 409 (Conflict). Account had already been created - " +
               s"proceeding as normal ${timeString(time)}", nino, correlationId)
-            Right(SubmissionSuccess(accountAlreadyCreated = true))
+            Right(SubmissionSuccess(None))
 
           case other ⇒
             pagerDutyAlerting.alert("Received unexpected http status in response to create account")

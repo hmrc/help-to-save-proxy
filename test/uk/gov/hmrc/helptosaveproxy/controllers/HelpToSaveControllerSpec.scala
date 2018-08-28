@@ -28,7 +28,7 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.helptosaveproxy.TestSupport
 import uk.gov.hmrc.helptosaveproxy.connectors.NSIConnector
-import uk.gov.hmrc.helptosaveproxy.models.NSIUserInfo
+import uk.gov.hmrc.helptosaveproxy.models.{AccountNumber, NSIUserInfo}
 import uk.gov.hmrc.helptosaveproxy.models.SubmissionResult.{SubmissionFailure, SubmissionSuccess}
 import uk.gov.hmrc.helptosaveproxy.services.JSONSchemaValidationService
 import uk.gov.hmrc.helptosaveproxy.testutil.TestData.UserData.validNSIUserInfo
@@ -77,7 +77,7 @@ class HelpToSaveControllerSpec extends TestSupport {
     "return a Created status when valid json is given for an eligible new user" in {
       inSequence {
         mockJSONSchemaValidationService(validNSIUserInfo)(Right(()))
-        mockCreateAccount(validNSIUserInfo)(Right(SubmissionSuccess(false)))
+        mockCreateAccount(validNSIUserInfo)(Right(SubmissionSuccess(Some(AccountNumber("1234567890")))))
       }
 
       val result = doCreateAccountRequest(validNSIUserInfo)
@@ -87,7 +87,7 @@ class HelpToSaveControllerSpec extends TestSupport {
     "return a Conflict status when valid json is given for an existing user" in {
       inSequence {
         mockJSONSchemaValidationService(validNSIUserInfo)(Right(()))
-        mockCreateAccount(validNSIUserInfo)(Right(SubmissionSuccess(true)))
+        mockCreateAccount(validNSIUserInfo)(Right(SubmissionSuccess(None)))
       }
 
       val result = doCreateAccountRequest(validNSIUserInfo)

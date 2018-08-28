@@ -24,8 +24,9 @@ import org.scalamock.scalatest.MockFactory
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
 import play.api.Configuration
 import play.api.http.Status
-import play.api.libs.json.{JsObject, JsString, Writes}
+import play.api.libs.json.{JsObject, JsString, Json, Writes}
 import uk.gov.hmrc.helptosaveproxy.TestSupport
+import uk.gov.hmrc.helptosaveproxy.models.AccountNumber
 import uk.gov.hmrc.helptosaveproxy.models.SubmissionResult.{SubmissionFailure, SubmissionSuccess}
 import uk.gov.hmrc.helptosaveproxy.testutil.MockPagerDuty
 import uk.gov.hmrc.helptosaveproxy.testutil.TestData.UserData.validNSIUserInfo
@@ -119,15 +120,15 @@ class NSIConnectorSpec extends TestSupport with MockFactory with GeneratorDriven
   "the createAccount Method" must {
 
     "Return a SubmissionSuccess when the status is Created" in {
-      mockPost(validNSIUserInfo, nsiCreateAccountUrl)(Right(HttpResponse(Status.CREATED)))
+      mockPost(validNSIUserInfo, nsiCreateAccountUrl)(Right(HttpResponse(Status.CREATED, Some(Json.parse("""{"accountNumber" : "1234567890"}""")))))
       val result = nsiConnector.createAccount(validNSIUserInfo)
-      Await.result(result.value, 3.seconds) shouldBe Right(SubmissionSuccess(false))
+      Await.result(result.value, 3.seconds) shouldBe Right(SubmissionSuccess(Some(AccountNumber("1234567890"))))
     }
 
     "Return a SubmissionSuccess when the status is CONFLICT" in {
       mockPost(validNSIUserInfo, nsiCreateAccountUrl)(Right(HttpResponse(Status.CONFLICT)))
       val result = nsiConnector.createAccount(validNSIUserInfo)
-      Await.result(result.value, 3.seconds) shouldBe Right(SubmissionSuccess(true))
+      Await.result(result.value, 3.seconds) shouldBe Right(SubmissionSuccess(None))
     }
 
     "return a SubmissionFailure" when {
