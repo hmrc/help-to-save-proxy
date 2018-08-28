@@ -86,16 +86,13 @@ class NSIConnectorImpl @Inject() (auditConnector:    AuditConnector,
       .map[Either[SubmissionFailure, SubmissionSuccess]] { response ⇒
         val time = timeContext.stop()
 
-        val acNumber = response.parseJSON[AccountNumber]()
-
         response.status match {
           case Status.CREATED ⇒
             logger.info(s"createAccount/insert returned 201 (Created) ${timeString(time)}", nino, correlationId)
-            acNumber match {
-              case Right(AccountNumber(number)) ⇒ {
-                Right(SubmissionSuccess(Some(AccountNumber(number))))
-              }
-              case _ ⇒ Left(SubmissionFailure(None, "account created but no account number was returned", ""))
+            response.parseJSON[AccountNumber]() match {
+
+              case Right(AccountNumber(number)) ⇒ Right(SubmissionSuccess(Some(AccountNumber(number))))
+              case _                            ⇒ Left(SubmissionFailure(None, "account created but no account number was returned", ""))
             }
 
           case Status.CONFLICT ⇒
