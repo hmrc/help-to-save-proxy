@@ -31,7 +31,7 @@ import uk.gov.hmrc.helptosaveproxy.http.HttpProxyClient
 import uk.gov.hmrc.helptosaveproxy.models.AccountNumber
 import uk.gov.hmrc.helptosaveproxy.models.SubmissionResult.{SubmissionFailure, SubmissionSuccess}
 import uk.gov.hmrc.helptosaveproxy.testutil.MockPagerDuty
-import uk.gov.hmrc.helptosaveproxy.testutil.TestData.UserData.validNSIUserInfo
+import uk.gov.hmrc.helptosaveproxy.testutil.TestData.UserData.validNSIPayload
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 
@@ -63,8 +63,8 @@ class NSIConnectorSpec extends TestSupport with HttpSupport with MockFactory wit
   "the updateEmail method" must {
     "return a Right when the status is OK" in {
 
-      mockPut(nsiCreateAccountUrl, validNSIUserInfo, authHeaders)(Some(HttpResponse(Status.OK)))
-      val result = nsiConnector.updateEmail(validNSIUserInfo)
+      mockPut(nsiCreateAccountUrl, validNSIPayload, authHeaders)(Some(HttpResponse(Status.OK)))
+      val result = nsiConnector.updateEmail(validNSIPayload)
       Await.result(result.value, 3.seconds) shouldBe Right(())
     }
 
@@ -73,12 +73,12 @@ class NSIConnectorSpec extends TestSupport with HttpSupport with MockFactory wit
         forAll { status: Int ⇒
           whenever(status =!= Status.OK && status > 0) {
             inSequence {
-              mockPut(nsiCreateAccountUrl, validNSIUserInfo, authHeaders)(Some(HttpResponse(status)))
+              mockPut(nsiCreateAccountUrl, validNSIPayload, authHeaders)(Some(HttpResponse(status)))
               // WARNING: do not change the message in the following check - this needs to stay in line with the configuration in alert-config
               mockPagerDutyAlert("Received unexpected http status in response to update email")
             }
 
-            val result = nsiConnector.updateEmail(validNSIUserInfo)
+            val result = nsiConnector.updateEmail(validNSIPayload)
             Await.result(result.value, 3.seconds).isLeft shouldBe true
           }
         }
@@ -86,12 +86,12 @@ class NSIConnectorSpec extends TestSupport with HttpSupport with MockFactory wit
 
       "the POST to NS&I fails" in {
         inSequence {
-          mockPut(nsiCreateAccountUrl, validNSIUserInfo, authHeaders)(None)
+          mockPut(nsiCreateAccountUrl, validNSIPayload, authHeaders)(None)
           // WARNING: do not change the message in the following check - this needs to stay in line with the configuration in alert-config
           mockPagerDutyAlert("Failed to make call to update email")
         }
 
-        val result = nsiConnector.updateEmail(validNSIUserInfo)
+        val result = nsiConnector.updateEmail(validNSIPayload)
         Await.result(result.value, 3.seconds).isLeft shouldBe true
       }
     }
@@ -101,14 +101,14 @@ class NSIConnectorSpec extends TestSupport with HttpSupport with MockFactory wit
   "the createAccount Method" must {
 
     "Return a SubmissionSuccess when the status is Created" in {
-      mockPost(nsiCreateAccountUrl, validNSIUserInfo, authHeaders)(Some(HttpResponse(Status.CREATED, Some(Json.parse("""{"accountNumber" : "1234567890"}""")))))
-      val result = nsiConnector.createAccount(validNSIUserInfo)
+      mockPost(nsiCreateAccountUrl, validNSIPayload, authHeaders)(Some(HttpResponse(Status.CREATED, Some(Json.parse("""{"accountNumber" : "1234567890"}""")))))
+      val result = nsiConnector.createAccount(validNSIPayload)
       Await.result(result.value, 3.seconds) shouldBe Right(SubmissionSuccess(Some(AccountNumber("1234567890"))))
     }
 
     "Return a SubmissionSuccess when the status is CONFLICT" in {
-      mockPost(nsiCreateAccountUrl, validNSIUserInfo, authHeaders)(Some(HttpResponse(Status.CONFLICT)))
-      val result = nsiConnector.createAccount(validNSIUserInfo)
+      mockPost(nsiCreateAccountUrl, validNSIPayload, authHeaders)(Some(HttpResponse(Status.CONFLICT)))
+      val result = nsiConnector.createAccount(validNSIPayload)
       Await.result(result.value, 3.seconds) shouldBe Right(SubmissionSuccess(None))
     }
 
@@ -116,56 +116,56 @@ class NSIConnectorSpec extends TestSupport with HttpSupport with MockFactory wit
       "the status is BAD_REQUEST" in {
         val submissionFailure = SubmissionFailure(Some("id"), "message", "detail")
         inSequence {
-          mockPost(nsiCreateAccountUrl, validNSIUserInfo, authHeaders)(Some(
+          mockPost(nsiCreateAccountUrl, validNSIPayload, authHeaders)(Some(
             HttpResponse(Status.BAD_REQUEST, Some(JsObject(Seq("error" → submissionFailure.toJson))))))
           // WARNING: do not change the message in the following check - this needs to stay in line with the configuration in alert-config
           mockPagerDutyAlert("Received unexpected http status in response to create account")
         }
-        val result = nsiConnector.createAccount(validNSIUserInfo)
+        val result = nsiConnector.createAccount(validNSIPayload)
         Await.result(result.value, 3.seconds) shouldBe Left(submissionFailure)
       }
 
       "the status is BAD_REQUEST but fails to parse json in the response body" in {
         inSequence {
-          mockPost(nsiCreateAccountUrl, validNSIUserInfo, authHeaders)(Some(
+          mockPost(nsiCreateAccountUrl, validNSIPayload, authHeaders)(Some(
             HttpResponse(Status.BAD_REQUEST, Some(JsString("no json in the response")))))
           // WARNING: do not change the message in the following check - this needs to stay in line with the configuration in alert-config
           mockPagerDutyAlert("Received unexpected http status in response to create account")
         }
-        val result = nsiConnector.createAccount(validNSIUserInfo)
+        val result = nsiConnector.createAccount(validNSIPayload)
         Await.result(result.value, 3.seconds) shouldBe Left(SubmissionFailure("Bad request", ""))
       }
 
       "the status is INTERNAL_SERVER_ERROR" in {
         inSequence {
-          mockPost(nsiCreateAccountUrl, validNSIUserInfo, authHeaders)(Some(
+          mockPost(nsiCreateAccountUrl, validNSIPayload, authHeaders)(Some(
             HttpResponse(Status.INTERNAL_SERVER_ERROR, Some(JsString("500 Internal Server Error")))))
           // WARNING: do not change the message in the following check - this needs to stay in line with the configuration in alert-config
           mockPagerDutyAlert("Received unexpected http status in response to create account")
         }
-        val result = nsiConnector.createAccount(validNSIUserInfo)
+        val result = nsiConnector.createAccount(validNSIPayload)
         Await.result(result.value, 3.seconds) shouldBe Left(SubmissionFailure("Server error", ""))
       }
 
       "the status is SERVICE_UNAVAILABLE" in {
         inSequence {
-          mockPost(nsiCreateAccountUrl, validNSIUserInfo, authHeaders)(Some(
+          mockPost(nsiCreateAccountUrl, validNSIPayload, authHeaders)(Some(
             HttpResponse(Status.SERVICE_UNAVAILABLE, Some(JsString("502 Bad Gateway")))))
           // WARNING: do not change the message in the following check - this needs to stay in line with the configuration in alert-config
           mockPagerDutyAlert("Received unexpected http status in response to create account")
         }
-        val result = nsiConnector.createAccount(validNSIUserInfo)
+        val result = nsiConnector.createAccount(validNSIPayload)
         Await.result(result.value, 3.seconds) shouldBe Left(SubmissionFailure("Server error", ""))
       }
 
       "the status is anything else" in {
         inSequence {
-          mockPost(nsiCreateAccountUrl, validNSIUserInfo, authHeaders)(Some(HttpResponse(Status.BAD_GATEWAY)))
+          mockPost(nsiCreateAccountUrl, validNSIPayload, authHeaders)(Some(HttpResponse(Status.BAD_GATEWAY)))
           // WARNING: do not change the message in the following check - this needs to stay in line with the configuration in alert-config
           mockPagerDutyAlert("Received unexpected http status in response to create account")
 
         }
-        val result = nsiConnector.createAccount(validNSIUserInfo).value
+        val result = nsiConnector.createAccount(validNSIPayload).value
         Await.result(result, 3.seconds) match {
           case Right(_) ⇒ fail()
           case Left(_)  ⇒ ()
@@ -174,27 +174,27 @@ class NSIConnectorSpec extends TestSupport with HttpSupport with MockFactory wit
 
       "the call to createAccount fails" in {
         inSequence {
-          mockPost(nsiCreateAccountUrl, validNSIUserInfo, authHeaders)(None)
+          mockPost(nsiCreateAccountUrl, validNSIPayload, authHeaders)(None)
           // WARNING: do not change the message in the following check - this needs to stay in line with the configuration in alert-config
           mockPagerDutyAlert("Failed to make call to create account")
         }
-        val result = nsiConnector.createAccount(validNSIUserInfo)
+        val result = nsiConnector.createAccount(validNSIPayload)
         Await.result(result.value, 3.seconds).isLeft shouldBe true
       }
     }
 
     "the health-check Method" must {
       "Return a Right when the status is OK" in {
-        mockPut(nsiCreateAccountUrl, validNSIUserInfo, authHeaders)(Some(HttpResponse(Status.OK)))
-        val result = nsiConnector.healthCheck(validNSIUserInfo)
+        mockPut(nsiCreateAccountUrl, validNSIPayload, authHeaders)(Some(HttpResponse(Status.OK)))
+        val result = nsiConnector.healthCheck(validNSIPayload)
         Await.result(result.value, 3.seconds) shouldBe Right(())
       }
 
       "Return a Left when the status is OK" in {
         forAll { status: Int ⇒
           whenever(status > 0 && status =!= Status.OK) {
-            mockPut(nsiCreateAccountUrl, validNSIUserInfo, authHeaders)(Some(HttpResponse(status)))
-            val result = nsiConnector.healthCheck(validNSIUserInfo)
+            mockPut(nsiCreateAccountUrl, validNSIPayload, authHeaders)(Some(HttpResponse(status)))
+            val result = nsiConnector.healthCheck(validNSIPayload)
             Await.result(result.value, 3.seconds).isLeft shouldBe true
           }
         }
