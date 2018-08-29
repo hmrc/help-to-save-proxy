@@ -23,7 +23,7 @@ import uk.gov.hmrc.helptosaveproxy.health.HealthCheck.PerformHealthCheck
 import uk.gov.hmrc.helptosaveproxy.health.NSIConnectionHealthCheck.NSIConnectionHealthCheckRunner
 import uk.gov.hmrc.helptosaveproxy.health.NSIConnectionHealthCheck.NSIConnectionHealthCheckRunner.Payload
 import uk.gov.hmrc.helptosaveproxy.health.NSIConnectionHealthCheck.NSIConnectionHealthCheckRunner.Payload.{Payload1, Payload2}
-import uk.gov.hmrc.helptosaveproxy.models.NSIUserInfo
+import uk.gov.hmrc.helptosaveproxy.models.NSIPayload
 import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -42,7 +42,7 @@ class NSIConnectionHealthCheckRunnerSpec extends ActorTestSupport("NSIConnection
   )))
 
   def mockNSIConnectorTest(expectedPayload: Payload)(result: Option[Either[String, Unit]]): Unit =
-    (nsiConnector.healthCheck(_: NSIUserInfo)(_: HeaderCarrier, _: ExecutionContext))
+    (nsiConnector.healthCheck(_: NSIPayload)(_: HeaderCarrier, _: ExecutionContext))
       .expects(expectedPayload.value, *, *)
       .returning(
         EitherT(
