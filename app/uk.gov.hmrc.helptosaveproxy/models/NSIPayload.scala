@@ -22,18 +22,21 @@ import java.time.format.DateTimeFormatter
 import cats.instances.string._
 import cats.syntax.eq._
 import play.api.libs.json._
-import uk.gov.hmrc.helptosaveproxy.models.NSIUserInfo.ContactDetails
+import uk.gov.hmrc.helptosaveproxy.models.NSIPayload.ContactDetails
 
 import scala.util.{Failure, Success, Try}
 
-case class NSIUserInfo(forename:            String,
-                       surname:             String,
-                       dateOfBirth:         LocalDate,
-                       nino:                String,
-                       contactDetails:      ContactDetails,
-                       registrationChannel: String)
+case class NSIPayload(forename:            String,
+                      surname:             String,
+                      dateOfBirth:         LocalDate,
+                      nino:                String,
+                      contactDetails:      ContactDetails,
+                      registrationChannel: String,
+                      nbaDetails:          Option[BankDetails] = None,
+                      version:             String,
+                      systemId:            String)
 
-object NSIUserInfo {
+object NSIPayload {
 
   case class ContactDetails(address1:                String,
                             address2:                String,
@@ -70,16 +73,16 @@ object NSIUserInfo {
 
   implicit val contactDetailsFormat: Format[ContactDetails] = Json.format[ContactDetails]
 
-  implicit val nsiUserInfoFormat: Format[NSIUserInfo] = new Format[NSIUserInfo] {
+  implicit val nsiPayloadFormat: Format[NSIPayload] = new Format[NSIPayload] {
 
-    val writes: Writes[NSIUserInfo] = Json.writes[NSIUserInfo]
-    val reads: Reads[NSIUserInfo] = Json.reads[NSIUserInfo]
+    val writes: Writes[NSIPayload] = Json.writes[NSIPayload]
+    val reads: Reads[NSIPayload] = Json.reads[NSIPayload]
 
-    override def writes(o: NSIUserInfo): JsValue = writes.writes(o)
+    override def writes(o: NSIPayload): JsValue = writes.writes(o)
 
-    override def reads(json: JsValue): JsResult[NSIUserInfo] = reads.reads(json).map { u ⇒
+    override def reads(json: JsValue): JsResult[NSIPayload] = reads.reads(json).map { u ⇒
       val c = u.contactDetails
-      NSIUserInfo(
+      NSIPayload(
         u.forename.cleanupSpecialCharacters,
         u.surname.cleanupSpecialCharacters,
         u.dateOfBirth,
@@ -96,7 +99,10 @@ object NSIUserInfo {
           c.phoneNumber,
           c.communicationPreference.cleanupSpecialCharacters.removeAllSpaces
         ),
-        u.registrationChannel.cleanupSpecialCharacters.removeAllSpaces
+        u.registrationChannel.cleanupSpecialCharacters.removeAllSpaces,
+        u.nbaDetails,
+        u.version,
+        u.systemId
       )
 
     }

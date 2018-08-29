@@ -28,8 +28,8 @@ import uk.gov.hmrc.helptosaveproxy.connectors.NSIConnector
 import uk.gov.hmrc.helptosaveproxy.health.NSIConnectionHealthCheck.NSIConnectionHealthCheckRunner
 import uk.gov.hmrc.helptosaveproxy.health.NSIConnectionHealthCheck.NSIConnectionHealthCheckRunner.Payload
 import uk.gov.hmrc.helptosaveproxy.metrics.Metrics
-import uk.gov.hmrc.helptosaveproxy.models.NSIUserInfo
-import uk.gov.hmrc.helptosaveproxy.models.NSIUserInfo.ContactDetails
+import uk.gov.hmrc.helptosaveproxy.models.NSIPayload
+import uk.gov.hmrc.helptosaveproxy.models.NSIPayload.ContactDetails
 import uk.gov.hmrc.helptosaveproxy.util.lock.Lock
 import uk.gov.hmrc.helptosaveproxy.util.{Email, Logging, PagerDutyAlerting}
 import uk.gov.hmrc.http.HeaderCarrier
@@ -134,21 +134,21 @@ object NSIConnectionHealthCheck {
       Props(new NSIConnectionHealthCheckRunner(nsiConnector, metrics, payload, ninoLoggingEnabled))
 
     sealed trait Payload {
-      val value: NSIUserInfo
+      val value: NSIPayload
     }
 
     object Payload {
 
-      private def payload(email: Email): NSIUserInfo = NSIUserInfo(
+      private def payload(email: Email): NSIPayload = NSIPayload(
         "Service", "Account", LocalDate.ofEpochDay(0L), "XX999999X",
-                              ContactDetails("Health", "Check", None, None, None, "AB12CD", None, Some(email), None, "02"), "online")
+                              ContactDetails("Health", "Check", None, None, None, "AB12CD", None, Some(email), None, "02"), "online", None, "V2.0", "MDTP REGISTRATION")
 
       private[health] case object Payload1 extends Payload {
-        override val value: NSIUserInfo = payload("healthcheck_ping@noreply.com")
+        override val value: NSIPayload = payload("healthcheck_ping@noreply.com")
       }
 
       private[health] case object Payload2 extends Payload {
-        override val value: NSIUserInfo = payload("healthcheck_pong@noreply.com")
+        override val value: NSIPayload = payload("healthcheck_pong@noreply.com")
       }
 
     }

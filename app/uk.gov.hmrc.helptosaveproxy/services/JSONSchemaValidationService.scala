@@ -78,10 +78,10 @@ class JSONSchemaValidationServiceImpl @Inject() (conf: Configuration) extends JS
       case JsSuccess(u, _) ⇒ Right(u)
     }
 
-  def validate(userInfo: JsValue): Either[String, JsValue] =
+  def validate(payload: JsValue): Either[String, JsValue] =
     for {
-      u ← validateAgainstSchema(userInfo)
-      d ← extractDateOfBirth(userInfo)
+      u ← validateAgainstSchema(payload)
+      d ← extractDateOfBirth(payload)
       _ ← futureDate(d)
       _ ← before1800(d)
     } yield u
