@@ -21,8 +21,8 @@ import java.time.LocalDate
 import uk.gov.hmrc.smartstub.AutoGen.{GenProvider, instance}
 import uk.gov.hmrc.smartstub._
 import org.scalacheck.Gen
-import uk.gov.hmrc.helptosaveproxy.models.NSIUserInfo
-import uk.gov.hmrc.helptosaveproxy.models.NSIUserInfo.ContactDetails
+import uk.gov.hmrc.helptosaveproxy.models.NSIPayload
+import uk.gov.hmrc.helptosaveproxy.models.NSIPayload.ContactDetails
 
 object TestData {
 
@@ -35,14 +35,14 @@ object TestData {
       }
     })
 
-    implicit val userInfoGen: Gen[NSIUserInfo] = AutoGen[NSIUserInfo]
+    implicit val userInfoGen: Gen[NSIPayload] = AutoGen[NSIPayload]
 
-    def randomUserInfo(): NSIUserInfo = sample(userInfoGen)
+    def randomUserInfo(): NSIPayload = sample(userInfoGen)
 
     /**
      * Valid user details which will pass NSI validation checks
      */
-    val (nsiValidContactDetails, validNSIUserInfo) = {
+    val (nsiValidContactDetails, validNSIPayload) = {
       val (forename, surname) = "Tyrion" → "Lannister"
       val dateOfBirth = LocalDate.ofEpochDay(0L)
       val addressLine1 = "Casterly Rock"
@@ -58,10 +58,10 @@ object TestData {
 
       val nsiValidContactDetails =
         ContactDetails(addressLine1, addressLine2, Some(addressLine3), None, None, postcode, Some(country), Some(email), Some(phone), comms)
-      val nsiUserInfo =
-        NSIUserInfo(forename, surname, dateOfBirth, nino, nsiValidContactDetails, regChannel)
+      val nsiPayload =
+        NSIPayload(forename, surname, dateOfBirth, nino, nsiValidContactDetails, regChannel, None, "V2.1", "systemId")
 
-      (nsiValidContactDetails, nsiUserInfo)
+      (nsiValidContactDetails, nsiPayload)
     }
   }
 

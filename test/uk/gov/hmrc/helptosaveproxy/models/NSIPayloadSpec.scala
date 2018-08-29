@@ -20,74 +20,74 @@ import java.time.LocalDate
 
 import org.scalatest.{Matchers, WordSpec}
 import play.api.libs.json._
-import uk.gov.hmrc.helptosaveproxy.models.NSIUserInfo.ContactDetails
-import uk.gov.hmrc.helptosaveproxy.testutil.TestData.UserData.validNSIUserInfo
+import uk.gov.hmrc.helptosaveproxy.models.NSIPayload.ContactDetails
+import uk.gov.hmrc.helptosaveproxy.testutil.TestData.UserData.validNSIPayload
 
-class NSIUserInfoSpec extends WordSpec with Matchers { // scalastyle:off magic.number
+class NSIPayloadSpec extends WordSpec with Matchers { // scalastyle:off magic.number
 
-  val email = validNSIUserInfo.contactDetails.email
+  val email = validNSIPayload.contactDetails.email
 
   "The NSIUSerInfo" must {
 
     "have JSON format" which {
 
       "reads and writes NSIUserInfo" in {
-        Json.fromJson[NSIUserInfo](Json.toJson(validNSIUserInfo)) shouldBe JsSuccess(validNSIUserInfo)
+        Json.fromJson[NSIPayload](Json.toJson(validNSIPayload)) shouldBe JsSuccess(validNSIPayload)
       }
 
       "reads and writes dates in the format 'yyyyMMdd'" in {
         val date = LocalDate.of(1234, 5, 6)
 
         // check the happy path
-        val json1 = Json.toJson(validNSIUserInfo.copy(dateOfBirth = date))
+        val json1 = Json.toJson(validNSIPayload.copy(dateOfBirth = date))
         (json1 \ "dateOfBirth").get shouldBe JsString("12340506")
 
         // check the read will fail if the date is in the wrong format
         val json2 = json1.as[JsObject] ++ Json.obj("dateOfBirth" → JsString("not a date"))
-        Json.fromJson[NSIUserInfo](json2).isError shouldBe true
+        Json.fromJson[NSIPayload](json2).isError shouldBe true
 
         // check that read will fail if the date is not a string
         val json3 = json1.as[JsObject] ++ Json.obj("dateOfBirth" → JsNumber(0))
-        Json.fromJson[NSIUserInfo](json3).isError shouldBe true
+        Json.fromJson[NSIPayload](json3).isError shouldBe true
       }
     }
 
     "have an reads instance" which {
 
-        def performReads(userInfo: NSIUserInfo): NSIUserInfo = Json.toJson(userInfo).validate[NSIUserInfo].get
+        def performReads(userInfo: NSIPayload): NSIPayload = Json.toJson(userInfo).validate[NSIPayload].get
 
       "removes new line, tab and carriage return in forename" in {
         val modifiedForename = "\n\t\rname\t"
-        performReads(validNSIUserInfo.copy(forename = modifiedForename)).forename shouldBe "name"
+        performReads(validNSIPayload.copy(forename = modifiedForename)).forename shouldBe "name"
       }
 
       "removes white spaces in forename" in {
         val forenameWithSpaces = " " + "forename" + " "
-        performReads(validNSIUserInfo.copy(forename = forenameWithSpaces)).forename shouldBe "forename"
+        performReads(validNSIPayload.copy(forename = forenameWithSpaces)).forename shouldBe "forename"
       }
 
       "removes spaces, tabs, new lines and carriage returns from a double barrel forename" in {
         val forenameDoubleBarrel = "   John\t\n\r   Paul\t\n\r   "
-        performReads(validNSIUserInfo.copy(forename = forenameDoubleBarrel)).forename shouldBe "John Paul"
+        performReads(validNSIPayload.copy(forename = forenameDoubleBarrel)).forename shouldBe "John Paul"
       }
 
       "removes spaces, tabs, new lines and carriage returns from a double barrel forename with a hyphen" in {
         val forenameDoubleBarrel = "   John\t\n\r-Paul\t\n\r   "
-        performReads(validNSIUserInfo.copy(forename = forenameDoubleBarrel)).forename shouldBe "John -Paul"
+        performReads(validNSIPayload.copy(forename = forenameDoubleBarrel)).forename shouldBe "John -Paul"
       }
 
       "removes whitespace from surname" in {
-        performReads(validNSIUserInfo.copy(surname = " surname")).surname shouldBe "surname"
+        performReads(validNSIPayload.copy(surname = " surname")).surname shouldBe "surname"
       }
 
       "removes leading and trailing whitespaces, tabs, new lines and carriage returns from double barrel surname" in {
         val modifiedSurname = "   Luis\t\n\r   Guerra\t\n\r   "
-        performReads(validNSIUserInfo.copy(surname = modifiedSurname)).surname shouldBe "Luis Guerra"
+        performReads(validNSIPayload.copy(surname = modifiedSurname)).surname shouldBe "Luis Guerra"
       }
 
       "removes leading and trailing whitespaces, tabs, new lines and carriage returns from double barrel surname with a hyphen" in {
         val modifiedSurname = "   Luis\t\n\r-Guerra\t\n\r   "
-        performReads(validNSIUserInfo.copy(surname = " " + modifiedSurname)).surname shouldBe "Luis -Guerra"
+        performReads(validNSIPayload.copy(surname = " " + modifiedSurname)).surname shouldBe "Luis -Guerra"
       }
 
       "removes new lines, tabs, carriage returns and trailing whitespaces from all address lines" in {
@@ -104,7 +104,7 @@ class NSIUserInfoSpec extends WordSpec with Matchers { // scalastyle:off magic.n
             None,
             "comms"
           )
-        val ui: NSIUserInfo = validNSIUserInfo.copy(contactDetails = specialAddress)
+        val ui: NSIPayload = validNSIPayload.copy(contactDetails = specialAddress)
         val result = performReads(ui)
 
         result.contactDetails.address1 shouldBe "address line1"
@@ -129,8 +129,8 @@ class NSIUserInfoSpec extends WordSpec with Matchers { // scalastyle:off magic.n
           "comms"
         )
 
-        val json: JsValue = Json.toJson(validNSIUserInfo.copy(contactDetails = specialAddress))
-        val result = json.validate[NSIUserInfo].get
+        val json: JsValue = Json.toJson(validNSIPayload.copy(contactDetails = specialAddress))
+        val result = json.validate[NSIPayload].get
 
         result.contactDetails.address1 shouldBe "Address line1"
         result.contactDetails.address2 shouldBe "Address line2"
@@ -156,8 +156,8 @@ class NSIUserInfoSpec extends WordSpec with Matchers { // scalastyle:off magic.n
           "comms"
         )
 
-        val json: JsValue = Json.toJson(validNSIUserInfo.copy(forename       = longName, surname = longSurname, contactDetails = specialAddress))
-        val result = json.validate[NSIUserInfo].get
+        val json: JsValue = Json.toJson(validNSIPayload.copy(forename       = longName, surname = longSurname, contactDetails = specialAddress))
+        val result = json.validate[NSIPayload].get
 
         result.forename shouldBe "John Paul Harry"
         result.surname shouldBe "Smith Brown"
@@ -172,7 +172,7 @@ class NSIUserInfoSpec extends WordSpec with Matchers { // scalastyle:off magic.n
 
       "filters out country codes equal to the string 'other'" in {
         Set("other", "OTHER", "Other").foreach { other ⇒
-          val result = performReads(validNSIUserInfo.copy(contactDetails = validNSIUserInfo.contactDetails.copy(countryCode = Some(other))))
+          val result = performReads(validNSIPayload.copy(contactDetails = validNSIPayload.contactDetails.copy(countryCode = Some(other))))
           result.contactDetails.countryCode shouldBe None
         }
       }
