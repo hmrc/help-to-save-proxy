@@ -5,9 +5,9 @@
 
 ## How to run
 
-Runs on port 7004 when started locally by the service manager.
+Runs on port 7005 when started locally by the service manager.
 
-sbt "run 7004"
+sbt "run 7005"
 
 ## Endpoints
 
