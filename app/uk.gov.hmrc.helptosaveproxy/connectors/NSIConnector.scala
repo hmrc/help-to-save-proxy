@@ -159,13 +159,13 @@ class NSIConnectorImpl @Inject() (auditConnector:    AuditConnector,
       }
   }
 
-  override def queryAccount(resource: String, queryString: String)(implicit hc: HeaderCarrier, ex: ExecutionContext): Result[HttpResponse] = {
+  override def queryAccount(resource: String, queryString: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Result[HttpResponse] = {
     val url = s"${appConfig.nsiQueryAccountUrl}/$resource"
     logger.info(s"Trying to query account: $url")
 
     val queryParams = queryString.split("&|=").grouped(2).map { case Array(k, v) ⇒ k -> v }.toMap
 
-    EitherT(proxyClient.get(url, queryParams, Map(nsiAuthHeaderKey → nsiBasicAuth))(hc.copy(authorization = None), implicitly[ExecutionContext])
+    EitherT(proxyClient.get(url, queryParams, Map(nsiAuthHeaderKey → nsiBasicAuth))(hc.copy(authorization = None), ec)
       .map[Either[String, HttpResponse]](Right(_))
       .recover {
         case e ⇒ Left(e.getMessage)
