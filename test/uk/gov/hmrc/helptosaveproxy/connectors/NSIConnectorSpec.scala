@@ -24,7 +24,8 @@ import org.scalamock.scalatest.MockFactory
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
 import play.api.Configuration
 import play.api.http.Status
-import play.api.libs.json.{JsObject, JsString, Writes}
+import play.api.libs.json.{JsObject, JsString, Json}
+import play.api.libs.ws.WSClient
 import uk.gov.hmrc.helptosaveproxy.TestSupport
 import uk.gov.hmrc.helptosaveproxy.models.SubmissionResult.{SubmissionFailure, SubmissionSuccess}
 import uk.gov.hmrc.helptosaveproxy.testutil.MockPagerDuty
@@ -32,56 +33,33 @@ import uk.gov.hmrc.helptosaveproxy.testutil.TestData.UserData.validNSIUserInfo
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 
+import scala.concurrent.Await
 import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.Random
 
-class NSIConnectorSpec extends TestSupport with MockFactory with GeneratorDrivenPropertyChecks with MockPagerDuty {
+class NSIConnectorSpec extends TestSupport with HttpSupport with MockFactory with GeneratorDrivenPropertyChecks with MockPagerDuty {
 
   override lazy val additionalConfig = Configuration("feature-toggles.log-account-creation-json.enabled" → Random.nextBoolean())
 
-  val mockAuditor = mock[AuditConnector]
-  lazy val nsiConnector = new NSIConnectorImpl(mockAuditor, mockMetrics, mockPagerDuty) {
-    override val httpProxy = mockHTTPProxy
+  private val mockAuditor = mock[AuditConnector]
+  private val mockWsClient = mock[WSClient]
+
+  lazy val nsiConnector = new NSIConnectorImpl(mockAuditor, mockMetrics, mockPagerDuty, mockWsClient) {
+    override val proxyClient = mockProxyClient
   }
 
   val nsiCreateAccountUrl = appConfig.nsiCreateAccountUrl
   val nsiAuthHeaderKey = appConfig.nsiAuthHeaderKey
   val nsiBasicAuth = appConfig.nsiBasicAuth
 
+  val authHeaders = Map(nsiAuthHeaderKey → nsiBasicAuth)
+
   private val headerCarrierWithoutAuthorization = argThat[HeaderCarrier](_.authorization.isEmpty)
-
-  def mockPost[I](body: I, url: String)(result: Either[String, HttpResponse]): Unit =
-    (mockHTTPProxy.post(_: String, _: I, _: Map[String, String])(_: Writes[I], _: HeaderCarrier, _: ExecutionContext))
-      .expects(url, body, Map(nsiAuthHeaderKey → nsiBasicAuth), *, headerCarrierWithoutAuthorization, *)
-      .returning(
-        result.fold(
-          e ⇒ Future.failed(new Exception(e)),
-          r ⇒ Future.successful(r)
-        ))
-
-  def mockPut[I](body: I, url: String, needsAuditing: Boolean = true)(result: Either[String, HttpResponse]): Unit =
-    (mockHTTPProxy.put(_: String, _: I, _: Boolean, _: Map[String, String])(_: Writes[I], _: HeaderCarrier, _: ExecutionContext))
-      .expects(url, body, needsAuditing, Map(nsiAuthHeaderKey → nsiBasicAuth), *, headerCarrierWithoutAuthorization, *)
-      .returning(
-        result.fold(
-          e ⇒ Future.failed(new Exception(e)),
-          r ⇒ Future.successful(r)
-        ))
-
-  def mockGet[I](url: String)(result: Either[String, HttpResponse]): Unit =
-    (mockHTTPProxy.get(_: String, _: Map[String, String])(_: HeaderCarrier, _: ExecutionContext))
-      .expects(url, Map(nsiAuthHeaderKey → nsiBasicAuth), headerCarrierWithoutAuthorization, *)
-      .returning(
-        result.fold(
-          e ⇒ Future.failed(new Exception(e)),
-          r ⇒ Future.successful(r)
-        ))
 
   "the updateEmail method" must {
     "return a Right when the status is OK" in {
-      mockPut(validNSIUserInfo, nsiCreateAccountUrl)(Right(HttpResponse(Status.OK)))
 
+      mockPut(nsiCreateAccountUrl, validNSIUserInfo, authHeaders)(Some(HttpResponse(Status.OK)))
       val result = nsiConnector.updateEmail(validNSIUserInfo)
       Await.result(result.value, 3.seconds) shouldBe Right(())
     }
@@ -91,7 +69,7 @@ class NSIConnectorSpec extends TestSupport with MockFactory with GeneratorDriven
         forAll { status: Int ⇒
           whenever(status =!= Status.OK && status > 0) {
             inSequence {
-              mockPut(validNSIUserInfo, nsiCreateAccountUrl)(Right(HttpResponse(status)))
+              mockPut(nsiCreateAccountUrl, validNSIUserInfo, authHeaders)(Some(HttpResponse(status)))
               // WARNING: do not change the message in the following check - this needs to stay in line with the configuration in alert-config
               mockPagerDutyAlert("Received unexpected http status in response to update email")
             }
@@ -104,7 +82,7 @@ class NSIConnectorSpec extends TestSupport with MockFactory with GeneratorDriven
 
       "the POST to NS&I fails" in {
         inSequence {
-          mockPut(validNSIUserInfo, nsiCreateAccountUrl)(Left("Oh no!"))
+          mockPut(nsiCreateAccountUrl, validNSIUserInfo, authHeaders)(None)
           // WARNING: do not change the message in the following check - this needs to stay in line with the configuration in alert-config
           mockPagerDutyAlert("Failed to make call to update email")
         }
@@ -119,13 +97,13 @@ class NSIConnectorSpec extends TestSupport with MockFactory with GeneratorDriven
   "the createAccount Method" must {
 
     "Return a SubmissionSuccess when the status is Created" in {
-      mockPost(validNSIUserInfo, nsiCreateAccountUrl)(Right(HttpResponse(Status.CREATED)))
+      mockPost(nsiCreateAccountUrl, validNSIUserInfo, authHeaders)(Some(HttpResponse(Status.CREATED, Some(Json.parse("""{"accountNumber" : "1234567890"}""")))))
       val result = nsiConnector.createAccount(validNSIUserInfo)
       Await.result(result.value, 3.seconds) shouldBe Right(SubmissionSuccess(false))
     }
 
     "Return a SubmissionSuccess when the status is CONFLICT" in {
-      mockPost(validNSIUserInfo, nsiCreateAccountUrl)(Right(HttpResponse(Status.CONFLICT)))
+      mockPost(nsiCreateAccountUrl, validNSIUserInfo, authHeaders)(Some(HttpResponse(Status.CONFLICT)))
       val result = nsiConnector.createAccount(validNSIUserInfo)
       Await.result(result.value, 3.seconds) shouldBe Right(SubmissionSuccess(true))
     }
@@ -134,7 +112,7 @@ class NSIConnectorSpec extends TestSupport with MockFactory with GeneratorDriven
       "the status is BAD_REQUEST" in {
         val submissionFailure = SubmissionFailure(Some("id"), "message", "detail")
         inSequence {
-          mockPost(validNSIUserInfo, nsiCreateAccountUrl)(Right(
+          mockPost(nsiCreateAccountUrl, validNSIUserInfo, authHeaders)(Some(
             HttpResponse(Status.BAD_REQUEST, Some(JsObject(Seq("error" → submissionFailure.toJson))))))
           // WARNING: do not change the message in the following check - this needs to stay in line with the configuration in alert-config
           mockPagerDutyAlert("Received unexpected http status in response to create account")
@@ -145,7 +123,7 @@ class NSIConnectorSpec extends TestSupport with MockFactory with GeneratorDriven
 
       "the status is BAD_REQUEST but fails to parse json in the response body" in {
         inSequence {
-          mockPost(validNSIUserInfo, nsiCreateAccountUrl)(Right(
+          mockPost(nsiCreateAccountUrl, validNSIUserInfo, authHeaders)(Some(
             HttpResponse(Status.BAD_REQUEST, Some(JsString("no json in the response")))))
           // WARNING: do not change the message in the following check - this needs to stay in line with the configuration in alert-config
           mockPagerDutyAlert("Received unexpected http status in response to create account")
@@ -156,7 +134,7 @@ class NSIConnectorSpec extends TestSupport with MockFactory with GeneratorDriven
 
       "the status is INTERNAL_SERVER_ERROR" in {
         inSequence {
-          mockPost(validNSIUserInfo, nsiCreateAccountUrl)(Right(
+          mockPost(nsiCreateAccountUrl, validNSIUserInfo, authHeaders)(Some(
             HttpResponse(Status.INTERNAL_SERVER_ERROR, Some(JsString("500 Internal Server Error")))))
           // WARNING: do not change the message in the following check - this needs to stay in line with the configuration in alert-config
           mockPagerDutyAlert("Received unexpected http status in response to create account")
@@ -167,7 +145,7 @@ class NSIConnectorSpec extends TestSupport with MockFactory with GeneratorDriven
 
       "the status is SERVICE_UNAVAILABLE" in {
         inSequence {
-          mockPost(validNSIUserInfo, nsiCreateAccountUrl)(Right(
+          mockPost(nsiCreateAccountUrl, validNSIUserInfo, authHeaders)(Some(
             HttpResponse(Status.SERVICE_UNAVAILABLE, Some(JsString("502 Bad Gateway")))))
           // WARNING: do not change the message in the following check - this needs to stay in line with the configuration in alert-config
           mockPagerDutyAlert("Received unexpected http status in response to create account")
@@ -178,7 +156,7 @@ class NSIConnectorSpec extends TestSupport with MockFactory with GeneratorDriven
 
       "the status is anything else" in {
         inSequence {
-          mockPost(validNSIUserInfo, nsiCreateAccountUrl)(Right(HttpResponse(Status.BAD_GATEWAY)))
+          mockPost(nsiCreateAccountUrl, validNSIUserInfo, authHeaders)(Some(HttpResponse(Status.BAD_GATEWAY)))
           // WARNING: do not change the message in the following check - this needs to stay in line with the configuration in alert-config
           mockPagerDutyAlert("Received unexpected http status in response to create account")
 
@@ -192,7 +170,7 @@ class NSIConnectorSpec extends TestSupport with MockFactory with GeneratorDriven
 
       "the call to createAccount fails" in {
         inSequence {
-          mockPost(validNSIUserInfo, nsiCreateAccountUrl)(Left(""))
+          mockPost(nsiCreateAccountUrl, validNSIUserInfo, authHeaders)(None)
           // WARNING: do not change the message in the following check - this needs to stay in line with the configuration in alert-config
           mockPagerDutyAlert("Failed to make call to create account")
         }
@@ -203,7 +181,7 @@ class NSIConnectorSpec extends TestSupport with MockFactory with GeneratorDriven
 
     "the health-check Method" must {
       "Return a Right when the status is OK" in {
-        mockPut(validNSIUserInfo, nsiCreateAccountUrl, false)(Right(HttpResponse(Status.OK)))
+        mockPut(nsiCreateAccountUrl, validNSIUserInfo, authHeaders)(Some(HttpResponse(Status.OK)))
         val result = nsiConnector.healthCheck(validNSIUserInfo)
         Await.result(result.value, 3.seconds) shouldBe Right(())
       }
@@ -211,7 +189,7 @@ class NSIConnectorSpec extends TestSupport with MockFactory with GeneratorDriven
       "Return a Left when the status is OK" in {
         forAll { status: Int ⇒
           whenever(status > 0 && status =!= Status.OK) {
-            mockPut(validNSIUserInfo, nsiCreateAccountUrl, false)(Right(HttpResponse(status)))
+            mockPut(nsiCreateAccountUrl, validNSIUserInfo, authHeaders)(Some(HttpResponse(status)))
             val result = nsiConnector.healthCheck(validNSIUserInfo)
             Await.result(result.value, 3.seconds).isLeft shouldBe true
           }
@@ -231,22 +209,24 @@ class NSIConnectorSpec extends TestSupport with MockFactory with GeneratorDriven
 
     val queryString = s"nino=$nino&version=$version&systemId=$systemId&correlationId=$correlationId"
 
+    val queryParamsMap = Map("nino" -> nino, "version" -> version, "systemId" -> systemId, "correlationId" -> correlationId.toString)
+
       def doRequest = nsiConnector.queryAccount(resource, queryString)
 
-      def url = s"${appConfig.nsiQueryAccountUrl}/$resource?nino=$nino&version=$version&systemId=$systemId&correlationId=$correlationId"
+      def url = s"${appConfig.nsiQueryAccountUrl}/$resource"
 
     "handle the successful response and return it" in {
       val responseBody = s"""{"version":$version,"correlationId":"$correlationId"}"""
       val httpResponse = HttpResponse(Status.OK, responseString = Some(responseBody))
 
-      mockGet(url)(Right(httpResponse))
+      mockGet(url, queryParamsMap, authHeaders)(Some(httpResponse))
 
       Await.result(doRequest.value, 3.seconds) shouldBe Right(httpResponse)
     }
 
     "handle unexpected errors" in {
 
-      mockGet(url)(Left("unexpected failure"))
+      mockGet(url, queryParamsMap, authHeaders)(None)
 
       Await.result(doRequest.value, 3.seconds).isLeft shouldBe true
     }

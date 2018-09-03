@@ -24,7 +24,10 @@ import com.google.inject.ImplementedBy
 import javax.inject.{Inject, Singleton}
 import play.api.http.Status
 import play.api.libs.json.Json
-import uk.gov.hmrc.helptosaveproxy.config.{AppConfig, WSHttpProxy}
+import play.api.libs.ws.WSClient
+import uk.gov.hmrc.helptosaveproxy.config.AppConfig
+import uk.gov.hmrc.helptosaveproxy.http.HttpProxyClient
+import uk.gov.hmrc.helptosaveproxy.http.HttpProxyClient.HttpProxyClientOps
 import uk.gov.hmrc.helptosaveproxy.metrics.Metrics
 import uk.gov.hmrc.helptosaveproxy.metrics.Metrics.nanosToPrettyString
 import uk.gov.hmrc.helptosaveproxy.models.NSIUserInfo
@@ -36,6 +39,7 @@ import uk.gov.hmrc.helptosaveproxy.util.Toggles._
 import uk.gov.hmrc.helptosaveproxy.util.{LogMessageTransformer, Logging, NINO, PagerDutyAlerting, Result, maskNino}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
+import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -54,11 +58,12 @@ trait NSIConnector {
 @Singleton
 class NSIConnectorImpl @Inject() (auditConnector:    AuditConnector,
                                   metrics:           Metrics,
-                                  pagerDutyAlerting: PagerDutyAlerting)(
+                                  pagerDutyAlerting: PagerDutyAlerting,
+                                  wsClient:          WSClient)(
     implicit
     transformer: LogMessageTransformer, appConfig: AppConfig) extends NSIConnector with Logging {
 
-  val httpProxy: WSHttpProxy = new WSHttpProxy(auditConnector, appConfig.runModeConfiguration, "microservice.services.nsi.proxy")
+  val proxyClient: HttpClient = new HttpProxyClient(auditConnector, appConfig.runModeConfiguration, wsClient, "microservice.services.nsi.proxy")
 
   private val nsiCreateAccountUrl = appConfig.nsiCreateAccountUrl
   private val nsiAuthHeaderKey = appConfig.nsiAuthHeaderKey
@@ -81,7 +86,7 @@ class NSIConnectorImpl @Inject() (auditConnector:    AuditConnector,
 
     val timeContext: Timer.Context = metrics.nsiAccountCreationTimer.time()
 
-    EitherT(httpProxy.post(nsiCreateAccountUrl, userInfo, Map(nsiAuthHeaderKey → nsiBasicAuth))(nsiUserInfoFormat, hc.copy(authorization = None), ec)
+    EitherT(proxyClient.post(nsiCreateAccountUrl, userInfo, Map(nsiAuthHeaderKey → nsiBasicAuth))(nsiUserInfoFormat, hc.copy(authorization = None), ec)
       .map[Either[SubmissionFailure, SubmissionSuccess]] { response ⇒
         val time = timeContext.stop()
 
@@ -116,7 +121,7 @@ class NSIConnectorImpl @Inject() (auditConnector:    AuditConnector,
     val timeContext: Timer.Context = metrics.nsiUpdateEmailTimer.time()
     val correlationId = getCorrelationId
 
-    httpProxy.put(nsiCreateAccountUrl, userInfo, true, Map(nsiAuthHeaderKey → nsiBasicAuth))(nsiUserInfoFormat, hc.copy(authorization = None), ec)
+    proxyClient.put(nsiCreateAccountUrl, userInfo, Map(nsiAuthHeaderKey → nsiBasicAuth))(nsiUserInfoFormat, hc.copy(authorization = None), ec)
       .map[Either[String, Unit]] { response ⇒
         val time = timeContext.stop()
 
@@ -143,7 +148,7 @@ class NSIConnectorImpl @Inject() (auditConnector:    AuditConnector,
   }
 
   override def healthCheck(userInfo: NSIUserInfo)(implicit hc: HeaderCarrier, ex: ExecutionContext): Result[Unit] = EitherT[Future, String, Unit] {
-    httpProxy.put(nsiCreateAccountUrl, userInfo, false, Map(nsiAuthHeaderKey → nsiBasicAuth))(nsiUserInfoFormat, hc.copy(authorization = None), ex)
+    proxyClient.put(nsiCreateAccountUrl, userInfo, Map(nsiAuthHeaderKey → nsiBasicAuth))(nsiUserInfoFormat, hc.copy(authorization = None), ex)
       .map[Either[String, Unit]] { response ⇒
         response.status match {
           case Status.OK ⇒ Right(())
@@ -155,10 +160,12 @@ class NSIConnectorImpl @Inject() (auditConnector:    AuditConnector,
   }
 
   override def queryAccount(resource: String, queryString: String)(implicit hc: HeaderCarrier, ex: ExecutionContext): Result[HttpResponse] = {
-    val url = s"${appConfig.nsiQueryAccountUrl}/$resource?$queryString"
+    val url = s"${appConfig.nsiQueryAccountUrl}/$resource"
     logger.info(s"Trying to query account: $url")
 
-    EitherT(httpProxy.get(url, Map(nsiAuthHeaderKey → nsiBasicAuth))(hc.copy(authorization = None), implicitly[ExecutionContext])
+    val queryParams = queryString.split("&|=").grouped(2).map { case Array(k, v) ⇒ k -> v }.toMap
+
+    EitherT(proxyClient.get(url, queryParams, Map(nsiAuthHeaderKey → nsiBasicAuth))(hc.copy(authorization = None), implicitly[ExecutionContext])
       .map[Either[String, HttpResponse]](Right(_))
       .recover {
         case e ⇒ Left(e.getMessage)

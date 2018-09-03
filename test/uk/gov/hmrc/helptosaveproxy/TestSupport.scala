@@ -26,7 +26,7 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{BeforeAndAfterAll, Suite}
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.{Application, Configuration, Play}
-import uk.gov.hmrc.helptosaveproxy.config.{AppConfig, WSHttpProxy}
+import uk.gov.hmrc.helptosaveproxy.config.AppConfig
 import uk.gov.hmrc.helptosaveproxy.metrics.Metrics
 import uk.gov.hmrc.helptosaveproxy.testutil.TestLogMessageTransformer
 import uk.gov.hmrc.helptosaveproxy.util.LogMessageTransformer
@@ -56,8 +56,6 @@ trait TestSupport extends UnitSpec with MockFactory with BeforeAndAfterAll with 
   }
 
   lazy val fakeApplication: Application = buildFakeApplication(additionalConfig)
-
-  val mockHTTPProxy = mock[WSHttpProxy]
 
   implicit lazy val ec: ExecutionContext = fakeApplication.injector.instanceOf[ExecutionContext]
 
