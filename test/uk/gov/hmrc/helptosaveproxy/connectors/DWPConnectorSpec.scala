@@ -24,9 +24,10 @@ import org.scalatest.EitherValues
 import play.api.libs.json.Json
 import play.api.libs.ws.WSClient
 import uk.gov.hmrc.helptosaveproxy.TestSupport
+import uk.gov.hmrc.helptosaveproxy.http.HttpProxyClient
 import uk.gov.hmrc.helptosaveproxy.models.UCDetails
 import uk.gov.hmrc.helptosaveproxy.testutil.{MockPagerDuty, UCClaimantTestSupport}
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 
 import scala.concurrent.duration._
@@ -37,14 +38,16 @@ class DWPConnectorSpec extends TestSupport with HttpSupport with MockFactory wit
   private val mockAuditor = mock[AuditConnector]
   private val mockWsClient = mock[WSClient]
 
+  class MockedHttpProxyClient extends HttpProxyClient(mockAuditor, configuration, mockWsClient, "microservice.services.dwp.proxy")
+
+  override val mockProxyClient = mock[MockedHttpProxyClient]
+
   lazy val connector = new DWPConnectorImpl(mockAuditor, mockMetrics, mockPagerDuty, mockWsClient) {
     override val proxyClient = mockProxyClient
   }
 
   val transactionId = UUID.randomUUID()
   val threshold = 650.0
-
-  private val headerCarrierWithoutAuthorizationAndToken = argThat[HeaderCarrier](h ⇒ h.authorization.isEmpty && h.token.isEmpty)
 
   def build200Response(uCDetails: UCDetails): HttpResponse = {
     HttpResponse(200, Some(Json.toJson(uCDetails))) // scalastyle:ignore magic.number

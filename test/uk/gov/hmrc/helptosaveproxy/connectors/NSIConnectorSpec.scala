@@ -27,10 +27,11 @@ import play.api.http.Status
 import play.api.libs.json.{JsObject, JsString, Json}
 import play.api.libs.ws.WSClient
 import uk.gov.hmrc.helptosaveproxy.TestSupport
+import uk.gov.hmrc.helptosaveproxy.http.HttpProxyClient
 import uk.gov.hmrc.helptosaveproxy.models.SubmissionResult.{SubmissionFailure, SubmissionSuccess}
 import uk.gov.hmrc.helptosaveproxy.testutil.MockPagerDuty
 import uk.gov.hmrc.helptosaveproxy.testutil.TestData.UserData.validNSIUserInfo
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 
 import scala.concurrent.Await
@@ -44,6 +45,10 @@ class NSIConnectorSpec extends TestSupport with HttpSupport with MockFactory wit
   private val mockAuditor = mock[AuditConnector]
   private val mockWsClient = mock[WSClient]
 
+  class MockedHttpProxyClient extends HttpProxyClient(mockAuditor, configuration, mockWsClient, "microservice.services.nsi.proxy")
+
+  override val mockProxyClient = mock[MockedHttpProxyClient]
+
   lazy val nsiConnector = new NSIConnectorImpl(mockAuditor, mockMetrics, mockPagerDuty, mockWsClient) {
     override val proxyClient = mockProxyClient
   }
@@ -53,8 +58,6 @@ class NSIConnectorSpec extends TestSupport with HttpSupport with MockFactory wit
   val nsiBasicAuth = appConfig.nsiBasicAuth
 
   val authHeaders = Map(nsiAuthHeaderKey → nsiBasicAuth)
-
-  private val headerCarrierWithoutAuthorization = argThat[HeaderCarrier](_.authorization.isEmpty)
 
   "the updateEmail method" must {
     "return a Right when the status is OK" in {

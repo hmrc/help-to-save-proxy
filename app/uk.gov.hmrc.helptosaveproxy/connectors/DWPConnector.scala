@@ -32,8 +32,6 @@ import uk.gov.hmrc.helptosaveproxy.util.Logging._
 import uk.gov.hmrc.helptosaveproxy.util.{LogMessageTransformer, Logging, PagerDutyAlerting}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
-import uk.gov.hmrc.play.bootstrap.http.HttpClient
-import uk.gov.hmrc.helptosaveproxy.http.HttpProxyClient.HttpProxyClientOps
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -52,9 +50,7 @@ class DWPConnectorImpl @Inject() (auditConnector:    AuditConnector,
                                   wsClient:          WSClient)(implicit transformer: LogMessageTransformer, appConfig: AppConfig)
   extends DWPConnector with Logging {
 
-  val dwpBaseUrl: String = appConfig.baseUrl("dwp")
-
-  val proxyClient: HttpClient = new HttpProxyClient(auditConnector, appConfig.runModeConfiguration, wsClient, "microservice.services.dwp.proxy")
+  val proxyClient: HttpProxyClient = new HttpProxyClient(auditConnector, appConfig.runModeConfiguration, wsClient, "microservice.services.dwp.proxy")
 
   def ucClaimantCheck(nino: String, transactionId: UUID, threshold: Double)(implicit hc: HeaderCarrier, ec: ExecutionContext): EitherT[Future, String, HttpResponse] = {
 
@@ -62,7 +58,7 @@ class DWPConnectorImpl @Inject() (auditConnector:    AuditConnector,
 
     val queryParams = Map("systemId" -> appConfig.systemId, "thresholdAmount" -> threshold.toString, "transactionId" -> transactionId.toString)
 
-    EitherT(proxyClient.get(s"$dwpBaseUrl/hmrc/$nino", queryParams)(hc.copy(authorization = None, token = None), ec)
+    EitherT(proxyClient.get(s"${appConfig.dwpBaseUrl}/hmrc/$nino", queryParams)(hc.copy(authorization = None, token = None), ec)
       .map[Either[String, HttpResponse]] { response ⇒
         val time = timeContext.stop()
         response.status match {

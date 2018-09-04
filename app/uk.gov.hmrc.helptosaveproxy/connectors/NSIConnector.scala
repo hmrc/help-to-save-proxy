@@ -27,7 +27,6 @@ import play.api.libs.json.Json
 import play.api.libs.ws.WSClient
 import uk.gov.hmrc.helptosaveproxy.config.AppConfig
 import uk.gov.hmrc.helptosaveproxy.http.HttpProxyClient
-import uk.gov.hmrc.helptosaveproxy.http.HttpProxyClient.HttpProxyClientOps
 import uk.gov.hmrc.helptosaveproxy.metrics.Metrics
 import uk.gov.hmrc.helptosaveproxy.metrics.Metrics.nanosToPrettyString
 import uk.gov.hmrc.helptosaveproxy.models.NSIUserInfo
@@ -39,7 +38,6 @@ import uk.gov.hmrc.helptosaveproxy.util.Toggles._
 import uk.gov.hmrc.helptosaveproxy.util.{LogMessageTransformer, Logging, NINO, PagerDutyAlerting, Result, maskNino}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
-import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -63,7 +61,7 @@ class NSIConnectorImpl @Inject() (auditConnector:    AuditConnector,
     implicit
     transformer: LogMessageTransformer, appConfig: AppConfig) extends NSIConnector with Logging {
 
-  val proxyClient: HttpClient = new HttpProxyClient(auditConnector, appConfig.runModeConfiguration, wsClient, "microservice.services.nsi.proxy")
+  val proxyClient: HttpProxyClient = new HttpProxyClient(auditConnector, appConfig.runModeConfiguration, wsClient, "microservice.services.nsi.proxy")
 
   private val nsiCreateAccountUrl = appConfig.nsiCreateAccountUrl
   private val nsiAuthHeaderKey = appConfig.nsiAuthHeaderKey

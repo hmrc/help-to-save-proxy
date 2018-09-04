@@ -17,7 +17,8 @@
 package uk.gov.hmrc.helptosaveproxy.http
 
 import play.api.Configuration
-import play.api.libs.json.Writes
+import play.api.http.HttpVerbs
+import play.api.libs.json.{Json, Writes}
 import play.api.libs.ws.{WSClient, WSProxyServer}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpReads, HttpResponse}
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
@@ -31,40 +32,42 @@ class HttpProxyClient(override val auditConnector: AuditConnector,
                       wsClient:                    WSClient,
                       proxyConfigPath:             String)
 
-  extends DefaultHttpClient(config, auditConnector, wsClient) with WSProxy {
+  extends DefaultHttpClient(config, auditConnector, wsClient) with WSProxy with HttpVerbs {
 
   override lazy val wsProxyServer: Option[WSProxyServer] = WSProxyConfiguration(proxyConfigPath)
-}
 
-object HttpProxyClient {
-
-  // this HttpReads instance for HttpResponse is preferred over the default
-  // uk.gov.hmrc.http.RawReads.readRaw as this custom one doesn't throw exceptions
   private class RawHttpReads extends HttpReads[HttpResponse] {
     override def read(method: String, url: String, response: HttpResponse): HttpResponse = response
   }
 
+  // this HttpReads instance for HttpResponse is preferred over the default
+  // uk.gov.hmrc.http.RawReads.readRaw as this custom one doesn't throw exceptions
   private val rawHttpReads = new RawHttpReads
 
-  implicit class HttpProxyClientOps(val http: uk.gov.hmrc.play.bootstrap.http.HttpClient) extends AnyVal {
+  def get(url:         String,
+          queryParams: Map[String, String] = Map.empty[String, String],
+          headers:     Map[String, String] = Map.empty[String, String]
+  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
+    GET(url, queryParams.toSeq)(rawHttpReads, hc.withExtraHeaders(headers.toSeq: _*), ec)
 
-    def get(url:         String,
-            queryParams: Map[String, String] = Map.empty[String, String],
-            headers:     Map[String, String] = Map.empty[String, String]
-    )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
-      http.GET(url, queryParams.toSeq)(rawHttpReads, hc.withExtraHeaders(headers.toSeq: _*), ec)
+  def post[A](url:     String,
+              body:    A,
+              headers: Map[String, String] = Map.empty[String, String]
+  )(implicit w: Writes[A], hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
+    POST(url, body, headers.toSeq)(w, rawHttpReads, hc, ec)
 
-    def post[A](url:     String,
-                body:    A,
-                headers: Map[String, String] = Map.empty[String, String]
-    )(implicit w: Writes[A], hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
-      http.POST(url, body, headers.toSeq)(w, rawHttpReads, hc, ec)
-
-    def put[A](url:     String,
-               body:    A,
-               headers: Map[String, String] = Map.empty[String, String]
-    )(implicit w: Writes[A], hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
-      http.PUT(url, body)(w, rawHttpReads, hc.withExtraHeaders(headers.toSeq: _*), ec)
+  def put[A](url:           String,
+             body:          A,
+             headers:       Map[String, String] = Map.empty[String, String],
+             needsAuditing: Boolean             = true
+  )(implicit w: Writes[A], hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
+    withTracing(PUT, url) {
+      val httpResponse = doPut(url, body)(w, hc.withExtraHeaders(headers.toSeq: _*))
+      if (needsAuditing) {
+        executeHooks(url, PUT, Option(Json.stringify(w.writes(body))), httpResponse)
+      }
+      mapErrors(PUT, url, httpResponse).map(response ⇒ rawHttpReads.read(PUT, url, response))
+    }
   }
 
 }
