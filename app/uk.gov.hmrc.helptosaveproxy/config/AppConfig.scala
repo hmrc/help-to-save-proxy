@@ -53,9 +53,6 @@ class AppConfig @Inject() (override val runModeConfiguration: Configuration, val
 
   val dwpBaseUrl: String = baseUrl("dwp")
 
-  def dwpUrl(nino: String, transactionId: UUID, threshold: Double): String =
-    s"$dwpBaseUrl/hmrc/$nino?systemId=$systemId&thresholdAmount=$threshold&transactionId=$transactionId"
-
   val dwpHealthCheckURL: String = s"$dwpBaseUrl/hmrc-healthcheck"
 
 }
