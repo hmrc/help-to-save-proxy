@@ -33,9 +33,9 @@ trait HttpSupport {
 
   private val authHeaders = Map("Authorization-test" -> "Basic: dXNlcm5hbWU6cGFzc3dvcmQ=")
 
-  def mockGet(url: String, queryParams: Map[String, String] = emptyMap, headers: Map[String, String] = emptyMap)(response: Option[HttpResponse]): Unit =
-    (mockProxyClient.get(_: String, _: Map[String, String], _: Map[String, String])(_: HeaderCarrier, _: ExecutionContext))
-      .expects(where { (u: String, q: Map[String, String], hdrs: Map[String, String], h: HeaderCarrier, _: ExecutionContext) ⇒
+  def mockGet(url: String, queryParams: Seq[(String, String)] = Seq.empty[(String, String)], headers: Map[String, String] = emptyMap)(response: Option[HttpResponse]): Unit =
+    (mockProxyClient.get(_: String, _: Seq[(String, String)], _: Map[String, String])(_: HeaderCarrier, _: ExecutionContext))
+      .expects(where { (u: String, q: Seq[(String, String)], hdrs: Map[String, String], h: HeaderCarrier, _: ExecutionContext) ⇒
         // use matchers here to get useful error messages when the following predicates
         // are not satisfied - otherwise it is difficult to tell in the logs what went wrong
         u shouldBe url

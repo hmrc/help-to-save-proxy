@@ -157,11 +157,12 @@ class NSIConnectorImpl @Inject() (auditConnector:    AuditConnector,
       }
   }
 
-  override def queryAccount(resource: String, queryString: Map[String, Seq[String]])(implicit hc: HeaderCarrier, ec: ExecutionContext): Result[HttpResponse] = {
+  override def queryAccount(resource:        String,
+                            queryParameters: Map[String, Seq[String]])(implicit hc: HeaderCarrier, ec: ExecutionContext): Result[HttpResponse] = {
     val url = s"${appConfig.nsiQueryAccountUrl}/$resource"
     logger.info(s"Trying to query account: $url")
 
-    val queryParams = queryString.map {
+    val queryParams = queryParameters.map {
       case (name: String, values: Seq[String]) ⇒
         values.map { value ⇒ (name, value) }
     }.flatten.toSeq

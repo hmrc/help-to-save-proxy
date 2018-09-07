@@ -55,7 +55,7 @@ class DWPConnectorSpec extends TestSupport with HttpSupport with MockFactory wit
 
   def resultValue(result: EitherT[Future, String, HttpResponse]): Either[String, HttpResponse] = Await.result(result.value, 3.seconds)
 
-  val queryParams = Map("systemId" -> appConfig.systemId, "thresholdAmount" -> threshold.toString, "transactionId" -> transactionId.toString)
+  val queryParams = Seq("systemId" -> appConfig.systemId, "thresholdAmount" -> threshold.toString, "transactionId" -> transactionId.toString)
 
   "the ucClaimantCheck call" must {
     "return a Right with HttpResponse(200, Some(Y, Y)) when given an eligible NINO of a UC Claimant within the threshold" in {
