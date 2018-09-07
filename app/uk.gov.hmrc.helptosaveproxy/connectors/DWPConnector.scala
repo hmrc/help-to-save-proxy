@@ -56,7 +56,7 @@ class DWPConnectorImpl @Inject() (auditConnector:    AuditConnector,
 
     val timeContext: Timer.Context = metrics.dwpClaimantCheckTimer.time()
 
-    val queryParams = Map("systemId" -> appConfig.systemId, "thresholdAmount" -> threshold.toString, "transactionId" -> transactionId.toString)
+    val queryParams = Seq("systemId" -> appConfig.systemId, "thresholdAmount" -> threshold.toString, "transactionId" -> transactionId.toString)
 
     EitherT(proxyClient.get(s"${appConfig.dwpBaseUrl}/hmrc/$nino", queryParams)(hc.copy(authorization = None, token = None), ec)
       .map[Either[String, HttpResponse]] { response ⇒

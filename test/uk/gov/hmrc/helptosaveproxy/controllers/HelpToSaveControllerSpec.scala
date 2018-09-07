@@ -58,8 +58,8 @@ class HelpToSaveControllerSpec extends TestSupport {
       .expects(expectedInfo, *, *)
       .returning(EitherT.fromEither[Future](result))
 
-  def mockGetAccountByNino(resource: String, queryString: String)(result: Either[String, HttpResponse]): Unit =
-    (mockNSIConnector.queryAccount(_: String, _: String)(_: HeaderCarrier, _: ExecutionContext))
+  def mockGetAccountByNino(resource: String, queryString: Map[String, Seq[String]])(result: Either[String, HttpResponse]): Unit =
+    (mockNSIConnector.queryAccount(_: String, _: Map[String, Seq[String]])(_: HeaderCarrier, _: ExecutionContext))
       .expects(resource, queryString, *, *)
       .returning(EitherT.fromEither[Future](result))
 
@@ -126,7 +126,15 @@ class HelpToSaveControllerSpec extends TestSupport {
 
     val resource = "account"
 
+    val queryParameters = Map(
+      "nino" → Seq(nino),
+      "version" → Seq(version),
+      "systemId" → Seq(systemId),
+      "correlationId" → Seq(correlationId.toString)
+    )
+
     val queryString = s"nino=$nino&version=$version&systemId=$systemId&correlationId=$correlationId"
+
       def doRequest() = controller.queryAccount(resource)(FakeRequest("GET", s"/nsi-services/account?$queryString"))
 
     "handle successful response" in {
@@ -134,7 +142,7 @@ class HelpToSaveControllerSpec extends TestSupport {
       val responseBody = s"""{"version":$version,"correlationId":"$correlationId"}"""
       val httpResponse = HttpResponse(Status.OK, responseString = Some(responseBody))
 
-      mockGetAccountByNino(resource, queryString)(Right(httpResponse))
+      mockGetAccountByNino(resource, queryParameters)(Right(httpResponse))
 
       val result = doRequest()
 
@@ -143,7 +151,7 @@ class HelpToSaveControllerSpec extends TestSupport {
     }
 
     "handle unexpected errors from NS&I" in {
-      mockGetAccountByNino(resource, queryString)(Left("boom"))
+      mockGetAccountByNino(resource, queryParameters)(Left("boom"))
       status(doRequest()) shouldBe INTERNAL_SERVER_ERROR
     }
   }

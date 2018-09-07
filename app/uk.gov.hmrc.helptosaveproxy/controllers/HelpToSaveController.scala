@@ -68,7 +68,7 @@ class HelpToSaveController @Inject() (nsiConnector:                NSIConnector,
   }
 
   def queryAccount(resource: String): Action[AnyContent] = Action.async { implicit request ⇒
-    nsiConnector.queryAccount(resource, request.rawQueryString)
+    nsiConnector.queryAccount(resource, request.queryString)
       .fold({
         e ⇒
           val message = s"Could not retrieve $resource due to : $e"

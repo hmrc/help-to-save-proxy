@@ -210,11 +210,16 @@ class NSIConnectorSpec extends TestSupport with HttpSupport with MockFactory wit
 
     val resource = "account"
 
-    val queryString = s"nino=$nino&version=$version&systemId=$systemId&correlationId=$correlationId"
+    val queryParameters = Map(
+      "nino" → Seq(nino),
+      "version" → Seq(version),
+      "systemId" → Seq(systemId),
+      "correlationId" → Seq(correlationId.toString)
+    )
 
-    val queryParamsMap = Map("nino" -> nino, "version" -> version, "systemId" -> systemId, "correlationId" -> correlationId.toString)
+    val queryParamsSeq = Seq("nino" -> nino, "version" -> version, "systemId" -> systemId, "correlationId" -> correlationId.toString)
 
-      def doRequest = nsiConnector.queryAccount(resource, queryString)
+      def doRequest = nsiConnector.queryAccount(resource, queryParameters)
 
       def url = s"${appConfig.nsiQueryAccountUrl}/$resource"
 
@@ -222,14 +227,14 @@ class NSIConnectorSpec extends TestSupport with HttpSupport with MockFactory wit
       val responseBody = s"""{"version":$version,"correlationId":"$correlationId"}"""
       val httpResponse = HttpResponse(Status.OK, responseString = Some(responseBody))
 
-      mockGet(url, queryParamsMap, authHeaders)(Some(httpResponse))
+      mockGet(url, queryParamsSeq, authHeaders)(Some(httpResponse))
 
       Await.result(doRequest.value, 3.seconds) shouldBe Right(httpResponse)
     }
 
     "handle unexpected errors" in {
 
-      mockGet(url, queryParamsMap, authHeaders)(None)
+      mockGet(url, queryParamsSeq, authHeaders)(None)
 
       Await.result(doRequest.value, 3.seconds).isLeft shouldBe true
     }
