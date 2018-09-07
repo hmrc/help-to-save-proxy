@@ -45,10 +45,10 @@ class HttpProxyClient(override val auditConnector: AuditConnector,
   private val rawHttpReads = new RawHttpReads
 
   def get(url:         String,
-          queryParams: Map[String, String] = Map.empty[String, String],
-          headers:     Map[String, String] = Map.empty[String, String]
+          queryParams: Seq[(String, String)] = Seq.empty,
+          headers:     Map[String, String]   = Map.empty[String, String]
   )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
-    GET(url, queryParams.toSeq)(rawHttpReads, hc.withExtraHeaders(headers.toSeq: _*), ec)
+    GET(url, queryParams)(rawHttpReads, hc.withExtraHeaders(headers.toSeq: _*), ec)
 
   def post[A](url:     String,
               body:    A,
