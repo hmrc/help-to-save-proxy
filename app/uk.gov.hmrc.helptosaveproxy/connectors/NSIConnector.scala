@@ -162,10 +162,7 @@ class NSIConnectorImpl @Inject() (auditConnector:    AuditConnector,
     val url = s"${appConfig.nsiQueryAccountUrl}/$resource"
     logger.info(s"Trying to query account: $url")
 
-    val queryParams = queryParameters.map {
-      case (name: String, values: Seq[String]) ⇒
-        values.map { value ⇒ (name, value) }
-    }.flatten.toSeq
+    val queryParams = queryParameters.toSeq.flatMap { case (name, values) ⇒ values.map(value ⇒ (name, value)) }
 
     EitherT(proxyClient.get(url, queryParams, Map(nsiAuthHeaderKey → nsiBasicAuth))(hc.copy(authorization = None), ec)
       .map[Either[String, HttpResponse]](Right(_))
