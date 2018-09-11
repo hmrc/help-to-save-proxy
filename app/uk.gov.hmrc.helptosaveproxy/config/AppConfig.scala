@@ -42,7 +42,7 @@ class AppConfig @Inject() (override val runModeConfiguration: Configuration, val
     val password = new String(base64Decode(getString("microservice.services.nsi.client.httpheader.basicauth.Base64Password")))
     val encoding = getString("microservice.services.nsi.client.httpheader.encoding")
 
-    s"Basic: ${new String(base64Encode(s"$user:$password"), encoding)}"
+    s"Basic ${new String(base64Encode(s"$user:$password"), encoding)}"
   }
 
   val nsiCreateAccountUrl: String = s"${baseUrl("nsi")}/nsi-services/account"
