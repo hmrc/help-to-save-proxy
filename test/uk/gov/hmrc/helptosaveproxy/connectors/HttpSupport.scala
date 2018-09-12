@@ -31,7 +31,7 @@ trait HttpSupport {
 
   private val emptyMap = Map.empty[String, String]
 
-  private val authHeaders = Map("Authorization-test" -> "Basic: dXNlcm5hbWU6cGFzc3dvcmQ=")
+  private val authHeaders = Map("Authorization-test" -> "Basic dXNlcm5hbWU6cGFzc3dvcmQ=")
 
   def mockGet(url: String, queryParams: Seq[(String, String)] = Seq.empty[(String, String)], headers: Map[String, String] = emptyMap)(response: Option[HttpResponse]): Unit =
     (mockProxyClient.get(_: String, _: Seq[(String, String)], _: Map[String, String])(_: HeaderCarrier, _: ExecutionContext))
