@@ -21,7 +21,7 @@ import java.time.LocalDate
 import org.scalatest.{Matchers, WordSpec}
 import play.api.libs.json._
 import uk.gov.hmrc.helptosaveproxy.models.NSIPayload.ContactDetails
-import uk.gov.hmrc.helptosaveproxy.testutil.TestData.UserData.validNSIPayload
+import uk.gov.hmrc.helptosaveproxy.testutil.TestData.UserData.{validNSIPayload, validBankDetails}
 
 class NSIPayloadSpec extends WordSpec with Matchers { // scalastyle:off magic.number
 
@@ -176,6 +176,54 @@ class NSIPayloadSpec extends WordSpec with Matchers { // scalastyle:off magic.nu
           result.contactDetails.countryCode shouldBe None
         }
       }
+
+      "formats sort codes correctly" in {
+        List(
+          "1234-56",
+          "123456",
+          "12 34 56",
+          "12_34_56"
+        ).foreach { sortCode ⇒
+            withClue(s"For sort code $sortCode: ") {
+              val json: JsValue = Json.toJson(validNSIPayload.copy(nbaDetails = Some(validBankDetails.copy(sortCode = sortCode))))
+              val result = json.validate[NSIPayload].get
+              result.nbaDetails.map(_.sortCode) shouldBe Some("12-34-56")
+            }
+          }
+      }
+
+      "removes leading and trailing whitespaces, new lines, tabs, carriage returns from sort codes" in {
+        val sortCode = "  12\t34\r5\n6  "
+
+        val json: JsValue = Json.toJson(validNSIPayload.copy(nbaDetails = Some(validBankDetails.copy(sortCode = sortCode))))
+        val result = json.validate[NSIPayload].get
+        result.nbaDetails.map(_.sortCode) shouldBe Some("12-34-56")
+      }
+
+      "removes leading and trailing whitespaces, new lines, tabs, carriage returns from account numbers" in {
+        val accountNumber = "  12\t34\r5\n678  "
+
+        val json: JsValue = Json.toJson(validNSIPayload.copy(nbaDetails = Some(validBankDetails.copy(accountNumber = accountNumber))))
+        val result = json.validate[NSIPayload].get
+        result.nbaDetails.map(_.accountNumber) shouldBe Some("12345678")
+      }
+
+      "removes leading and trailing whitespaces, new lines, tabs, carriage returns from roll numbers" in {
+        val rollNumber = "  ab\tcd\re\n1  "
+
+        val json: JsValue = Json.toJson(validNSIPayload.copy(nbaDetails = Some(validBankDetails.copy(rollNumber = Some(rollNumber)))))
+        val result = json.validate[NSIPayload].get
+        result.nbaDetails.flatMap(_.rollNumber) shouldBe Some("abcde1")
+      }
+
+      "removes leading and trailing whitespaces, new lines, tabs, carriage returns from account names" in {
+        val accountName = "  ab\tcd\re f\ng  "
+
+        val json: JsValue = Json.toJson(validNSIPayload.copy(nbaDetails = Some(validBankDetails.copy(accountName = accountName))))
+        val result = json.validate[NSIPayload].get
+        result.nbaDetails.map(_.accountName) shouldBe Some("ab cd e f g")
+      }
+
     }
   }
 

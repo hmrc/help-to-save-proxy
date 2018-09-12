@@ -21,7 +21,7 @@ import java.time.LocalDate
 import uk.gov.hmrc.smartstub.AutoGen.{GenProvider, instance}
 import uk.gov.hmrc.smartstub._
 import org.scalacheck.Gen
-import uk.gov.hmrc.helptosaveproxy.models.NSIPayload
+import uk.gov.hmrc.helptosaveproxy.models.{BankDetails, NSIPayload}
 import uk.gov.hmrc.helptosaveproxy.models.NSIPayload.ContactDetails
 
 object TestData {
@@ -42,7 +42,7 @@ object TestData {
     /**
      * Valid user details which will pass NSI validation checks
      */
-    val (nsiValidContactDetails, validNSIPayload) = {
+    val (nsiValidContactDetails, validNSIPayload, validBankDetails) = {
       val (forename, surname) = "Tyrion" → "Lannister"
       val dateOfBirth = LocalDate.ofEpochDay(0L)
       val addressLine1 = "Casterly Rock"
@@ -56,12 +56,14 @@ object TestData {
       val comms = "00"
       val regChannel = "callCentre"
 
+      val bankDetails = BankDetails("12-34-56", "12345678", Some("rollnumber"), "account name")
+
       val nsiValidContactDetails =
         ContactDetails(addressLine1, addressLine2, Some(addressLine3), None, None, postcode, Some(country), Some(email), Some(phone), comms)
       val nsiPayload =
-        NSIPayload(forename, surname, dateOfBirth, nino, nsiValidContactDetails, regChannel, None, "V2.1", "systemId")
+        NSIPayload(forename, surname, dateOfBirth, nino, nsiValidContactDetails, regChannel, Some(bankDetails), "V2.1", "systemId")
 
-      (nsiValidContactDetails, nsiPayload)
+      (nsiValidContactDetails, nsiPayload, bankDetails)
     }
   }
 
