@@ -100,12 +100,23 @@ object NSIPayload {
           c.communicationPreference.cleanupSpecialCharacters.removeAllSpaces
         ),
         u.registrationChannel.cleanupSpecialCharacters.removeAllSpaces,
-        u.nbaDetails,
+        u.nbaDetails.map(formatBankDetails),
         u.version,
         u.systemId
       )
 
     }
+
+    private val allowedSortCodeSeparators = Set(' ', '-', '_')
+
+    private def formatBankDetails(bankDetails: BankDetails): BankDetails =
+      BankDetails(
+        bankDetails.sortCode.cleanupSpecialCharacters.removeAllSpaces.filterNot(allowedSortCodeSeparators.contains).grouped(2).mkString("-"),
+        bankDetails.accountNumber.cleanupSpecialCharacters.removeAllSpaces,
+        bankDetails.rollNumber.map(_.cleanupSpecialCharacters.removeAllSpaces),
+        bankDetails.accountName.trim.cleanupSpecialCharacters
+      )
+
   }
 
 }
