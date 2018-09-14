@@ -72,7 +72,8 @@ class HelpToSaveControllerSpec extends TestSupport {
 
     behave like commonBehaviour(
       controller.createAccount,
-      () ⇒ mockCreateAccount(validNSIPayload)(Left(SubmissionFailure("", ""))))
+      () ⇒ mockCreateAccount(validNSIPayload)(Left(SubmissionFailure("", ""))),
+      validNSIPayload)
 
     "return a Created status when valid json is given for an eligible new user" in {
       inSequence {
@@ -101,17 +102,20 @@ class HelpToSaveControllerSpec extends TestSupport {
       def doUpdateEmailRequest(userInfo: NSIPayload) =
         controller.updateEmail()(FakeRequest().withJsonBody(Json.toJson(userInfo)))
 
+    val updatePayload = validNSIPayload.copy(version  = None, systemId = None)
+
     behave like commonBehaviour(
       controller.updateEmail,
-      () ⇒ mockUpdateEmail(validNSIPayload)(Left("")))
+      () ⇒ mockUpdateEmail(updatePayload)(Left("")),
+      updatePayload)
 
     "return an OK status when a user successfully updates their email address" in {
       inSequence {
-        mockJSONSchemaValidationService(validNSIPayload)(Right(()))
-        mockUpdateEmail(validNSIPayload)(Right(()))
+        mockJSONSchemaValidationService(updatePayload)(Right(()))
+        mockUpdateEmail(updatePayload)(Right(()))
       }
 
-      val result = doUpdateEmailRequest(validNSIPayload)
+      val result = doUpdateEmailRequest(updatePayload)
       status(result) shouldBe OK
     }
 
@@ -157,15 +161,16 @@ class HelpToSaveControllerSpec extends TestSupport {
   }
 
   def commonBehaviour(doCall:         () ⇒ Action[AnyContent],
-                      mockNSIFailure: () ⇒ Unit): Unit = {
+                      mockNSIFailure: () ⇒ Unit,
+                      nsiPayload:     NSIPayload): Unit = {
 
     "return an InternalServerError status when the call to NSI returns an error" in {
       inSequence {
-        mockJSONSchemaValidationService(validNSIPayload)(Right(()))
+        mockJSONSchemaValidationService(nsiPayload)(Right(()))
         mockNSIFailure()
       }
 
-      val result = doCall()(FakeRequest().withJsonBody(Json.toJson(validNSIPayload)))
+      val result = doCall()(FakeRequest().withJsonBody(Json.toJson(nsiPayload)))
       status(result) shouldBe INTERNAL_SERVER_ERROR
       contentAsJson(result).validate[SubmissionFailure].isSuccess shouldBe true
     }
@@ -173,9 +178,9 @@ class HelpToSaveControllerSpec extends TestSupport {
     "return a BadRequest" when {
 
       "the given user info doesn't pass the json schema validation" in {
-        mockJSONSchemaValidationService(validNSIPayload)(Left(""))
+        mockJSONSchemaValidationService(nsiPayload)(Left(""))
 
-        val result = doCall()(FakeRequest().withJsonBody(Json.toJson(validNSIPayload)))
+        val result = doCall()(FakeRequest().withJsonBody(Json.toJson(nsiPayload)))
         status(result) shouldBe BAD_REQUEST
         contentAsJson(result).validate[SubmissionFailure].isSuccess shouldBe true
       }
