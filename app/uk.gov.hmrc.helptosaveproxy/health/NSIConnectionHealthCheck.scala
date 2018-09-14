@@ -141,7 +141,7 @@ object NSIConnectionHealthCheck {
 
       private def payload(email: Email): NSIPayload = NSIPayload(
         "Service", "Account", LocalDate.ofEpochDay(0L), "XX999999X",
-                              ContactDetails("Health", "Check", None, None, None, "AB12CD", None, Some(email), None, "02"), "online", None, "V2.0", "MDTP REGISTRATION")
+                              ContactDetails("Health", "Check", None, None, None, "AB12CD", None, Some(email), None, "02"), "online", None, None, None)
 
       private[health] case object Payload1 extends Payload {
         override val value: NSIPayload = payload("healthcheck_ping@noreply.com")
