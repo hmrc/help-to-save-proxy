@@ -28,10 +28,10 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.helptosaveproxy.TestSupport
 import uk.gov.hmrc.helptosaveproxy.connectors.NSIConnector
-import uk.gov.hmrc.helptosaveproxy.models.NSIUserInfo
+import uk.gov.hmrc.helptosaveproxy.models.{AccountNumber, NSIPayload}
 import uk.gov.hmrc.helptosaveproxy.models.SubmissionResult.{SubmissionFailure, SubmissionSuccess}
 import uk.gov.hmrc.helptosaveproxy.services.JSONSchemaValidationService
-import uk.gov.hmrc.helptosaveproxy.testutil.TestData.UserData.validNSIUserInfo
+import uk.gov.hmrc.helptosaveproxy.testutil.TestData.UserData.validNSIPayload
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -43,18 +43,18 @@ class HelpToSaveControllerSpec extends TestSupport {
 
   val controller = new HelpToSaveController(mockNSIConnector, mockJsonSchema)
 
-  def mockJSONSchemaValidationService(expectedInfo: NSIUserInfo)(result: Either[String, Unit]) =
+  def mockJSONSchemaValidationService(expectedInfo: NSIPayload)(result: Either[String, Unit]) =
     (mockJsonSchema.validate(_: JsValue))
       .expects(Json.toJson(expectedInfo))
       .returning(result.map(_ ⇒ Json.toJson(expectedInfo)))
 
-  def mockCreateAccount(expectedInfo: NSIUserInfo)(result: Either[SubmissionFailure, SubmissionSuccess]): Unit =
-    (mockNSIConnector.createAccount(_: NSIUserInfo)(_: HeaderCarrier, _: ExecutionContext))
+  def mockCreateAccount(expectedInfo: NSIPayload)(result: Either[SubmissionFailure, SubmissionSuccess]): Unit =
+    (mockNSIConnector.createAccount(_: NSIPayload)(_: HeaderCarrier, _: ExecutionContext))
       .expects(expectedInfo, *, *)
       .returning(EitherT.fromEither[Future](result))
 
-  def mockUpdateEmail(expectedInfo: NSIUserInfo)(result: Either[String, Unit]) =
-    (mockNSIConnector.updateEmail(_: NSIUserInfo)(_: HeaderCarrier, _: ExecutionContext))
+  def mockUpdateEmail(expectedInfo: NSIPayload)(result: Either[String, Unit]) =
+    (mockNSIConnector.updateEmail(_: NSIPayload)(_: HeaderCarrier, _: ExecutionContext))
       .expects(expectedInfo, *, *)
       .returning(EitherT.fromEither[Future](result))
 
@@ -67,30 +67,31 @@ class HelpToSaveControllerSpec extends TestSupport {
 
     val correlationId = "correlationId"
 
-      def doCreateAccountRequest(userInfo: NSIUserInfo) =
+      def doCreateAccountRequest(userInfo: NSIPayload) =
         controller.createAccount()(FakeRequest().withJsonBody(Json.toJson(userInfo)).withHeaders("X-Correlation-Id" → correlationId))
 
     behave like commonBehaviour(
       controller.createAccount,
-      () ⇒ mockCreateAccount(validNSIUserInfo)(Left(SubmissionFailure("", ""))))
+      () ⇒ mockCreateAccount(validNSIPayload)(Left(SubmissionFailure("", ""))),
+      validNSIPayload)
 
     "return a Created status when valid json is given for an eligible new user" in {
       inSequence {
-        mockJSONSchemaValidationService(validNSIUserInfo)(Right(()))
-        mockCreateAccount(validNSIUserInfo)(Right(SubmissionSuccess(false)))
+        mockJSONSchemaValidationService(validNSIPayload)(Right(()))
+        mockCreateAccount(validNSIPayload)(Right(SubmissionSuccess(Some(AccountNumber("1234567890")))))
       }
 
-      val result = doCreateAccountRequest(validNSIUserInfo)
+      val result = doCreateAccountRequest(validNSIPayload)
       status(result) shouldBe CREATED
     }
 
     "return a Conflict status when valid json is given for an existing user" in {
       inSequence {
-        mockJSONSchemaValidationService(validNSIUserInfo)(Right(()))
-        mockCreateAccount(validNSIUserInfo)(Right(SubmissionSuccess(true)))
+        mockJSONSchemaValidationService(validNSIPayload)(Right(()))
+        mockCreateAccount(validNSIPayload)(Right(SubmissionSuccess(None)))
       }
 
-      val result = doCreateAccountRequest(validNSIUserInfo)
+      val result = doCreateAccountRequest(validNSIPayload)
       status(result) shouldBe CONFLICT
     }
 
@@ -98,20 +99,23 @@ class HelpToSaveControllerSpec extends TestSupport {
 
   "The updateEmail method" must {
 
-      def doUpdateEmailRequest(userInfo: NSIUserInfo) =
+      def doUpdateEmailRequest(userInfo: NSIPayload) =
         controller.updateEmail()(FakeRequest().withJsonBody(Json.toJson(userInfo)))
+
+    val updatePayload = validNSIPayload.copy(version  = None, systemId = None)
 
     behave like commonBehaviour(
       controller.updateEmail,
-      () ⇒ mockUpdateEmail(validNSIUserInfo)(Left("")))
+      () ⇒ mockUpdateEmail(updatePayload)(Left("")),
+      updatePayload)
 
     "return an OK status when a user successfully updates their email address" in {
       inSequence {
-        mockJSONSchemaValidationService(validNSIUserInfo)(Right(()))
-        mockUpdateEmail(validNSIUserInfo)(Right(()))
+        mockJSONSchemaValidationService(updatePayload)(Right(()))
+        mockUpdateEmail(updatePayload)(Right(()))
       }
 
-      val result = doUpdateEmailRequest(validNSIUserInfo)
+      val result = doUpdateEmailRequest(updatePayload)
       status(result) shouldBe OK
     }
 
@@ -157,15 +161,16 @@ class HelpToSaveControllerSpec extends TestSupport {
   }
 
   def commonBehaviour(doCall:         () ⇒ Action[AnyContent],
-                      mockNSIFailure: () ⇒ Unit): Unit = {
+                      mockNSIFailure: () ⇒ Unit,
+                      nsiPayload:     NSIPayload): Unit = {
 
     "return an InternalServerError status when the call to NSI returns an error" in {
       inSequence {
-        mockJSONSchemaValidationService(validNSIUserInfo)(Right(()))
+        mockJSONSchemaValidationService(nsiPayload)(Right(()))
         mockNSIFailure()
       }
 
-      val result = doCall()(FakeRequest().withJsonBody(Json.toJson(validNSIUserInfo)))
+      val result = doCall()(FakeRequest().withJsonBody(Json.toJson(nsiPayload)))
       status(result) shouldBe INTERNAL_SERVER_ERROR
       contentAsJson(result).validate[SubmissionFailure].isSuccess shouldBe true
     }
@@ -173,9 +178,9 @@ class HelpToSaveControllerSpec extends TestSupport {
     "return a BadRequest" when {
 
       "the given user info doesn't pass the json schema validation" in {
-        mockJSONSchemaValidationService(validNSIUserInfo)(Left(""))
+        mockJSONSchemaValidationService(nsiPayload)(Left(""))
 
-        val result = doCall()(FakeRequest().withJsonBody(Json.toJson(validNSIUserInfo)))
+        val result = doCall()(FakeRequest().withJsonBody(Json.toJson(nsiPayload)))
         status(result) shouldBe BAD_REQUEST
         contentAsJson(result).validate[SubmissionFailure].isSuccess shouldBe true
       }

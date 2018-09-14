@@ -29,8 +29,8 @@ import uk.gov.hmrc.helptosaveproxy.config.AppConfig
 import uk.gov.hmrc.helptosaveproxy.http.HttpProxyClient
 import uk.gov.hmrc.helptosaveproxy.metrics.Metrics
 import uk.gov.hmrc.helptosaveproxy.metrics.Metrics.nanosToPrettyString
-import uk.gov.hmrc.helptosaveproxy.models.NSIUserInfo
-import uk.gov.hmrc.helptosaveproxy.models.NSIUserInfo.nsiUserInfoFormat
+import uk.gov.hmrc.helptosaveproxy.models.NSIPayload
+import uk.gov.hmrc.helptosaveproxy.models.NSIPayload.nsiPayloadFormat
 import uk.gov.hmrc.helptosaveproxy.models.SubmissionResult._
 import uk.gov.hmrc.helptosaveproxy.util.HttpResponseOps._
 import uk.gov.hmrc.helptosaveproxy.util.Logging._
@@ -38,16 +38,17 @@ import uk.gov.hmrc.helptosaveproxy.util.Toggles._
 import uk.gov.hmrc.helptosaveproxy.util.{LogMessageTransformer, Logging, NINO, PagerDutyAlerting, Result, maskNino}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
+import uk.gov.hmrc.helptosaveproxy.models.AccountNumber
 
 import scala.concurrent.{ExecutionContext, Future}
 
 @ImplementedBy(classOf[NSIConnectorImpl])
 trait NSIConnector {
-  def createAccount(userInfo: NSIUserInfo)(implicit hc: HeaderCarrier, ex: ExecutionContext): EitherT[Future, SubmissionFailure, SubmissionSuccess]
+  def createAccount(payload: NSIPayload)(implicit hc: HeaderCarrier, ex: ExecutionContext): EitherT[Future, SubmissionFailure, SubmissionSuccess]
 
-  def updateEmail(userInfo: NSIUserInfo)(implicit hc: HeaderCarrier, ex: ExecutionContext): Result[Unit]
+  def updateEmail(payload: NSIPayload)(implicit hc: HeaderCarrier, ex: ExecutionContext): Result[Unit]
 
-  def healthCheck(userInfo: NSIUserInfo)(implicit hc: HeaderCarrier, ex: ExecutionContext): Result[Unit]
+  def healthCheck(payload: NSIPayload)(implicit hc: HeaderCarrier, ex: ExecutionContext): Result[Unit]
 
   def queryAccount(resource: String, queryString: Map[String, Seq[String]])(implicit hc: HeaderCarrier, ex: ExecutionContext): Result[HttpResponse]
 
@@ -70,37 +71,41 @@ class NSIConnectorImpl @Inject() (auditConnector:    AuditConnector,
 
   private def getCorrelationId(implicit hc: HeaderCarrier) = hc.headers.find(p ⇒ p._1 === correlationIdHeaderName).map(_._2)
 
-  override def createAccount(userInfo: NSIUserInfo)(implicit hc: HeaderCarrier, ec: ExecutionContext): EitherT[Future, SubmissionFailure, SubmissionSuccess] = {
+  override def createAccount(payload: NSIPayload)(implicit hc: HeaderCarrier, ec: ExecutionContext): EitherT[Future, SubmissionFailure, SubmissionSuccess] = {
 
-    val nino = userInfo.nino
+    val nino = payload.nino
     val correlationId = getCorrelationId
 
     logger.info(s"Trying to create an account using NSI endpoint ${appConfig.nsiCreateAccountUrl}", nino, correlationId)
 
     FEATURE("log-account-creation-json", appConfig.runModeConfiguration, logger).thenOrElse(
-      logger.info(s"CreateAccount JSON is ${Json.toJson(userInfo)}", nino, correlationId),
+      logger.info(s"CreateAccount JSON is ${Json.toJson(payload)}", nino, correlationId),
       ()
     )
 
     val timeContext: Timer.Context = metrics.nsiAccountCreationTimer.time()
 
-    EitherT(proxyClient.post(nsiCreateAccountUrl, userInfo, Map(nsiAuthHeaderKey → nsiBasicAuth))(nsiUserInfoFormat, hc.copy(authorization = None), ec)
+    EitherT(proxyClient.post(nsiCreateAccountUrl, payload, Map(nsiAuthHeaderKey → nsiBasicAuth))(nsiPayloadFormat, hc.copy(authorization = None), ec)
       .map[Either[SubmissionFailure, SubmissionSuccess]] { response ⇒
         val time = timeContext.stop()
 
         response.status match {
           case Status.CREATED ⇒
             logger.info(s"createAccount/insert returned 201 (Created) ${timeString(time)}", nino, correlationId)
-            Right(SubmissionSuccess(accountAlreadyCreated = false))
+            response.parseJSON[AccountNumber]() match {
+
+              case Right(AccountNumber(number)) ⇒ Right(SubmissionSuccess(Some(AccountNumber(number))))
+              case _                            ⇒ Left(SubmissionFailure(None, "account created but no account number was returned", ""))
+            }
 
           case Status.CONFLICT ⇒
             logger.info(s"createAccount/insert returned 409 (Conflict). Account had already been created - " +
               s"proceeding as normal ${timeString(time)}", nino, correlationId)
-            Right(SubmissionSuccess(accountAlreadyCreated = true))
+            Right(SubmissionSuccess(None))
 
           case other ⇒
             pagerDutyAlerting.alert("Received unexpected http status in response to create account")
-            Left(handleErrorStatus(other, response, userInfo.nino, time, correlationId))
+            Left(handleErrorStatus(other, response, payload.nino, time, correlationId))
         }
       }.recover {
         case e ⇒
@@ -113,13 +118,13 @@ class NSIConnectorImpl @Inject() (auditConnector:    AuditConnector,
       })
   }
 
-  override def updateEmail(userInfo: NSIUserInfo)(implicit hc: HeaderCarrier, ec: ExecutionContext): Result[Unit] = EitherT[Future, String, Unit] {
-    val nino = userInfo.nino
+  override def updateEmail(payload: NSIPayload)(implicit hc: HeaderCarrier, ec: ExecutionContext): Result[Unit] = EitherT[Future, String, Unit] {
+    val nino = payload.nino
 
     val timeContext: Timer.Context = metrics.nsiUpdateEmailTimer.time()
     val correlationId = getCorrelationId
 
-    proxyClient.put(nsiCreateAccountUrl, userInfo, Map(nsiAuthHeaderKey → nsiBasicAuth))(nsiUserInfoFormat, hc.copy(authorization = None), ec)
+    proxyClient.put(nsiCreateAccountUrl, payload, Map(nsiAuthHeaderKey → nsiBasicAuth))(nsiPayloadFormat, hc.copy(authorization = None), ec)
       .map[Either[String, Unit]] { response ⇒
         val time = timeContext.stop()
 
@@ -145,8 +150,8 @@ class NSIConnectorImpl @Inject() (auditConnector:    AuditConnector,
       }
   }
 
-  override def healthCheck(userInfo: NSIUserInfo)(implicit hc: HeaderCarrier, ex: ExecutionContext): Result[Unit] = EitherT[Future, String, Unit] {
-    proxyClient.put(nsiCreateAccountUrl, userInfo, Map(nsiAuthHeaderKey → nsiBasicAuth))(nsiUserInfoFormat, hc.copy(authorization = None), ex)
+  override def healthCheck(payload: NSIPayload)(implicit hc: HeaderCarrier, ex: ExecutionContext): Result[Unit] = EitherT[Future, String, Unit] {
+    proxyClient.put(nsiCreateAccountUrl, payload, Map(nsiAuthHeaderKey → nsiBasicAuth))(nsiPayloadFormat, hc.copy(authorization = None), ex)
       .map[Either[String, Unit]] { response ⇒
         response.status match {
           case Status.OK ⇒ Right(())

@@ -25,7 +25,7 @@ import uk.gov.hmrc.helptosaveproxy.config.AppConfig
 import uk.gov.hmrc.helptosaveproxy.connectors.NSIConnector
 import uk.gov.hmrc.helptosaveproxy.controllers.HelpToSaveController.Error
 import uk.gov.hmrc.helptosaveproxy.models.SubmissionResult.{SubmissionFailure, SubmissionSuccess}
-import uk.gov.hmrc.helptosaveproxy.models.NSIUserInfo
+import uk.gov.hmrc.helptosaveproxy.models.NSIPayload
 import uk.gov.hmrc.helptosaveproxy.services.JSONSchemaValidationService
 import uk.gov.hmrc.helptosaveproxy.util.JsErrorOps._
 import uk.gov.hmrc.helptosaveproxy.util.Toggles.FEATURE
@@ -52,10 +52,9 @@ class HelpToSaveController @Inject() (nsiConnector:                NSIConnector,
       nsiConnector.createAccount(_).leftMap[Error](NSIError)
     } {
       (submissionSuccess, nSIUserInfo) ⇒
-        if (submissionSuccess.accountAlreadyCreated) {
-          Conflict
-        } else {
-          Created
+        submissionSuccess.accountNumber match {
+          case None          ⇒ Conflict
+          case Some(account) ⇒ Created(Json.toJson(account))
         }
     }
   }
@@ -79,12 +78,12 @@ class HelpToSaveController @Inject() (nsiConnector:                NSIConnector,
       })
   }
 
-  private def processRequest[T](doRequest: NSIUserInfo ⇒ EitherT[Future, Error, T])(handleResult: (T, NSIUserInfo) ⇒ Result)(implicit request: Request[AnyContent]): Future[Result] = { // scalastyle:ignore
-    val result: EitherT[Future, Error, (T, NSIUserInfo)] = for {
-      userInfo ← EitherT.fromEither[Future](extractNSIUSerInfo(request))
-      _ ← validateAgainstJSONSchema(userInfo)
-      response ← doRequest(userInfo)
-    } yield (response, userInfo)
+  private def processRequest[T](doRequest: NSIPayload ⇒ EitherT[Future, Error, T])(handleResult: (T, NSIPayload) ⇒ Result)(implicit request: Request[AnyContent]): Future[Result] = { // scalastyle:ignore
+    val result: EitherT[Future, Error, (T, NSIPayload)] = for {
+      nsiPayload ← EitherT.fromEither[Future](extractNSIPayload(request))
+      _ ← validateAgainstJSONSchema(nsiPayload)
+      response ← doRequest(nsiPayload)
+    } yield (response, nsiPayload)
 
     result.fold[Result]({
       case InvalidRequest(m, d) ⇒
@@ -92,24 +91,24 @@ class HelpToSaveController @Inject() (nsiConnector:                NSIConnector,
       case NSIError(f) ⇒
         InternalServerError(f.toJson)
     }, {
-      case (subResult, nsiUserInfo) ⇒ handleResult(subResult, nsiUserInfo)
+      case (subResult, nsiPayload) ⇒ handleResult(subResult, nsiPayload)
     }
     )
   }
 
-  private def validateAgainstJSONSchema(userInfo: NSIUserInfo)(implicit ec: ExecutionContext): EitherT[Future, Error, JsValue] = {
-    val json = Json.toJson(userInfo)
-    jsonSchemaValidationToggle(userInfo.nino).thenOrElse(
+  private def validateAgainstJSONSchema(payload: NSIPayload)(implicit ec: ExecutionContext): EitherT[Future, Error, JsValue] = {
+    val json = Json.toJson(payload)
+    jsonSchemaValidationToggle(payload.nino).thenOrElse(
       EitherT.fromEither[Future](jsonSchemaValidationService.validate(json)).leftMap[Error](e ⇒ InvalidRequest("Invalid data found in request", e)),
       EitherT.pure(json)
     )
   }
 
-  private def extractNSIUSerInfo(request: Request[AnyContent]): Either[InvalidRequest, NSIUserInfo] = {
-    request.body.asJson.map(_.validate[NSIUserInfo]) match {
-      case Some(JsSuccess(userInfo, _)) ⇒ Right(userInfo)
-      case Some(e: JsError)             ⇒ Left(InvalidRequest("Could not parse JSON in request", e.prettyPrint()))
-      case None                         ⇒ Left(InvalidRequest("No JSON found in request", "JSON body required"))
+  private def extractNSIPayload(request: Request[AnyContent]): Either[InvalidRequest, NSIPayload] = {
+    request.body.asJson.map(_.validate[NSIPayload]) match {
+      case Some(JsSuccess(payload, _)) ⇒ Right(payload)
+      case Some(e: JsError)            ⇒ Left(InvalidRequest("Could not parse JSON in request", e.prettyPrint()))
+      case None                        ⇒ Left(InvalidRequest("No JSON found in request", "JSON body required"))
 
     }
   }

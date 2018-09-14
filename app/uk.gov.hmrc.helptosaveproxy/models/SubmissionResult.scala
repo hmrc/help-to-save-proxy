@@ -21,7 +21,8 @@ import play.api.libs.json.{Format, JsValue, Json}
 sealed trait SubmissionResult
 
 object SubmissionResult {
-  case class SubmissionSuccess(accountAlreadyCreated: Boolean) extends SubmissionResult
+  // Some means account was created, None means the account already existed
+  case class SubmissionSuccess(accountNumber: Option[AccountNumber]) extends SubmissionResult
 
   case class SubmissionFailure(errorMessageId: Option[String], errorMessage: String, errorDetail: String) extends SubmissionResult
 

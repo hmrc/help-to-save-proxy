@@ -34,7 +34,7 @@ import uk.gov.hmrc.helptosaveproxy.health.HealthTestSpec.ProxyActor
 import uk.gov.hmrc.helptosaveproxy.health.HealthTestSpec.ProxyActor.Created
 import uk.gov.hmrc.helptosaveproxy.health.HealthTestSpec.TestNSIConnector.{GetTestResult, GetTestResultResponse}
 import uk.gov.hmrc.helptosaveproxy.models.SubmissionResult.{SubmissionFailure, SubmissionSuccess}
-import uk.gov.hmrc.helptosaveproxy.models.{NSIUserInfo, SubmissionResult}
+import uk.gov.hmrc.helptosaveproxy.models.{NSIPayload, SubmissionResult}
 import uk.gov.hmrc.helptosaveproxy.util.{NINO, PagerDutyAlerting, Result}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 
@@ -330,13 +330,13 @@ object HealthTestSpec {
   class TestNSIConnector(reportTo: ActorRef) extends NSIConnector {
     implicit val timeout: Timeout = Timeout(3.seconds)
 
-    override def createAccount(userInfo: NSIUserInfo)(implicit hc: HeaderCarrier, ex: ExecutionContext): EitherT[Future, SubmissionFailure, SubmissionSuccess] =
+    override def createAccount(userInfo: NSIPayload)(implicit hc: HeaderCarrier, ex: ExecutionContext): EitherT[Future, SubmissionFailure, SubmissionSuccess] =
       sys.error("Not used")
 
-    override def updateEmail(userInfo: NSIUserInfo)(implicit hc: HeaderCarrier, ex: ExecutionContext): Result[Unit] =
+    override def updateEmail(userInfo: NSIPayload)(implicit hc: HeaderCarrier, ex: ExecutionContext): Result[Unit] =
       sys.error("Not used")
 
-    override def healthCheck(userInfo: NSIUserInfo)(implicit hc: HeaderCarrier, ex: ExecutionContext): Result[Unit] = {
+    override def healthCheck(userInfo: NSIPayload)(implicit hc: HeaderCarrier, ex: ExecutionContext): Result[Unit] = {
       val result: Future[Option[Either[String, Unit]]] = (reportTo ? GetTestResult(userInfo)).mapTo[GetTestResultResponse].map(_.result)
       EitherT(result.flatMap{
         _.fold[Future[Either[String, Unit]]](Future.failed(new Exception("")))(Future.successful)
@@ -349,7 +349,7 @@ object HealthTestSpec {
   }
 
   object TestNSIConnector {
-    case class GetTestResult(payload: NSIUserInfo)
+    case class GetTestResult(payload: NSIPayload)
 
     case class GetTestResultResponse(result: Option[Either[String, Unit]])
   }
