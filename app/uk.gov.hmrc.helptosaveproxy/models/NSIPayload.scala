@@ -33,8 +33,8 @@ case class NSIPayload(forename:            String,
                       contactDetails:      ContactDetails,
                       registrationChannel: String,
                       nbaDetails:          Option[BankDetails] = None,
-                      version:             String,
-                      systemId:            String)
+                      version:             Option[String],
+                      systemId:            Option[String])
 
 object NSIPayload {
 

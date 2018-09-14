@@ -59,12 +59,14 @@ class NSIConnectorSpec extends TestSupport with HttpSupport with MockFactory wit
   val nsiBasicAuth = appConfig.nsiBasicAuth
 
   val authHeaders = Map(nsiAuthHeaderKey → nsiBasicAuth)
+  val updatePayload = validNSIPayload.copy(version  = None, systemId = None)
 
   "the updateEmail method" must {
+
     "return a Right when the status is OK" in {
 
-      mockPut(nsiCreateAccountUrl, validNSIPayload, authHeaders)(Some(HttpResponse(Status.OK)))
-      val result = nsiConnector.updateEmail(validNSIPayload)
+      mockPut(nsiCreateAccountUrl, updatePayload, authHeaders)(Some(HttpResponse(Status.OK)))
+      val result = nsiConnector.updateEmail(updatePayload)
       Await.result(result.value, 3.seconds) shouldBe Right(())
     }
 
@@ -73,25 +75,25 @@ class NSIConnectorSpec extends TestSupport with HttpSupport with MockFactory wit
         forAll { status: Int ⇒
           whenever(status =!= Status.OK && status > 0) {
             inSequence {
-              mockPut(nsiCreateAccountUrl, validNSIPayload, authHeaders)(Some(HttpResponse(status)))
+              mockPut(nsiCreateAccountUrl, updatePayload, authHeaders)(Some(HttpResponse(status)))
               // WARNING: do not change the message in the following check - this needs to stay in line with the configuration in alert-config
               mockPagerDutyAlert("Received unexpected http status in response to update email")
             }
 
-            val result = nsiConnector.updateEmail(validNSIPayload)
+            val result = nsiConnector.updateEmail(updatePayload)
             Await.result(result.value, 3.seconds).isLeft shouldBe true
           }
         }
       }
 
-      "the POST to NS&I fails" in {
+      "the PUT to NS&I fails" in {
         inSequence {
-          mockPut(nsiCreateAccountUrl, validNSIPayload, authHeaders)(None)
+          mockPut(nsiCreateAccountUrl, updatePayload, authHeaders)(None)
           // WARNING: do not change the message in the following check - this needs to stay in line with the configuration in alert-config
           mockPagerDutyAlert("Failed to make call to update email")
         }
 
-        val result = nsiConnector.updateEmail(validNSIPayload)
+        val result = nsiConnector.updateEmail(updatePayload)
         Await.result(result.value, 3.seconds).isLeft shouldBe true
       }
     }
@@ -185,16 +187,16 @@ class NSIConnectorSpec extends TestSupport with HttpSupport with MockFactory wit
 
     "the health-check Method" must {
       "Return a Right when the status is OK" in {
-        mockPut(nsiCreateAccountUrl, validNSIPayload, authHeaders)(Some(HttpResponse(Status.OK)))
-        val result = nsiConnector.healthCheck(validNSIPayload)
+        mockPut(nsiCreateAccountUrl, updatePayload, authHeaders)(Some(HttpResponse(Status.OK)))
+        val result = nsiConnector.healthCheck(updatePayload)
         Await.result(result.value, 3.seconds) shouldBe Right(())
       }
 
       "Return a Left when the status is OK" in {
         forAll { status: Int ⇒
           whenever(status > 0 && status =!= Status.OK) {
-            mockPut(nsiCreateAccountUrl, validNSIPayload, authHeaders)(Some(HttpResponse(status)))
-            val result = nsiConnector.healthCheck(validNSIPayload)
+            mockPut(nsiCreateAccountUrl, updatePayload, authHeaders)(Some(HttpResponse(status)))
+            val result = nsiConnector.healthCheck(updatePayload)
             Await.result(result.value, 3.seconds).isLeft shouldBe true
           }
         }
