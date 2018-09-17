@@ -271,16 +271,8 @@ class JSONSchemaValidationServiceImplSpec extends TestSupport {
       testError(validNSIPayloadJSON.remove(Fields.nino))
     }
 
-    "when given a NSIPayload that the json validation schema reports that the version is missing, return a message" in {
-      testError(validNSIPayloadJSON.remove(Fields.version))
-    }
-
     "when given a NSIPayload that the json validation schema reports that the version is invalid, return a message" in {
       testError(validNSIPayloadJSON.replace(Fields.version, JsString("BAD_VERSION")))
-    }
-
-    "when given a NSIPayload that the json validation schema reports that the systemId is missing, return a message" in {
-      testError(validNSIPayloadJSON.remove(Fields.systemId))
     }
 
     "when given a NSIPayload that the json validation schema reports that the systemId is invalid, return a message" in {
