@@ -20,7 +20,6 @@ import play.api.Configuration
 import play.api.http.HttpVerbs
 import play.api.libs.json.{Json, Writes}
 import play.api.libs.ws.{WSClient, WSProxyServer}
-import uk.gov.hmrc.http.hooks.HttpHook
 import uk.gov.hmrc.http.{HeaderCarrier, HttpReads, HttpResponse}
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.bootstrap.http.DefaultHttpClient
@@ -34,8 +33,6 @@ class HttpProxyClient(override val auditConnector: AuditConnector,
                       proxyConfigPath:             String)
 
   extends DefaultHttpClient(config, auditConnector, wsClient) with WSProxy with HttpVerbs {
-
-  override val hooks: Seq[HttpHook] = NoneRequired
 
   override lazy val wsProxyServer: Option[WSProxyServer] = WSProxyConfiguration(proxyConfigPath)
 
