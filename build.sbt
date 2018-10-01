@@ -34,7 +34,7 @@ lazy val testDependencies = Seq(
   "org.scalatest" %% "scalatest" % "3.0.4" % test,
   "com.typesafe.play" %% "play-test" % PlayVersion.current % test,
   "org.scalamock" %% "scalamock-scalatest-support" % "3.6.0" % test,
-  "com.miguno.akka" % "akka-mock-scheduler_2.11" % "0.5.1" % test,
+  "com.miguno.akka" %% "akka-mock-scheduler" % "0.5.1" % test,
   "com.typesafe.akka" %% "akka-testkit" % "2.5.13" % test,
   "uk.gov.hmrc" %% "stub-data-generator" % "0.5.3" % test
 )
@@ -103,10 +103,11 @@ lazy val wartRemoverSettings = {
 }
 
 lazy val microservice = Project(appName, file("."))
-  .enablePlugins(Seq(play.sbt.PlayScala, SbtAutoBuildPlugin, SbtGitVersioning, SbtDistributablesPlugin) ++ plugins: _*)
+  .enablePlugins(Seq(play.sbt.PlayScala, SbtAutoBuildPlugin, SbtGitVersioning, SbtDistributablesPlugin, SbtArtifactory) ++ plugins: _*)
   .settings(addCompilerPlugin("org.psywerx.hairyfotr" %% "linter" % "0.1.17"))
   .settings(playSettings ++ scoverageSettings: _*)
   .settings(scalaSettings: _*)
+  .settings(majorVersion := 2)
   .settings(publishingSettings: _*)
   .settings(defaultSettings(): _*)
   .settings(PlayKeys.playDefaultPort := 7005)
