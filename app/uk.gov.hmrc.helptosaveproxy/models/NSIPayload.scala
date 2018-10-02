@@ -113,7 +113,7 @@ object NSIPayload {
       BankDetails(
         bankDetails.sortCode.cleanupSpecialCharacters.removeAllSpaces.filterNot(allowedSortCodeSeparators.contains).grouped(2).mkString("-"),
         bankDetails.accountNumber.cleanupSpecialCharacters.removeAllSpaces,
-        bankDetails.rollNumber.map(_.cleanupSpecialCharacters),
+        bankDetails.rollNumber.map(_.cleanupSpecialCharacters.removeAllSpaces),
         bankDetails.accountName.trim.cleanupSpecialCharacters
       )
 
