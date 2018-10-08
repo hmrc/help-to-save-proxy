@@ -208,6 +208,13 @@ class NSIPayloadSpec extends WordSpec with Matchers { // scalastyle:off magic.nu
         result.nbaDetails.map(_.accountNumber) shouldBe Some("12345678")
       }
 
+      "removes leading and trailing whitespaces, new lines, tabs, carriage returns from roll numbers" in {
+        val rollNumber = "  ab\tcd\re\n1  "
+        val json: JsValue = Json.toJson(validNSIPayload.copy(nbaDetails = Some(validBankDetails.copy(rollNumber = Some(rollNumber)))))
+        val result = json.validate[NSIPayload].get
+        result.nbaDetails.flatMap(_.rollNumber) shouldBe Some("abcde1")
+      }
+
       "removes leading and trailing whitespaces, new lines, tabs, carriage returns from account names" in {
         val accountName = "  ab\tcd\re f\ng  "
 
