@@ -21,6 +21,7 @@ import java.time.format.DateTimeFormatter
 
 import play.api.libs.json._
 import uk.gov.hmrc.helptosaveproxy.TestSupport
+import uk.gov.hmrc.helptosaveproxy.models.BankDetails
 import uk.gov.hmrc.helptosaveproxy.testutil.TestData.UserData.validNSIPayload
 
 class JSONSchemaValidationServiceImplSpec extends TestSupport {
@@ -71,6 +72,7 @@ class JSONSchemaValidationServiceImplSpec extends TestSupport {
     val nino = "nino"
     val version = "version"
     val systemId = "systemId"
+    val nbaDetails = "nbaDetails"
   }
 
   "The JSONSchemaValidationServiceImpl" must {
@@ -277,6 +279,10 @@ class JSONSchemaValidationServiceImplSpec extends TestSupport {
 
     "when given a NSIPayload that the json validation schema reports that the systemId is invalid, return a message" in {
       testError(validNSIPayloadJSON.replace(Fields.systemId, JsString("BAD_SYSTEM_ID_BAD_SYSTEM_ID_")))
+    }
+
+    "when given a NSIPayload that the json validation schema reports that the rollNumber is invalid, return a message" in {
+      testError(validNSIPayloadJSON.replace(Fields.nbaDetails, Json.toJson(BankDetails("12-34-56", "12345678", Some("a b & c !@_"), "account name"))))
     }
   }
 
