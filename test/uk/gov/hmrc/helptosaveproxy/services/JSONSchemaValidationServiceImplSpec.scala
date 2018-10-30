@@ -285,7 +285,7 @@ class JSONSchemaValidationServiceImplSpec extends TestSupport {
       testError(validNSIPayloadJSON.replace(Fields.nbaDetails, Json.toJson(BankDetails("12-34-56", "12345678", Some("a b & c !@_"), "account name"))))
     }
 
-    "when given a NSIPayload that the json validation schema reports that the accountNumber is invalid, return a message" in {
+    "when given a NSIPayload that the json validation schema reports that the accountNumber is invalid - too short, return a message" in {
       testError(validNSIPayloadJSON.replace(Fields.nbaDetails, Json.toJson(BankDetails("12-34-56", "", Some("897/98X"), "account name"))))
     }
 
