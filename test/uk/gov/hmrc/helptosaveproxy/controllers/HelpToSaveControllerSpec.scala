@@ -26,7 +26,8 @@ import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.{Action, AnyContent}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import uk.gov.hmrc.helptosaveproxy.TestSupport
+import uk.gov.hmrc.auth.core.retrieve.Credentials
+import uk.gov.hmrc.helptosaveproxy.util.AuthSupport
 import uk.gov.hmrc.helptosaveproxy.connectors.NSIConnector
 import uk.gov.hmrc.helptosaveproxy.models.{AccountNumber, NSIPayload}
 import uk.gov.hmrc.helptosaveproxy.models.SubmissionResult.{SubmissionFailure, SubmissionSuccess}
@@ -36,12 +37,15 @@ import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class HelpToSaveControllerSpec extends TestSupport {
+class HelpToSaveControllerSpec extends AuthSupport {
 
   val mockNSIConnector = mock[NSIConnector]
   val mockJsonSchema = mock[JSONSchemaValidationService]
 
-  val controller = new HelpToSaveController(mockNSIConnector, mockJsonSchema)
+  val controller = new HelpToSaveController(mockNSIConnector, mockJsonSchema, mockAuthConnector)
+
+  val ggCreds = Credentials("id", "GovernmentGateway")
+  val ggRetrievals: Option[Credentials] = Some(ggCreds)
 
   def mockJSONSchemaValidationService(expectedInfo: NSIPayload)(result: Either[String, Unit]) =
     (mockJsonSchema.validate(_: JsValue))
@@ -77,6 +81,7 @@ class HelpToSaveControllerSpec extends TestSupport {
 
     "return a Created status when valid json is given for an eligible new user" in {
       inSequence {
+        mockAuthResultWithSuccess()(ggRetrievals)
         mockJSONSchemaValidationService(validNSIPayload)(Right(()))
         mockCreateAccount(validNSIPayload)(Right(SubmissionSuccess(Some(AccountNumber("1234567890")))))
       }
@@ -87,6 +92,7 @@ class HelpToSaveControllerSpec extends TestSupport {
 
     "return a Conflict status when valid json is given for an existing user" in {
       inSequence {
+        mockAuthResultWithSuccess()(ggRetrievals)
         mockJSONSchemaValidationService(validNSIPayload)(Right(()))
         mockCreateAccount(validNSIPayload)(Right(SubmissionSuccess(None)))
       }
@@ -111,6 +117,7 @@ class HelpToSaveControllerSpec extends TestSupport {
 
     "return an OK status when a user successfully updates their email address" in {
       inSequence {
+        mockAuthResultWithSuccess()(ggRetrievals)
         mockJSONSchemaValidationService(updatePayload)(Right(()))
         mockUpdateEmail(updatePayload)(Right(()))
       }
@@ -146,7 +153,10 @@ class HelpToSaveControllerSpec extends TestSupport {
       val responseBody = s"""{"version":$version,"correlationId":"$correlationId"}"""
       val httpResponse = HttpResponse(Status.OK, responseString = Some(responseBody))
 
-      mockGetAccountByNino(resource, queryParameters)(Right(httpResponse))
+      inSequence {
+        mockAuthResultWithSuccess()(ggRetrievals)
+        mockGetAccountByNino(resource, queryParameters)(Right(httpResponse))
+      }
 
       val result = doRequest()
 
@@ -155,7 +165,10 @@ class HelpToSaveControllerSpec extends TestSupport {
     }
 
     "handle unexpected errors from NS&I" in {
-      mockGetAccountByNino(resource, queryParameters)(Left("boom"))
+      inSequence {
+        mockAuthResultWithSuccess()(ggRetrievals)
+        mockGetAccountByNino(resource, queryParameters)(Left("boom"))
+      }
       status(doRequest()) shouldBe INTERNAL_SERVER_ERROR
     }
   }
@@ -166,6 +179,7 @@ class HelpToSaveControllerSpec extends TestSupport {
 
     "return an InternalServerError status when the call to NSI returns an error" in {
       inSequence {
+        mockAuthResultWithSuccess()(ggRetrievals)
         mockJSONSchemaValidationService(nsiPayload)(Right(()))
         mockNSIFailure()
       }
@@ -178,7 +192,10 @@ class HelpToSaveControllerSpec extends TestSupport {
     "return a BadRequest" when {
 
       "the given user info doesn't pass the json schema validation" in {
-        mockJSONSchemaValidationService(nsiPayload)(Left(""))
+        inSequence {
+          mockAuthResultWithSuccess()(ggRetrievals)
+          mockJSONSchemaValidationService(nsiPayload)(Left(""))
+        }
 
         val result = doCall()(FakeRequest().withJsonBody(Json.toJson(nsiPayload)))
         status(result) shouldBe BAD_REQUEST
@@ -186,12 +203,16 @@ class HelpToSaveControllerSpec extends TestSupport {
       }
 
       "there was no json in the request" in {
+        mockAuthResultWithSuccess()(ggRetrievals)
+
         val result = doCall()(FakeRequest())
         status(result) shouldBe BAD_REQUEST
         contentAsJson(result).validate[SubmissionFailure].isSuccess shouldBe true
       }
 
       "the given json is invalid" in {
+        mockAuthResultWithSuccess()(ggRetrievals)
+
         val result = doCall()(FakeRequest().withJsonBody(Json.toJson("json")))
         status(result) shouldBe BAD_REQUEST
         contentAsJson(result).validate[SubmissionFailure].isSuccess shouldBe true
