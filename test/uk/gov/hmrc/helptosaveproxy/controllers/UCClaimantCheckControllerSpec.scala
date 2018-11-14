@@ -24,18 +24,19 @@ import play.api.libs.json.Json
 import play.api.mvc.{Result ⇒ PlayResult}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import uk.gov.hmrc.helptosaveproxy.TestSupport
+import uk.gov.hmrc.auth.core.retrieve.Credentials
+import uk.gov.hmrc.helptosaveproxy.util.AuthSupport
 import uk.gov.hmrc.helptosaveproxy.connectors.DWPConnector
 import uk.gov.hmrc.helptosaveproxy.testutil.UCClaimantTestSupport
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class UCClaimantCheckControllerSpec extends TestSupport with UCClaimantTestSupport {
+class UCClaimantCheckControllerSpec extends AuthSupport with UCClaimantTestSupport {
 
   val mockDWPConnector = mock[DWPConnector]
 
-  val controller = new UCClaimantCheckController(mockDWPConnector)
+  val controller = new UCClaimantCheckController(mockDWPConnector, mockAuthConnector)
 
   val nino = "WP010123A"
   val transactionId = UUID.randomUUID()
@@ -50,9 +51,16 @@ class UCClaimantCheckControllerSpec extends TestSupport with UCClaimantTestSuppo
       .returning(EitherT.fromEither[Future](result))
 
   "ucClaimantCheck" must {
+    val ggCredentials = Credentials("id", "GovernmentGateway")
+    val ggRetrievals: Option[Credentials] = Some(ggCredentials)
+
     "return a 200 status with the expected json when given a NINO starting with WP01" in {
       val ucDetails = HttpResponse(200, Some(Json.toJson(eUCDetails)))
-      mockUCClaimantCheck(nino, transactionId, threshold)(Right(ucDetails))
+
+      inSequence {
+        mockAuthResultWithSuccess()(ggRetrievals)
+        mockUCClaimantCheck(nino, transactionId, threshold)(Right(ucDetails))
+      }
 
       val result = doUCClaimantCheck(controller, nino)
       status(result) shouldBe 200
@@ -61,7 +69,10 @@ class UCClaimantCheckControllerSpec extends TestSupport with UCClaimantTestSuppo
     }
 
     "return a 500 status with no payload when the ucClaimantCheck call fails" in {
-      mockUCClaimantCheck(nino, transactionId, threshold)(Left("uc claimant check failed"))
+      inSequence {
+        mockAuthResultWithSuccess()(ggRetrievals)
+        mockUCClaimantCheck(nino, transactionId, threshold)(Left("uc claimant check failed"))
+      }
 
       val result = doUCClaimantCheck(controller, nino)
       status(result) shouldBe 500

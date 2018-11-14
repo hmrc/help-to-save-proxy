@@ -22,6 +22,8 @@ import com.google.inject.Inject
 import play.api.libs.json.{JsError, JsSuccess, JsValue, Json}
 import play.api.mvc.{Action, AnyContent, Request, Result}
 import uk.gov.hmrc.helptosaveproxy.config.AppConfig
+import uk.gov.hmrc.auth.core.AuthConnector
+import uk.gov.hmrc.helptosaveproxy.auth.Auth
 import uk.gov.hmrc.helptosaveproxy.connectors.NSIConnector
 import uk.gov.hmrc.helptosaveproxy.controllers.HelpToSaveController.Error
 import uk.gov.hmrc.helptosaveproxy.models.SubmissionResult.{SubmissionFailure, SubmissionSuccess}
@@ -35,9 +37,10 @@ import uk.gov.hmrc.play.bootstrap.controller.BaseController
 import scala.concurrent.{ExecutionContext, Future}
 
 class HelpToSaveController @Inject() (nsiConnector:                NSIConnector,
-                                      jsonSchemaValidationService: JSONSchemaValidationService
+                                      jsonSchemaValidationService: JSONSchemaValidationService,
+                                      authConnector:               AuthConnector
 )(implicit transformer: LogMessageTransformer, appConfig: AppConfig)
-  extends BaseController with Logging with WithMdcExecutionContext {
+  extends Auth(authConnector) with BaseController with Logging with WithMdcExecutionContext {
 
   import HelpToSaveController.Error._
 
@@ -45,7 +48,7 @@ class HelpToSaveController @Inject() (nsiConnector:                NSIConnector,
 
   def jsonSchemaValidationToggle(nino: NINO): FEATURE = FEATURE("create-account-json-validation", appConfig.runModeConfiguration, logger, Some(nino))
 
-  def createAccount(): Action[AnyContent] = Action.async { implicit request ⇒
+  def createAccount(): Action[AnyContent] = authorised { implicit request ⇒
     val correlationId = request.headers.get(correlationIdHeaderName)
 
     processRequest[SubmissionSuccess] {
@@ -59,14 +62,14 @@ class HelpToSaveController @Inject() (nsiConnector:                NSIConnector,
     }
   }
 
-  def updateEmail(): Action[AnyContent] = Action.async { implicit request ⇒
+  def updateEmail(): Action[AnyContent] = authorised { implicit request ⇒
     processRequest[Unit](
       nsiConnector.updateEmail(_).leftMap[Error](e ⇒ NSIError(SubmissionFailure(e, "Could not update email")))) {
         (_, _) ⇒ Ok
       }
   }
 
-  def queryAccount(resource: String): Action[AnyContent] = Action.async { implicit request ⇒
+  def queryAccount(resource: String): Action[AnyContent] = authorised { implicit request ⇒
     nsiConnector.queryAccount(resource, request.queryString)
       .fold({
         e ⇒
