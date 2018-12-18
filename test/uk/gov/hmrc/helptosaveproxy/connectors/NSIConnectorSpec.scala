@@ -46,11 +46,11 @@ class NSIConnectorSpec extends TestSupport with HttpSupport with MockFactory wit
   private val mockAuditor = mock[AuditConnector]
   private val mockWsClient = mock[WSClient]
 
-  class MockedHttpProxyClient extends HttpProxyClient(mockAuditor, configuration, mockWsClient, "microservice.services.nsi.proxy")
+  class MockedHttpProxyClient extends HttpProxyClient(mockAuditor, configuration, mockWsClient, "microservice.services.nsi.proxy", fakeApplication.actorSystem)
 
   override val mockProxyClient = mock[MockedHttpProxyClient]
 
-  lazy val nsiConnector = new NSIConnectorImpl(mockAuditor, mockMetrics, mockPagerDuty, mockWsClient) {
+  lazy val nsiConnector = new NSIConnectorImpl(mockAuditor, mockMetrics, mockPagerDuty, mockWsClient, fakeApplication.actorSystem) {
     override val proxyClient = mockProxyClient
   }
 

@@ -31,7 +31,7 @@ import uk.gov.hmrc.helptosaveproxy.models.NSIPayload
 import uk.gov.hmrc.helptosaveproxy.services.JSONSchemaValidationService
 import uk.gov.hmrc.helptosaveproxy.util.JsErrorOps._
 import uk.gov.hmrc.helptosaveproxy.util.Toggles.FEATURE
-import uk.gov.hmrc.helptosaveproxy.util.{LogMessageTransformer, Logging, NINO, WithMdcExecutionContext}
+import uk.gov.hmrc.helptosaveproxy.util.{LogMessageTransformer, Logging, NINO}
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -39,8 +39,8 @@ import scala.concurrent.{ExecutionContext, Future}
 class HelpToSaveController @Inject() (nsiConnector:                NSIConnector,
                                       jsonSchemaValidationService: JSONSchemaValidationService,
                                       authConnector:               AuthConnector
-)(implicit transformer: LogMessageTransformer, appConfig: AppConfig)
-  extends Auth(authConnector) with BaseController with Logging with WithMdcExecutionContext {
+)(implicit transformer: LogMessageTransformer, appConfig: AppConfig, ec: ExecutionContext)
+  extends Auth(authConnector) with BaseController with Logging {
 
   import HelpToSaveController.Error._
 

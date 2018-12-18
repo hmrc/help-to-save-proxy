@@ -22,13 +22,17 @@ import cats.instances.future._
 import com.google.inject.Inject
 import play.api.mvc.{Action, AnyContent}
 import uk.gov.hmrc.helptosaveproxy.connectors.DWPConnector
-import uk.gov.hmrc.helptosaveproxy.util.{LogMessageTransformer, Logging, WithMdcExecutionContext}
+import uk.gov.hmrc.helptosaveproxy.util.{LogMessageTransformer, Logging}
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.helptosaveproxy.auth.Auth
 
-class UCClaimantCheckController @Inject() (dwpConnector: DWPConnector, override val authConnector: AuthConnector)(implicit transformer: LogMessageTransformer)
-  extends Auth(authConnector) with BaseController with Logging with WithMdcExecutionContext {
+import scala.concurrent.ExecutionContext
+
+class UCClaimantCheckController @Inject() (dwpConnector:               DWPConnector,
+                                           override val authConnector: AuthConnector
+)(implicit transformer: LogMessageTransformer, ec: ExecutionContext)
+  extends Auth(authConnector) with BaseController with Logging {
 
   def ucClaimantCheck(nino: String, transactionId: UUID, threshold: Double): Action[AnyContent] = authorised { implicit request ⇒
     dwpConnector.ucClaimantCheck(nino, transactionId, threshold).fold(

@@ -20,18 +20,18 @@ import play.api.mvc.{Action, AnyContent, Request, Result}
 import uk.gov.hmrc.auth.core.AuthProvider.{GovernmentGateway, PrivilegedApplication}
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthProviders}
 import uk.gov.hmrc.auth.core._
-import uk.gov.hmrc.helptosaveproxy.util.{Logging, WithMdcExecutionContext}
+import uk.gov.hmrc.helptosaveproxy.util.Logging
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
-class Auth(val authConnector: AuthConnector) extends AuthorisedFunctions { this: BaseController with Logging with WithMdcExecutionContext ⇒
+class Auth(val authConnector: AuthConnector) extends AuthorisedFunctions { this: BaseController with Logging ⇒
 
   val authProviders: AuthProviders = AuthProviders(GovernmentGateway, PrivilegedApplication)
 
   type HtsAction = Request[AnyContent] ⇒ Future[Result]
 
-  def authorised(action: HtsAction): Action[AnyContent] =
+  def authorised(action: HtsAction)(implicit ec: ExecutionContext): Action[AnyContent] =
     Action.async { implicit request ⇒
       authorised(authProviders) {
         action(request)

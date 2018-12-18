@@ -23,7 +23,7 @@ import uk.gov.hmrc.auth.core.AuthorisationException.fromString
 import uk.gov.hmrc.auth.core.AuthorisedFunctions
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.credentials
 import uk.gov.hmrc.auth.core.retrieve.{Credentials, Retrieval}
-import uk.gov.hmrc.helptosaveproxy.util.{AuthSupport, Logging, WithMdcExecutionContext}
+import uk.gov.hmrc.helptosaveproxy.util.{AuthSupport, Logging}
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
 
 import scala.concurrent.duration._
@@ -31,7 +31,7 @@ import scala.concurrent.{Await, Future}
 
 class AuthSpec extends AuthSupport {
 
-  class TestAuth extends Auth(mockAuthConnector) with AuthorisedFunctions with BaseController with Logging with WithMdcExecutionContext
+  class TestAuth extends Auth(mockAuthConnector) with AuthorisedFunctions with BaseController with Logging
 
   val auth = new TestAuth
 
