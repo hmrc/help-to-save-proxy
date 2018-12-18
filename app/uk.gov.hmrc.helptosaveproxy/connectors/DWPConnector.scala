@@ -18,6 +18,7 @@ package uk.gov.hmrc.helptosaveproxy.connectors
 
 import java.util.UUID
 
+import akka.actor.ActorSystem
 import cats.data.EitherT
 import com.codahale.metrics.Timer
 import com.google.inject.ImplementedBy
@@ -47,10 +48,11 @@ trait DWPConnector {
 class DWPConnectorImpl @Inject() (auditConnector:    AuditConnector,
                                   metrics:           Metrics,
                                   pagerDutyAlerting: PagerDutyAlerting,
-                                  wsClient:          WSClient)(implicit transformer: LogMessageTransformer, appConfig: AppConfig)
+                                  wsClient:          WSClient,
+                                  system:            ActorSystem)(implicit transformer: LogMessageTransformer, appConfig: AppConfig)
   extends DWPConnector with Logging {
 
-  val proxyClient: HttpProxyClient = new HttpProxyClient(auditConnector, appConfig.runModeConfiguration, wsClient, "microservice.services.dwp.proxy")
+  val proxyClient: HttpProxyClient = new HttpProxyClient(auditConnector, appConfig.runModeConfiguration, wsClient, "microservice.services.dwp.proxy", system)
 
   def ucClaimantCheck(nino: String, transactionId: UUID, threshold: Double)(implicit hc: HeaderCarrier, ec: ExecutionContext): EitherT[Future, String, HttpResponse] = {
 

@@ -38,11 +38,11 @@ class DWPConnectorSpec extends TestSupport with HttpSupport with MockFactory wit
   private val mockAuditor = mock[AuditConnector]
   private val mockWsClient = mock[WSClient]
 
-  class MockedHttpProxyClient extends HttpProxyClient(mockAuditor, configuration, mockWsClient, "microservice.services.dwp.proxy")
+  class MockedHttpProxyClient extends HttpProxyClient(mockAuditor, configuration, mockWsClient, "microservice.services.dwp.proxy", fakeApplication.actorSystem)
 
   override val mockProxyClient = mock[MockedHttpProxyClient]
 
-  lazy val connector = new DWPConnectorImpl(mockAuditor, mockMetrics, mockPagerDuty, mockWsClient) {
+  lazy val connector = new DWPConnectorImpl(mockAuditor, mockMetrics, mockPagerDuty, mockWsClient, fakeApplication.actorSystem) {
     override val proxyClient = mockProxyClient
   }
 

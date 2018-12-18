@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.helptosaveproxy.http
 
+import akka.actor.ActorSystem
 import play.api.Configuration
 import play.api.http.HttpVerbs
 import play.api.libs.json.{Json, Writes}
@@ -30,9 +31,10 @@ import scala.concurrent.{ExecutionContext, Future}
 class HttpProxyClient(override val auditConnector: AuditConnector,
                       config:                      Configuration,
                       wsClient:                    WSClient,
-                      proxyConfigPath:             String)
+                      proxyConfigPath:             String,
+                      system:                      ActorSystem)
 
-  extends DefaultHttpClient(config, auditConnector, wsClient) with WSProxy with HttpVerbs {
+  extends DefaultHttpClient(config, auditConnector, wsClient, system) with WSProxy with HttpVerbs {
 
   override lazy val wsProxyServer: Option[WSProxyServer] = WSProxyConfiguration(proxyConfigPath)
 

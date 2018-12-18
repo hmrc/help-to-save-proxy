@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.helptosaveproxy.connectors
 
+import akka.actor.ActorSystem
 import cats.data.EitherT
 import cats.instances.string._
 import cats.syntax.eq._
@@ -58,11 +59,12 @@ trait NSIConnector {
 class NSIConnectorImpl @Inject() (auditConnector:    AuditConnector,
                                   metrics:           Metrics,
                                   pagerDutyAlerting: PagerDutyAlerting,
-                                  wsClient:          WSClient)(
+                                  wsClient:          WSClient,
+                                  system:            ActorSystem)(
     implicit
     transformer: LogMessageTransformer, appConfig: AppConfig) extends NSIConnector with Logging {
 
-  val proxyClient: HttpProxyClient = new HttpProxyClient(auditConnector, appConfig.runModeConfiguration, wsClient, "microservice.services.nsi.proxy")
+  val proxyClient: HttpProxyClient = new HttpProxyClient(auditConnector, appConfig.runModeConfiguration, wsClient, "microservice.services.nsi.proxy", system)
 
   private val nsiCreateAccountUrl = appConfig.nsiCreateAccountUrl
   private val nsiAuthHeaderKey = appConfig.nsiAuthHeaderKey
