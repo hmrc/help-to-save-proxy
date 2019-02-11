@@ -1,24 +1,47 @@
+help-to-save-proxy
+==================
 
-[ ![Download](https://api.bintray.com/packages/hmrc/releases/help-to-save-proxy/images/download.svg) ](https://bintray.com/hmrc/releases/help-to-save-proxy/_latestVersion)
+This service allows Help to Save to make requests to services outside of MDTP. Used to make requests to NS&I and DWP.
 
-## Help to Save Proxy    
+Table of Contents
+=================
 
-## How to run
+* [About Help to Save](#about-help-to-save)
+* [Running and Testing](#running-and-testing)
+   * [Running](#running)
+   * [Unit tests](#unit-tests)
+* [Endpoints](#endpoints)
+* [License](#license)
 
-Runs on port 7005 when started locally by the service manager.
+About Help to Save
+==================
+Please click [here](https://github.com/hmrc/help-to-save#about-help-to-save) for more information.
 
-sbt "run 7005"
+Running and Testing
+===================
 
-## Endpoints
+Running
+-------
 
-## Main Public API
+Run `sbt run` on the terminal to start the service. The service runs on port 7005 by default.  
 
-| Path                                                          | Supported Methods | Description  |
-| --------------------------------------------------------------| ------------------| ------------ |
-|`/help-to-save-proxy/create-account`                           |        GET        | Submits a request to NS&I to create a HTS account|
-|`/help-to-save-proxy/update-email`                             |        GET        | Submits a request to NS&I to update the user's email address|
+Unit tests                                              
+----------                                              
+Run `sbt test` on the terminal to run the unit tests.   
+
+
+Endpoints
+=========
+
+| Path                                                          | Method            | Description  |
+| --------------------------------------------------------------| ------------------| -------------|
+|`/help-to-save-proxy/create-account`                           |        POST       | Creates a HTS account|
+|`/help-to-save-proxy/update-email`                             |        PUT        | Update the user's email address on their HTS account|
+|`/help-to-save-proxy/nsi-services/*resource`                   |        GET        | Submits a request to NS&I to query some resource (e.g. account info or transaction data)|
+|`/help-to-save-proxy/uc-claimant-check`                        |        GET        | Checks if a person is a UC claimant and if they are whether they're earning above a given threshold|
+
 
 License
----
+=======
 
 This code is open source software licensed under the [Apache 2.0 License]("http://www.apache.org/licenses/LICENSE-2.0.html").
