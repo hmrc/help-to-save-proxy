@@ -23,9 +23,9 @@ lazy val dependencies = Seq(
   "uk.gov.hmrc" %% "domain" % "5.3.0",
   "org.typelevel" %% "cats-core" % "1.5.0",
   "com.github.kxbmap" %% "configs" % "0.4.4",
-  "uk.gov.hmrc" %% "play-reactivemongo" % "6.2.0",
+  "uk.gov.hmrc" %% "simple-reactivemongo" % "7.12.0-play-25",
   "com.eclipsesource" %% "play-json-schema-validator" % "0.8.9",
-  "uk.gov.hmrc" %% "mongo-lock" % "5.1.1",
+  "uk.gov.hmrc" %% "mongo-lock" % "6.10.0-play-25",
   "uk.gov.hmrc" %% "bootstrap-play-25" % "4.8.0"
 )
 
