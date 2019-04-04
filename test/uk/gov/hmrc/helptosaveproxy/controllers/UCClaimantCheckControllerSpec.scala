@@ -51,14 +51,12 @@ class UCClaimantCheckControllerSpec extends AuthSupport with UCClaimantTestSuppo
       .returning(EitherT.fromEither[Future](result))
 
   "ucClaimantCheck" must {
-    val ggCredentials = Credentials("id", "GovernmentGateway")
-    val ggRetrievals: Option[Credentials] = Some(ggCredentials)
 
     "return a 200 status with the expected json when given a NINO starting with WP01" in {
       val ucDetails = HttpResponse(200, Some(Json.toJson(eUCDetails)))
 
       inSequence {
-        mockAuthResultWithSuccess()(ggRetrievals)
+        mockAuthResultWithSuccess()
         mockUCClaimantCheck(nino, transactionId, threshold)(Right(ucDetails))
       }
 
@@ -70,7 +68,7 @@ class UCClaimantCheckControllerSpec extends AuthSupport with UCClaimantTestSuppo
 
     "return a 500 status with no payload when the ucClaimantCheck call fails" in {
       inSequence {
-        mockAuthResultWithSuccess()(ggRetrievals)
+        mockAuthResultWithSuccess()
         mockUCClaimantCheck(nino, transactionId, threshold)(Left("uc claimant check failed"))
       }
 

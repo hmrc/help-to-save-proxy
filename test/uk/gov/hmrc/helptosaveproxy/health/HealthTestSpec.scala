@@ -136,7 +136,7 @@ class HealthTestSpec extends ActorTestSupport("HealthTestSpec") {
 
         "create a child runner from the given props" in {
           time.advance(timeBetweenTests - 1.millisecond)
-          expectNoMsg()
+          expectNoMessage()
 
           // now move time forward to when the timer is triggered
           time.advance(1.millisecond)
@@ -196,7 +196,7 @@ class HealthTestSpec extends ActorTestSupport("HealthTestSpec") {
             awaitActorReady(healthCheck)
 
             time.advance(timeBetweenTests)
-            runnerListener.expectNoMsg()
+            runnerListener.expectNoMessage()
 
             time.advance(1.second)
             mockTest(runnerName1, Left(""))
@@ -293,7 +293,7 @@ class HealthTestSpec extends ActorTestSupport("HealthTestSpec") {
             metricsListener.expectMsg(maximumConsecutiveFailures + i)
           }
           // pager duty shouldn't have been alerted at this point
-          pagerDutyListener.expectNoMsg()
+          pagerDutyListener.expectNoMessage()
 
           time.advance(timeBetweenTests)
           mockTest(runnerName1, Left(""))

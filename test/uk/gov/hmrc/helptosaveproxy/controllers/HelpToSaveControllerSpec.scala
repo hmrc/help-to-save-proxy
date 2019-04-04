@@ -81,7 +81,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
     "return a Created status when valid json is given for an eligible new user" in {
       inSequence {
-        mockAuthResultWithSuccess()(ggRetrievals)
+        mockAuthResultWithSuccess()
         mockJSONSchemaValidationService(validNSIPayload)(Right(()))
         mockCreateAccount(validNSIPayload)(Right(SubmissionSuccess(Some(AccountNumber("1234567890")))))
       }
@@ -92,7 +92,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
     "return a Conflict status when valid json is given for an existing user" in {
       inSequence {
-        mockAuthResultWithSuccess()(ggRetrievals)
+        mockAuthResultWithSuccess()
         mockJSONSchemaValidationService(validNSIPayload)(Right(()))
         mockCreateAccount(validNSIPayload)(Right(SubmissionSuccess(None)))
       }
@@ -117,7 +117,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
     "return an OK status when a user successfully updates their email address" in {
       inSequence {
-        mockAuthResultWithSuccess()(ggRetrievals)
+        mockAuthResultWithSuccess()
         mockJSONSchemaValidationService(updatePayload)(Right(()))
         mockUpdateEmail(updatePayload)(Right(()))
       }
@@ -154,7 +154,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
       val httpResponse = HttpResponse(Status.OK, responseString = Some(responseBody))
 
       inSequence {
-        mockAuthResultWithSuccess()(ggRetrievals)
+        mockAuthResultWithSuccess()
         mockGetAccountByNino(resource, queryParameters)(Right(httpResponse))
       }
 
@@ -166,7 +166,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
     "handle unexpected errors from NS&I" in {
       inSequence {
-        mockAuthResultWithSuccess()(ggRetrievals)
+        mockAuthResultWithSuccess()
         mockGetAccountByNino(resource, queryParameters)(Left("boom"))
       }
       status(doRequest()) shouldBe INTERNAL_SERVER_ERROR
@@ -179,7 +179,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
     "return an InternalServerError status when the call to NSI returns an error" in {
       inSequence {
-        mockAuthResultWithSuccess()(ggRetrievals)
+        mockAuthResultWithSuccess()
         mockJSONSchemaValidationService(nsiPayload)(Right(()))
         mockNSIFailure()
       }
@@ -193,7 +193,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
       "the given user info doesn't pass the json schema validation" in {
         inSequence {
-          mockAuthResultWithSuccess()(ggRetrievals)
+          mockAuthResultWithSuccess()
           mockJSONSchemaValidationService(nsiPayload)(Left(""))
         }
 
@@ -203,7 +203,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
       }
 
       "there was no json in the request" in {
-        mockAuthResultWithSuccess()(ggRetrievals)
+        mockAuthResultWithSuccess()
 
         val result = doCall()(FakeRequest())
         status(result) shouldBe BAD_REQUEST
@@ -211,7 +211,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
       }
 
       "the given json is invalid" in {
-        mockAuthResultWithSuccess()(ggRetrievals)
+        mockAuthResultWithSuccess()
 
         val result = doCall()(FakeRequest().withJsonBody(Json.toJson("json")))
         status(result) shouldBe BAD_REQUEST
