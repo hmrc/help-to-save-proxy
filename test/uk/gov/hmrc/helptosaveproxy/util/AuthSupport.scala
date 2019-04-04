@@ -27,10 +27,6 @@ import scala.concurrent.{ExecutionContext, Future}
 
 trait AuthSupport extends TestSupport {
 
-  val ggCredentials = GGCredId("123-gg")
-
-  val privilegedCredentials = PAClientId("123-pa")
-
   val authProviders: AuthProviders = AuthProviders(GovernmentGateway, PrivilegedApplication)
 
   val mockAuthConnector: AuthConnector = mock[AuthConnector]
@@ -40,9 +36,9 @@ trait AuthSupport extends TestSupport {
       .expects(authProviders, EmptyRetrieval, *, *)
       .returning(Future.failed(ex))
 
-  def mockAuthResultWithSuccess[A]()(result: A): Unit =
+  def mockAuthResultWithSuccess(): Unit =
     (mockAuthConnector.authorise(_: Predicate, _: Retrieval[Unit])(_: HeaderCarrier, _: ExecutionContext))
       .expects(authProviders, EmptyRetrieval, *, *)
-      .returning(Future.successful(result))
+      .returning(Future.successful(()))
 
 }
