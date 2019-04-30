@@ -26,7 +26,7 @@ lazy val dependencies = Seq(
   "uk.gov.hmrc" %% "simple-reactivemongo" % "7.12.0-play-25",
   "com.eclipsesource" %% "play-json-schema-validator" % "0.8.9",
   "uk.gov.hmrc" %% "mongo-lock" % "6.10.0-play-25",
-  "uk.gov.hmrc" %% "bootstrap-play-25" % "4.8.0"
+  "uk.gov.hmrc" %% "bootstrap-play-25" % "4.11.0"
 )
 
 lazy val testDependencies = Seq(
