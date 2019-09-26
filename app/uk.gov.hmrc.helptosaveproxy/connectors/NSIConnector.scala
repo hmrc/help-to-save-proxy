@@ -30,7 +30,7 @@ import uk.gov.hmrc.helptosaveproxy.config.AppConfig
 import uk.gov.hmrc.helptosaveproxy.http.HttpProxyClient
 import uk.gov.hmrc.helptosaveproxy.metrics.Metrics
 import uk.gov.hmrc.helptosaveproxy.metrics.Metrics.nanosToPrettyString
-import uk.gov.hmrc.helptosaveproxy.models.NSIPayload
+import uk.gov.hmrc.helptosaveproxy.models.{AccountNumber, NSIPayload}
 import uk.gov.hmrc.helptosaveproxy.models.NSIPayload.nsiPayloadFormat
 import uk.gov.hmrc.helptosaveproxy.models.SubmissionResult._
 import uk.gov.hmrc.helptosaveproxy.util.HttpResponseOps._
@@ -38,8 +38,8 @@ import uk.gov.hmrc.helptosaveproxy.util.Logging._
 import uk.gov.hmrc.helptosaveproxy.util.Toggles._
 import uk.gov.hmrc.helptosaveproxy.util.{LogMessageTransformer, Logging, NINO, PagerDutyAlerting, Result, maskNino}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.play.audit.http.HttpAuditing
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
-import uk.gov.hmrc.helptosaveproxy.models.AccountNumber
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -56,7 +56,7 @@ trait NSIConnector {
 }
 
 @Singleton
-class NSIConnectorImpl @Inject() (auditConnector:    AuditConnector,
+class NSIConnectorImpl @Inject() (httpAuditing:      HttpAuditing,
                                   metrics:           Metrics,
                                   pagerDutyAlerting: PagerDutyAlerting,
                                   wsClient:          WSClient,
@@ -64,7 +64,7 @@ class NSIConnectorImpl @Inject() (auditConnector:    AuditConnector,
     implicit
     transformer: LogMessageTransformer, appConfig: AppConfig) extends NSIConnector with Logging {
 
-  val proxyClient: HttpProxyClient = new HttpProxyClient(auditConnector, appConfig.runModeConfiguration, wsClient, "microservice.services.nsi.proxy", system)
+  val proxyClient: HttpProxyClient = new HttpProxyClient(httpAuditing, appConfig.runModeConfiguration, wsClient, "microservice.services.nsi.proxy", system)
 
   private val nsiCreateAccountUrl = appConfig.nsiCreateAccountUrl
   private val nsiAuthHeaderKey = appConfig.nsiAuthHeaderKey

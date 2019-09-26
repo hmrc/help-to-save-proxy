@@ -18,14 +18,13 @@ package uk.gov.hmrc.helptosaveproxy.auth
 
 import play.api.mvc.{Action, AnyContent, Request, Result}
 import uk.gov.hmrc.auth.core.AuthProvider.{GovernmentGateway, PrivilegedApplication}
-import uk.gov.hmrc.auth.core.{AuthConnector, AuthProviders}
-import uk.gov.hmrc.auth.core._
+import uk.gov.hmrc.auth.core.{AuthProviders, _}
 import uk.gov.hmrc.helptosaveproxy.util.Logging
-import uk.gov.hmrc.play.bootstrap.controller.BaseController
+import uk.gov.hmrc.play.bootstrap.controller.BackendController
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class Auth(val authConnector: AuthConnector) extends AuthorisedFunctions { this: BaseController with Logging ⇒
+trait Auth extends AuthorisedFunctions { this: BackendController with Logging ⇒
 
   val authProviders: AuthProviders = AuthProviders(GovernmentGateway, PrivilegedApplication)
 

@@ -17,26 +17,26 @@
 package uk.gov.hmrc.helptosaveproxy.http
 
 import akka.actor.ActorSystem
+import javax.inject.Inject
 import play.api.Configuration
 import play.api.http.HttpVerbs
 import play.api.libs.json.{Json, Writes}
 import play.api.libs.ws.{WSClient, WSProxyServer}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpReads, HttpResponse}
-import uk.gov.hmrc.play.audit.http.connector.AuditConnector
+import uk.gov.hmrc.play.audit.http.HttpAuditing
 import uk.gov.hmrc.play.bootstrap.http.DefaultHttpClient
 import uk.gov.hmrc.play.http.ws.{WSProxy, WSProxyConfiguration}
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class HttpProxyClient(override val auditConnector: AuditConnector,
-                      config:                      Configuration,
-                      wsClient:                    WSClient,
-                      proxyConfigPath:             String,
-                      system:                      ActorSystem)
+class HttpProxyClient(httpAuditing:    HttpAuditing,
+                      config:          Configuration,
+                      wsClient:        WSClient,
+                      proxyConfigPath: String,
+                      actorSystem:     ActorSystem)
+  extends DefaultHttpClient(config, httpAuditing, wsClient, actorSystem) with WSProxy with HttpVerbs {
 
-  extends DefaultHttpClient(config, auditConnector, wsClient, system) with WSProxy with HttpVerbs {
-
-  override lazy val wsProxyServer: Option[WSProxyServer] = WSProxyConfiguration(proxyConfigPath)
+  override lazy val wsProxyServer: Option[WSProxyServer] = WSProxyConfiguration(proxyConfigPath, config)
 
   private class RawHttpReads extends HttpReads[HttpResponse] {
     override def read(method: String, url: String, response: HttpResponse): HttpResponse = response
@@ -64,7 +64,7 @@ class HttpProxyClient(override val auditConnector: AuditConnector,
              needsAuditing: Boolean             = true
   )(implicit w: Writes[A], hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     withTracing(PUT, url) {
-      val httpResponse = doPut(url, body)(w, hc.withExtraHeaders(headers.toSeq: _*))
+      val httpResponse = doPut(url, body)(w, hc.withExtraHeaders(headers.toSeq: _*), ec)
       if (needsAuditing) {
         executeHooks(url, PUT, Option(Json.stringify(w.writes(body))), httpResponse)
       }

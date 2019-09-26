@@ -20,27 +20,28 @@ import cats.data.EitherT
 import cats.instances.future._
 import com.google.inject.Inject
 import play.api.libs.json.{JsError, JsSuccess, JsValue, Json}
-import play.api.mvc.{Action, AnyContent, Request, Result}
-import uk.gov.hmrc.helptosaveproxy.config.AppConfig
+import play.api.mvc._
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.helptosaveproxy.auth.Auth
+import uk.gov.hmrc.helptosaveproxy.config.AppConfig
 import uk.gov.hmrc.helptosaveproxy.connectors.NSIConnector
 import uk.gov.hmrc.helptosaveproxy.controllers.HelpToSaveController.Error
-import uk.gov.hmrc.helptosaveproxy.models.SubmissionResult.{SubmissionFailure, SubmissionSuccess}
 import uk.gov.hmrc.helptosaveproxy.models.NSIPayload
+import uk.gov.hmrc.helptosaveproxy.models.SubmissionResult.{SubmissionFailure, SubmissionSuccess}
 import uk.gov.hmrc.helptosaveproxy.services.JSONSchemaValidationService
 import uk.gov.hmrc.helptosaveproxy.util.JsErrorOps._
 import uk.gov.hmrc.helptosaveproxy.util.Toggles.FEATURE
 import uk.gov.hmrc.helptosaveproxy.util.{LogMessageTransformer, Logging, NINO}
-import uk.gov.hmrc.play.bootstrap.controller.BaseController
+import uk.gov.hmrc.play.bootstrap.controller.BackendController
 
 import scala.concurrent.{ExecutionContext, Future}
 
 class HelpToSaveController @Inject() (nsiConnector:                NSIConnector,
                                       jsonSchemaValidationService: JSONSchemaValidationService,
-                                      authConnector:               AuthConnector
+                                      override val authConnector:  AuthConnector,
+                                      cc:                          ControllerComponents
 )(implicit transformer: LogMessageTransformer, appConfig: AppConfig, ec: ExecutionContext)
-  extends Auth(authConnector) with BaseController with Logging {
+  extends BackendController(cc) with Auth with Logging {
 
   import HelpToSaveController.Error._
 

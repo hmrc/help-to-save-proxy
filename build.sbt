@@ -18,19 +18,19 @@ lazy val playSettings: Seq[Setting[_]] = Seq.empty
 
 lazy val dependencies = Seq(
   ws,
-  "uk.gov.hmrc" %% "auth-client" % "2.19.0-play-25",
-  "uk.gov.hmrc" %% "play-config" % "7.2.0",
-  "uk.gov.hmrc" %% "domain" % "5.3.0",
+  "uk.gov.hmrc" %% "auth-client" % "2.29.0-play-26",
+  "uk.gov.hmrc" %% "play-config" % "7.5.0",
+  "uk.gov.hmrc" %% "domain" % "5.6.0-play-26",
   "org.typelevel" %% "cats-core" % "1.5.0",
   "com.github.kxbmap" %% "configs" % "0.4.4",
-  "uk.gov.hmrc" %% "simple-reactivemongo" % "7.12.0-play-25",
+  "uk.gov.hmrc" %% "simple-reactivemongo" % "7.20.0-play-26",
   "com.eclipsesource" %% "play-json-schema-validator" % "0.8.9",
-  "uk.gov.hmrc" %% "mongo-lock" % "6.10.0-play-25",
-  "uk.gov.hmrc" %% "bootstrap-play-25" % "4.11.0"
+  "uk.gov.hmrc" %% "mongo-lock" % "6.15.0-play-26",
+  "uk.gov.hmrc" %% "bootstrap-play-26" % "1.0.0"
 )
 
 lazy val testDependencies = Seq(
-  "uk.gov.hmrc" %% "hmrctest" % "3.4.0-play-25" % test,
+  "uk.gov.hmrc" %% "hmrctest" % "3.9.0-play-26" % test,
   "org.scalatest" %% "scalatest" % "3.0.4" % test,
   "com.typesafe.play" %% "play-test" % PlayVersion.current % test,
   "org.scalamock" %% "scalamock-scalatest-support" % "3.6.0" % test,
@@ -130,8 +130,7 @@ lazy val microservice = Project(appName, file("."))
   )
   .settings(
     retrieveManaged := true,
-    evictionWarningOptions in update := EvictionWarningOptions.default.withWarnScalaVersionEviction(false),
-    routesGenerator := StaticRoutesGenerator
+    evictionWarningOptions in update := EvictionWarningOptions.default.withWarnScalaVersionEviction(false)
   )
   .settings(resolvers ++= Seq(
     Resolver.bintrayRepo("hmrc", "releases"),

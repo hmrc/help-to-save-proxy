@@ -16,42 +16,41 @@
 
 package uk.gov.hmrc.helptosaveproxy.config
 
-import java.util.{Base64, UUID}
-import javax.inject.Inject
+import java.util.Base64
 
 import com.google.inject.Singleton
-import play.api.Mode.Mode
-import play.api.{Configuration, Environment}
-import uk.gov.hmrc.play.config.ServicesConfig
+import javax.inject.Inject
+import play.api.Configuration
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 @Singleton
-class AppConfig @Inject() (override val runModeConfiguration: Configuration, val environment: Environment) extends ServicesConfig {
-
-  override protected def mode: Mode = environment.mode
+class AppConfig @Inject() (val runModeConfiguration: Configuration, sc: ServicesConfig) {
 
   def base64Encode(input: String): Array[Byte] = Base64.getEncoder.encode(input.getBytes)
 
   def base64Decode(input: String): Array[Byte] = Base64.getDecoder.decode(input)
 
-  val appName: String = getString("appName")
+  def getString(key: String): String = sc.getString(key)
 
-  val nsiAuthHeaderKey: String = getString("microservice.services.nsi.client.httpheader.header-key")
+  val appName: String = sc.getString("appName")
+
+  val nsiAuthHeaderKey: String = sc.getString("microservice.services.nsi.client.httpheader.header-key")
 
   val nsiBasicAuth: String = {
-    val user = new String(base64Decode(getString("microservice.services.nsi.client.httpheader.basicauth.Base64User")))
-    val password = new String(base64Decode(getString("microservice.services.nsi.client.httpheader.basicauth.Base64Password")))
-    val encoding = getString("microservice.services.nsi.client.httpheader.encoding")
+    val user = new String(base64Decode(sc.getString("microservice.services.nsi.client.httpheader.basicauth.Base64User")))
+    val password = new String(base64Decode(sc.getString("microservice.services.nsi.client.httpheader.basicauth.Base64Password")))
+    val encoding = sc.getString("microservice.services.nsi.client.httpheader.encoding")
 
     s"Basic ${new String(base64Encode(s"$user:$password"), encoding)}"
   }
 
-  val nsiCreateAccountUrl: String = s"${baseUrl("nsi")}/nsi-services/account"
+  val nsiCreateAccountUrl: String = s"${sc.baseUrl("nsi")}/nsi-services/account"
 
-  val nsiQueryAccountUrl: String = s"${baseUrl("nsi")}/nsi-services"
+  val nsiQueryAccountUrl: String = s"${sc.baseUrl("nsi")}/nsi-services"
 
-  val systemId: String = getString("microservice.services.dwp.system-id")
+  val systemId: String = sc.getString("microservice.services.dwp.system-id")
 
-  val dwpBaseUrl: String = baseUrl("dwp")
+  val dwpBaseUrl: String = sc.baseUrl("dwp")
 
   val dwpHealthCheckURL: String = s"$dwpBaseUrl/hmrc-healthcheck"
 
