@@ -20,7 +20,6 @@ import java.io._
 import java.security.KeyStore
 import java.security.cert.{Certificate, CertificateFactory, X509Certificate}
 
-import com.typesafe.config.Config
 import com.typesafe.sslconfig.ssl.{KeyStoreConfig, TrustStoreConfig}
 import javax.inject.{Inject, Singleton}
 import play.api.inject.{Binding, Module}
@@ -31,18 +30,20 @@ import uk.gov.hmrc.helptosaveproxy.util.{Logging, base64Decode}
 import scala.collection.JavaConverters._
 
 @Singleton
-class CustomWSConfigParser @Inject() (config: Config, environment: Environment) extends WSConfigParser(config, environment.classLoader) with Logging {
+class CustomWSConfigParser @Inject() (configuration: Configuration, env: Environment)
+  extends WSConfigParser(configuration.underlying, env.classLoader) with Logging {
 
   logger.info("Starting CustomWSConfigParser")
 
   override def parse(): WSClientConfig = {
+    println(">>>>>>parse()")
 
     logger.info("Parsing WSClientConfig")
 
-    val internalParser = new WSConfigParser(config, environment.classLoader)
-    val clientConfig = internalParser.parse()
+    val internalParser = new WSConfigParser(configuration.underlying, env.classLoader)
+    val config = internalParser.parse()
 
-    val keyStores = clientConfig.ssl.keyManagerConfig.keyStoreConfigs.filter(_.data.forall(_.nonEmpty)).map { ks ⇒
+    val keyStores = config.ssl.keyManagerConfig.keyStoreConfigs.filter(_.data.forall(_.nonEmpty)).map { ks ⇒
       (ks.storeType.toUpperCase, ks.filePath, ks.data) match {
         case (_, None, Some(data)) ⇒
           createKeyStoreConfig(ks, data)
@@ -53,7 +54,7 @@ class CustomWSConfigParser @Inject() (config: Config, environment: Environment) 
       }
     }
 
-    val trustStores = clientConfig.ssl.trustManagerConfig.trustStoreConfigs.filter(_.data.forall(_.nonEmpty)).map { ts ⇒
+    val trustStores = config.ssl.trustManagerConfig.trustStoreConfigs.filter(_.data.forall(_.nonEmpty)).map { ts ⇒
       (ts.filePath, ts.data) match {
         case (None, Some(data)) ⇒
           createTrustStoreConfig(ts, data)
@@ -64,10 +65,12 @@ class CustomWSConfigParser @Inject() (config: Config, environment: Environment) 
       }
     }
 
-    val wsClientConfig = clientConfig.copy(
-      ssl = clientConfig.ssl
-        .withKeyManagerConfig(clientConfig.ssl.keyManagerConfig.withKeyStoreConfigs(keyStores))
-        .withTrustManagerConfig(clientConfig.ssl.trustManagerConfig.withTrustStoreConfigs(trustStores))
+    val wsClientConfig = config.copy(
+      ssl = config.ssl
+        .withKeyManagerConfig(config.ssl.keyManagerConfig
+          .withKeyStoreConfigs(keyStores))
+        .withTrustManagerConfig(config.ssl.trustManagerConfig
+          .withTrustStoreConfigs(trustStores))
     )
 
     wsClientConfig

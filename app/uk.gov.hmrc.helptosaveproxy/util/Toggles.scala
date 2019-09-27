@@ -26,7 +26,7 @@ object Toggles {
   /**
    *
    * @param name Name of the feature. Configuration of the feature will be looked for in the path
-   *             'feature-toggles.$name'
+   *             'feature-toggles.\$name'
    * @param enabled Whether or not the feature should be enabled
    * @param logger The logger to use in logging
    */
@@ -58,7 +58,7 @@ object Toggles {
 
     /**
      * @param name Name of the feature. Configuration of the feature will be looked for in the path
-     *             'feature-toggles.$name'
+     *             'feature-toggles.\$name'
      * @param configuration The global configuration
      * @param logger The logger to be used by the feature
      */
