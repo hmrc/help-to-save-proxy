@@ -97,7 +97,9 @@ lazy val wartRemoverSettings = {
     Wart.Nothing,
     Wart.Overloading,
     Wart.ToString,
-    Wart.Var)
+    Wart.Var,
+    Wart.NonUnitStatements,
+    Wart.Null)
 
   wartremoverErrors in (Compile, compile) ++= Warts.allBut(excludedWarts: _*)
 }
