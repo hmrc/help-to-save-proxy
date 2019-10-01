@@ -104,9 +104,9 @@ class AsyncHttpClientProvider @Inject() (
     lazy val loggerFactory = new AhcLoggerFactory(
       org.slf4j.LoggerFactory.getILoggerFactory
     )
-        if (wsClientConfig.ssl.debug.enabled) {
-          new DebugConfiguration(loggerFactory).configure(wsClientConfig.ssl.debug)
-        }
+    if (wsClientConfig.ssl.debug.enabled) {
+      new DebugConfiguration(loggerFactory).configure(wsClientConfig.ssl.debug)
+    }
 
     new SystemConfiguration(loggerFactory).configure(wsClientConfig.ssl)
   }
