@@ -25,6 +25,7 @@ import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{BeforeAndAfterAll, Suite}
 import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.mvc.ControllerComponents
 import play.api.{Application, Configuration, Play}
 import uk.gov.hmrc.helptosaveproxy.config.AppConfig
 import uk.gov.hmrc.helptosaveproxy.metrics.Metrics
@@ -48,14 +49,18 @@ trait TestSupport extends UnitSpec with MockFactory with BeforeAndAfterAll with 
       .configure(Configuration(
         ConfigFactory.parseString(
           """
-            | metrics.enabled       = false
-            | play.modules.disabled = [ "uk.gov.hmrc.helptosaveproxy.config.HealthCheckModule" ]
+            | metrics.enabled       = true
+            | play.modules.disabled = [ "uk.gov.hmrc.helptosaveproxy.config.HealthCheckModule",
+            | "play.api.libs.ws.ahc.AhcWSModule",
+            | "play.api.mvc.LegacyCookiesModule" ]
           """.stripMargin)
       ) ++ additionalConfig)
       .build()
   }
 
   lazy val fakeApplication: Application = buildFakeApplication(additionalConfig)
+
+  lazy val mockCc: ControllerComponents = fakeApplication.injector.instanceOf[ControllerComponents]
 
   implicit lazy val ec: ExecutionContext = fakeApplication.injector.instanceOf[ExecutionContext]
 

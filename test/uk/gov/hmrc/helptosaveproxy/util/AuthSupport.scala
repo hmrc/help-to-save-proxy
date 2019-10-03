@@ -16,12 +16,13 @@
 
 package uk.gov.hmrc.helptosaveproxy.util
 
+import play.api.mvc.ControllerComponents
 import uk.gov.hmrc.auth.core.AuthProvider.{GovernmentGateway, PrivilegedApplication}
-import uk.gov.hmrc.auth.core.{AuthConnector, AuthProviders}
 import uk.gov.hmrc.auth.core.authorise.Predicate
 import uk.gov.hmrc.auth.core.retrieve._
-import uk.gov.hmrc.http._
+import uk.gov.hmrc.auth.core.{AuthConnector, AuthProviders}
 import uk.gov.hmrc.helptosaveproxy.TestSupport
+import uk.gov.hmrc.http._
 
 import scala.concurrent.{ExecutionContext, Future}
 

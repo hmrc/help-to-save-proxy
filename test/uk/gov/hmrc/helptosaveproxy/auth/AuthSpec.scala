@@ -20,18 +20,20 @@ import play.api.http.Status
 import play.api.mvc.Results.Ok
 import play.api.test.FakeRequest
 import uk.gov.hmrc.auth.core.AuthorisationException.fromString
-import uk.gov.hmrc.auth.core.AuthorisedFunctions
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.credentials
 import uk.gov.hmrc.auth.core.retrieve.{Credentials, Retrieval}
+import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.helptosaveproxy.util.{AuthSupport, Logging}
-import uk.gov.hmrc.play.bootstrap.controller.BaseController
+import uk.gov.hmrc.play.bootstrap.controller.BackendController
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 class AuthSpec extends AuthSupport {
 
-  class TestAuth extends Auth(mockAuthConnector) with AuthorisedFunctions with BaseController with Logging
+  class TestAuth extends BackendController(mockCc) with Auth with AuthorisedFunctions with Logging {
+    override def authConnector: AuthConnector = mockAuthConnector
+  }
 
   val auth = new TestAuth
 

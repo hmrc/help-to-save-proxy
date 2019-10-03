@@ -28,14 +28,14 @@ import uk.gov.hmrc.helptosaveproxy.http.HttpProxyClient
 import uk.gov.hmrc.helptosaveproxy.models.UCDetails
 import uk.gov.hmrc.helptosaveproxy.testutil.{MockPagerDuty, UCClaimantTestSupport}
 import uk.gov.hmrc.http.HttpResponse
-import uk.gov.hmrc.play.audit.http.connector.AuditConnector
+import uk.gov.hmrc.play.audit.http.HttpAuditing
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 class DWPConnectorSpec extends TestSupport with HttpSupport with MockFactory with EitherValues with UCClaimantTestSupport with MockPagerDuty {
 
-  private val mockAuditor = mock[AuditConnector]
+  private val mockAuditor = mock[HttpAuditing]
   private val mockWsClient = mock[WSClient]
 
   class MockedHttpProxyClient extends HttpProxyClient(mockAuditor, configuration, mockWsClient, "microservice.services.dwp.proxy", fakeApplication.actorSystem)

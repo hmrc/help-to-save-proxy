@@ -23,7 +23,7 @@ import cats.instances.future._
 import cats.syntax.either._
 import play.api.http.Status
 import play.api.libs.json.{JsValue, Json}
-import play.api.mvc.{Action, AnyContent}
+import play.api.mvc.{Action, ActionBuilder, AnyContent, Request}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.auth.core.retrieve.Credentials
@@ -42,7 +42,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
   val mockNSIConnector = mock[NSIConnector]
   val mockJsonSchema = mock[JSONSchemaValidationService]
 
-  val controller = new HelpToSaveController(mockNSIConnector, mockJsonSchema, mockAuthConnector)
+  val controller = new HelpToSaveController(mockNSIConnector, mockJsonSchema, mockAuthConnector, mockCc)
 
   val ggCreds = Credentials("id", "GovernmentGateway")
   val ggRetrievals: Option[Credentials] = Some(ggCreds)
@@ -180,6 +180,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
     "return an InternalServerError status when the call to NSI returns an error" in {
       inSequence {
         mockAuthResultWithSuccess()
+
         mockJSONSchemaValidationService(nsiPayload)(Right(()))
         mockNSIFailure()
       }

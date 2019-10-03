@@ -36,7 +36,7 @@ class UCClaimantCheckControllerSpec extends AuthSupport with UCClaimantTestSuppo
 
   val mockDWPConnector = mock[DWPConnector]
 
-  val controller = new UCClaimantCheckController(mockDWPConnector, mockAuthConnector)
+  val controller = new UCClaimantCheckController(mockDWPConnector, mockAuthConnector, mockCc)
 
   val nino = "WP010123A"
   val transactionId = UUID.randomUUID()

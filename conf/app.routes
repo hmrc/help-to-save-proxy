@@ -1,8 +1,8 @@
 # microservice specific routes
 
-POST        /create-account                    @uk.gov.hmrc.helptosaveproxy.controllers.HelpToSaveController.createAccount()
-PUT         /update-email                      @uk.gov.hmrc.helptosaveproxy.controllers.HelpToSaveController.updateEmail()
-GET         /nsi-services/*resource              @uk.gov.hmrc.helptosaveproxy.controllers.HelpToSaveController.queryAccount(resource: String)
+POST        /create-account                    uk.gov.hmrc.helptosaveproxy.controllers.HelpToSaveController.createAccount()
+PUT         /update-email                      uk.gov.hmrc.helptosaveproxy.controllers.HelpToSaveController.updateEmail()
+GET         /nsi-services/*resource            uk.gov.hmrc.helptosaveproxy.controllers.HelpToSaveController.queryAccount(resource: String)
 
 
-GET         /uc-claimant-check                 @uk.gov.hmrc.helptosaveproxy.controllers.UCClaimantCheckController.ucClaimantCheck(nino, transactionId: java.util.UUID, threshold: Double)
+GET         /uc-claimant-check                 uk.gov.hmrc.helptosaveproxy.controllers.UCClaimantCheckController.ucClaimantCheck(nino, transactionId: java.util.UUID, threshold: Double)

@@ -19,10 +19,10 @@ package uk.gov.hmrc.helptosaveproxy.config
 import java.io._
 import java.security.KeyStore
 import java.security.cert.{Certificate, CertificateFactory, X509Certificate}
-import javax.inject.{Inject, Singleton}
 
+import com.typesafe.sslconfig.ssl.{KeyStoreConfig, TrustStoreConfig}
+import javax.inject.{Inject, Singleton}
 import play.api.inject.{Binding, Module}
-import play.api.libs.ws.ssl.{KeyStoreConfig, TrustStoreConfig}
 import play.api.libs.ws.{WSClientConfig, WSConfigParser}
 import play.api.{Configuration, Environment}
 import uk.gov.hmrc.helptosaveproxy.util.{Logging, base64Decode}
@@ -30,15 +30,15 @@ import uk.gov.hmrc.helptosaveproxy.util.{Logging, base64Decode}
 import scala.collection.JavaConverters._
 
 @Singleton
-class CustomWSConfigParser @Inject() (configuration: Configuration, env: Environment) extends WSConfigParser(configuration, env) with Logging {
+class CustomWSConfigParser @Inject() (configuration: Configuration, env: Environment)
+  extends WSConfigParser(configuration.underlying, env.classLoader) with Logging {
 
   logger.info("Starting CustomWSConfigParser")
 
   override def parse(): WSClientConfig = {
-
     logger.info("Parsing WSClientConfig")
 
-    val internalParser = new WSConfigParser(configuration, env)
+    val internalParser = new WSConfigParser(configuration.underlying, env.classLoader)
     val config = internalParser.parse()
 
     val keyStores = config.ssl.keyManagerConfig.keyStoreConfigs.filter(_.data.forall(_.nonEmpty)).map { ks ⇒
@@ -64,14 +64,11 @@ class CustomWSConfigParser @Inject() (configuration: Configuration, env: Environ
     }
 
     val wsClientConfig = config.copy(
-      ssl = config.ssl.copy(
-        keyManagerConfig   = config.ssl.keyManagerConfig.copy(
-          keyStoreConfigs = keyStores
-        ),
-        trustManagerConfig = config.ssl.trustManagerConfig.copy(
-          trustStoreConfigs = trustStores
-        )
-      )
+      ssl = config.ssl
+        .withKeyManagerConfig(config.ssl.keyManagerConfig
+          .withKeyStoreConfigs(keyStores))
+        .withTrustManagerConfig(config.ssl.trustManagerConfig
+          .withTrustStoreConfigs(trustStores))
     )
 
     wsClientConfig
@@ -97,7 +94,7 @@ class CustomWSConfigParser @Inject() (configuration: Configuration, env: Environ
     try {
       keyStore.store(stream, "".toCharArray)
       logger.info(s"Successfully wrote truststore data to file: $filePath")
-      ts.copy(filePath = Some(filePath), data = None)
+      ts.withFilePath(Some(filePath)).withData(None)
     } finally {
       stream.close()
 
@@ -149,7 +146,7 @@ class CustomWSConfigParser @Inject() (configuration: Configuration, env: Environ
       .map(base64Decode)
       .map(new String(_))
 
-    ks.copy(data     = None, filePath = Some(ksFilePath), password = decryptedPass)
+    ks.withData(None).withFilePath(Some(ksFilePath)).withPassword(decryptedPass)
   }
 }
 
