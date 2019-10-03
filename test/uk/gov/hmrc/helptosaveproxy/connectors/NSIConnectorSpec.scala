@@ -24,7 +24,7 @@ import org.scalamock.scalatest.MockFactory
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
 import play.api.Configuration
 import play.api.http.Status
-import play.api.libs.json.{JsObject, JsString, Json, Writes}
+import play.api.libs.json.{JsObject, JsString, Json}
 import play.api.libs.ws.WSClient
 import uk.gov.hmrc.helptosaveproxy.TestSupport
 import uk.gov.hmrc.helptosaveproxy.http.HttpProxyClient
@@ -33,7 +33,7 @@ import uk.gov.hmrc.helptosaveproxy.models.SubmissionResult.{SubmissionFailure, S
 import uk.gov.hmrc.helptosaveproxy.testutil.MockPagerDuty
 import uk.gov.hmrc.helptosaveproxy.testutil.TestData.UserData.validNSIPayload
 import uk.gov.hmrc.http.HttpResponse
-import uk.gov.hmrc.play.audit.http.connector.AuditConnector
+import uk.gov.hmrc.play.audit.http.HttpAuditing
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -43,7 +43,7 @@ class NSIConnectorSpec extends TestSupport with HttpSupport with MockFactory wit
 
   override lazy val additionalConfig = Configuration("feature-toggles.log-account-creation-json.enabled" → Random.nextBoolean())
 
-  private val mockAuditor = mock[AuditConnector]
+  private val mockAuditor = mock[HttpAuditing]
   private val mockWsClient = mock[WSClient]
 
   class MockedHttpProxyClient extends HttpProxyClient(mockAuditor, configuration, mockWsClient, "microservice.services.nsi.proxy", fakeApplication.actorSystem)

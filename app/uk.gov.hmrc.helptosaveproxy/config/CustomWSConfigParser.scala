@@ -36,8 +36,6 @@ class CustomWSConfigParser @Inject() (configuration: Configuration, env: Environ
   logger.info("Starting CustomWSConfigParser")
 
   override def parse(): WSClientConfig = {
-    println(">>>>>>parse()")
-
     logger.info("Parsing WSClientConfig")
 
     val internalParser = new WSConfigParser(configuration.underlying, env.classLoader)
