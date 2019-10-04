@@ -94,7 +94,7 @@ class CustomWSConfigParser @Inject() (configuration: Configuration, env: Environ
     try {
       keyStore.store(stream, "".toCharArray)
       logger.info(s"Successfully wrote truststore data to file: $filePath")
-      ts.withFilePath(Some(filePath)).withData(None)
+      ts.withFilePath(Some(filePath))
     } finally {
       stream.close()
 
@@ -146,8 +146,7 @@ class CustomWSConfigParser @Inject() (configuration: Configuration, env: Environ
       .map(base64Decode)
       .map(new String(_))
 
-    val ksConfig: KeyStoreConfig = ks.withData(None).withFilePath(Some(ksFilePath)).withPassword(decryptedPass)
-    logger.info(s"Data: ${ksConfig.data}, FilePath: ${ksConfig.filePath}")
+    val ksConfig: KeyStoreConfig = ks.withFilePath(Some(ksFilePath)).withPassword(decryptedPass)
     ksConfig
   }
 }
