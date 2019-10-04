@@ -146,7 +146,9 @@ class CustomWSConfigParser @Inject() (configuration: Configuration, env: Environ
       .map(base64Decode)
       .map(new String(_))
 
-    ks.withData(None).withFilePath(Some(ksFilePath)).withPassword(decryptedPass)
+    val ksConfig: KeyStoreConfig = ks.withData(None).withFilePath(Some(ksFilePath)).withPassword(decryptedPass)
+    logger.info(s"Data: ${ksConfig.data}, FilePath: ${ksConfig.filePath}")
+    ksConfig
   }
 }
 
