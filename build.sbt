@@ -18,24 +18,23 @@ lazy val playSettings: Seq[Setting[_]] = Seq.empty
 
 lazy val dependencies = Seq(
   ws,
-  "uk.gov.hmrc" %% "auth-client" % "2.29.0-play-26",
-  "uk.gov.hmrc" %% "play-config" % "7.5.0",
+  "uk.gov.hmrc" %% "auth-client" % "2.31.0-play-26",
   "uk.gov.hmrc" %% "domain" % "5.6.0-play-26",
-  "org.typelevel" %% "cats-core" % "1.5.0",
+  "org.typelevel" %% "cats-core" % "2.0.0",
   "com.github.kxbmap" %% "configs" % "0.4.4",
   "uk.gov.hmrc" %% "simple-reactivemongo" % "7.20.0-play-26",
-  "com.eclipsesource" %% "play-json-schema-validator" % "0.8.9",
+  "com.eclipsesource" %% "play-json-schema-validator" % "0.9.4",
   "uk.gov.hmrc" %% "mongo-lock" % "6.15.0-play-26",
-  "uk.gov.hmrc" %% "bootstrap-play-26" % "1.0.0"
+  "uk.gov.hmrc" %% "bootstrap-play-26" % "1.1.0"
 )
 
 lazy val testDependencies = Seq(
   "uk.gov.hmrc" %% "hmrctest" % "3.9.0-play-26" % test,
-  "org.scalatest" %% "scalatest" % "3.0.4" % test,
+  "org.scalatest" %% "scalatest" % "3.0.8" % test,
   "com.typesafe.play" %% "play-test" % PlayVersion.current % test,
   "org.scalamock" %% "scalamock-scalatest-support" % "3.6.0" % test,
-  "com.miguno.akka" %% "akka-mock-scheduler" % "0.5.1" % test,
-  "com.typesafe.akka" %% "akka-testkit" % "2.5.13" % test,
+  "com.miguno.akka" %% "akka-mock-scheduler" % "0.5.5" % test,
+  "com.typesafe.akka" %% "akka-testkit" % "2.5.23" % test,
   "uk.gov.hmrc" %% "stub-data-generator" % "0.5.3" % test
 )
 
