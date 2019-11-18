@@ -77,8 +77,8 @@ class JSONSchemaValidationServiceImplSpec extends TestSupport {
 
   "The JSONSchemaValidationServiceImpl" must {
 
-      def testError(userInfo: JsValue): Unit =
-        service.validate(userInfo).isLeft shouldBe true
+    def testError(userInfo: JsValue): Unit =
+      service.validate(userInfo).isLeft shouldBe true
 
     val dateTimeFormmater = DateTimeFormatter.BASIC_ISO_DATE
 
@@ -95,11 +95,13 @@ class JSONSchemaValidationServiceImplSpec extends TestSupport {
     }
 
     "If the outgoing-json validation feature detects a birth date just after to 1800 it returns a right" in {
-      service.validate(
-        validNSIPayloadJSON.replace(
-          Fields.dob,
-          JsString(LocalDate.of(1800, 1, 1).format(dateTimeFormmater))
-        )).isRight shouldBe true
+      service
+        .validate(
+          validNSIPayloadJSON.replace(
+            Fields.dob,
+            JsString(LocalDate.of(1800, 1, 1).format(dateTimeFormmater))
+          ))
+        .isRight shouldBe true
     }
 
     "If the outgoing-json futureDate function detects a birth date in the future it returns a left " in {
@@ -179,21 +181,21 @@ class JSONSchemaValidationServiceImplSpec extends TestSupport {
       testError(validNSIPayloadJSON.replaceInner(Fields.contactDetails, Fields.countryCode, JsString("--")))
     }
 
-      def testAddressLines(number: Int, field: String): Unit = {
-        s"when given a NSIPayload that the json validation schema reports that the address$number field is the wrong type, return a message" in {
-          testError(validNSIPayloadJSON.replaceInner(Fields.contactDetails, field, JsNumber(1)))
-        }
+    def testAddressLines(number: Int, field: String): Unit = {
+      s"when given a NSIPayload that the json validation schema reports that the address$number field is the wrong type, return a message" in {
+        testError(validNSIPayloadJSON.replaceInner(Fields.contactDetails, field, JsNumber(1)))
+      }
 
-        s"when given a NSIPayload that the json validation schema reports that the address$number field is too long" in {
-          testError(validNSIPayloadJSON.replaceInner(Fields.contactDetails, field, JsString("A" * 36)))
-        }
+      s"when given a NSIPayload that the json validation schema reports that the address$number field is too long" in {
+        testError(validNSIPayloadJSON.replaceInner(Fields.contactDetails, field, JsString("A" * 36)))
+      }
 
-        if (number == 1 || number == 2) {
-          s"when given a NSIPayload that the json validation schema reports that the address$number field is missing, return a message" in {
-            testError(validNSIPayloadJSON.removeInner(Fields.contactDetails, field))
-          }
+      if (number == 1 || number == 2) {
+        s"when given a NSIPayload that the json validation schema reports that the address$number field is missing, return a message" in {
+          testError(validNSIPayloadJSON.removeInner(Fields.contactDetails, field))
         }
       }
+    }
 
     testAddressLines(1, Fields.address1)
     testAddressLines(2, Fields.address2)
@@ -222,11 +224,13 @@ class JSONSchemaValidationServiceImplSpec extends TestSupport {
     }
 
     "when given a NSIPayload that the json validation schema reports that the communicationPreference field is too long" in {
-      testError(validNSIPayloadJSON.replaceInner(Fields.contactDetails, Fields.communicationPreference, JsString("AAA")))
+      testError(
+        validNSIPayloadJSON.replaceInner(Fields.contactDetails, Fields.communicationPreference, JsString("AAA")))
     }
 
     "when given a NSIPayload that the json validation schema reports that the communicationPreference field does not meet regex" in {
-      testError(validNSIPayloadJSON.replaceInner(Fields.contactDetails, Fields.communicationPreference, JsString("01")))
+      testError(
+        validNSIPayloadJSON.replaceInner(Fields.contactDetails, Fields.communicationPreference, JsString("01")))
     }
 
     "when given a NSIPayload that the json validation schema reports that the communicationPreference field is missing, return a message" in {
@@ -242,7 +246,8 @@ class JSONSchemaValidationServiceImplSpec extends TestSupport {
     }
 
     "when given a NSIPayload that the json validation schema reports that the email address is too long" in {
-      testError(validNSIPayloadJSON.replaceInner(Fields.contactDetails, Fields.email, JsString("A" * 63 + "@" + "A" * 251)))
+      testError(
+        validNSIPayloadJSON.replaceInner(Fields.contactDetails, Fields.email, JsString("A" * 63 + "@" + "A" * 251)))
     }
 
     "when given a NSIPayload that the json validation schema reports that the registration channel is too long" in {
@@ -282,19 +287,28 @@ class JSONSchemaValidationServiceImplSpec extends TestSupport {
     }
 
     "when given a NSIPayload that the json validation schema reports that the rollNumber is invalid, return a message" in {
-      testError(validNSIPayloadJSON.replace(Fields.nbaDetails, Json.toJson(BankDetails("12-34-56", "12345678", Some("a b & c !@_"), "account name"))))
+      testError(
+        validNSIPayloadJSON.replace(
+          Fields.nbaDetails,
+          Json.toJson(BankDetails("12-34-56", "12345678", Some("a b & c !@_"), "account name"))))
     }
 
     "when given a NSIPayload that the json validation schema reports that the accountNumber is invalid - too short, return a message" in {
-      testError(validNSIPayloadJSON.replace(Fields.nbaDetails, Json.toJson(BankDetails("12-34-56", "", Some("897/98X"), "account name"))))
+      testError(
+        validNSIPayloadJSON
+          .replace(Fields.nbaDetails, Json.toJson(BankDetails("12-34-56", "", Some("897/98X"), "account name"))))
     }
 
     "when given a NSIPayload that the json validation schema reports that the accountNumber is invalid - too long, return a message" in {
-      testError(validNSIPayloadJSON.replace(Fields.nbaDetails, Json.toJson(BankDetails("12-34-56", "123456789", Some("897/98X"), "account name"))))
+      testError(
+        validNSIPayloadJSON.replace(
+          Fields.nbaDetails,
+          Json.toJson(BankDetails("12-34-56", "123456789", Some("897/98X"), "account name"))))
     }
 
     "when given a NSIPayload that the json validation schema reports that the accountNumber is invalid - it contains a non digit, return a message" in {
-      testError(validNSIPayloadJSON.replace(Fields.nbaDetails, Json.toJson(BankDetails("12-34-56", "1234567w", Some("897/98X"), "account name"))))
+      testError(validNSIPayloadJSON
+        .replace(Fields.nbaDetails, Json.toJson(BankDetails("12-34-56", "1234567w", Some("897/98X"), "account name"))))
     }
   }
 

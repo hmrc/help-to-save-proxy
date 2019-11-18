@@ -37,10 +37,10 @@ trait LockProvider {
 object LockProvider {
 
   /**
-   * This lock provider ensures that some operation is only performed once across multiple
-   * instances of an application. It is backed by [[ExclusiveTimePeriodLock]] from the
-   * `mongo-lock` library
-   */
+    * This lock provider ensures that some operation is only performed once across multiple
+    * instances of an application. It is backed by [[ExclusiveTimePeriodLock]] from the
+    * `mongo-lock` library
+    */
   case class ExclusiveTimePeriodLockProvider(lock: ExclusiveTimePeriodLock) extends LockProvider {
 
     val lockId: String = lock.lockId
@@ -58,4 +58,3 @@ object LockProvider {
 
 }
 // $COVERAGE-ON$
-

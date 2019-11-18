@@ -36,86 +36,94 @@ import uk.gov.hmrc.play.bootstrap.controller.BackendController
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class HelpToSaveController @Inject() (nsiConnector:                NSIConnector,
-                                      jsonSchemaValidationService: JSONSchemaValidationService,
-                                      override val authConnector:  AuthConnector,
-                                      cc:                          ControllerComponents
-)(implicit transformer: LogMessageTransformer, appConfig: AppConfig, ec: ExecutionContext)
-  extends BackendController(cc) with Auth with Logging {
+class HelpToSaveController @Inject()(
+  nsiConnector: NSIConnector,
+  jsonSchemaValidationService: JSONSchemaValidationService,
+  override val authConnector: AuthConnector,
+  cc: ControllerComponents)(implicit transformer: LogMessageTransformer, appConfig: AppConfig, ec: ExecutionContext)
+    extends BackendController(cc) with Auth with Logging {
 
   import HelpToSaveController.Error._
 
   lazy val correlationIdHeaderName: String = appConfig.getString("microservice.correlationIdHeaderName")
 
-  def jsonSchemaValidationToggle(nino: NINO): FEATURE = FEATURE("create-account-json-validation", appConfig.runModeConfiguration, logger, Some(nino))
+  def jsonSchemaValidationToggle(nino: NINO): FEATURE =
+    FEATURE("create-account-json-validation", appConfig.runModeConfiguration, logger, Some(nino))
 
   def createAccount(): Action[AnyContent] = authorised { implicit request ⇒
     val correlationId = request.headers.get(correlationIdHeaderName)
 
     processRequest[SubmissionSuccess] {
       nsiConnector.createAccount(_).leftMap[Error](NSIError)
-    } {
-      (submissionSuccess, nSIUserInfo) ⇒
-        submissionSuccess.accountNumber match {
-          case None          ⇒ Conflict
-          case Some(account) ⇒ Created(Json.toJson(account))
-        }
+    } { (submissionSuccess, nSIUserInfo) ⇒
+      submissionSuccess.accountNumber match {
+        case None ⇒ Conflict
+        case Some(account) ⇒ Created(Json.toJson(account))
+      }
     }
   }
 
   def updateEmail(): Action[AnyContent] = authorised { implicit request ⇒
     processRequest[Unit](
       nsiConnector.updateEmail(_).leftMap[Error](e ⇒ NSIError(SubmissionFailure(e, "Could not update email")))) {
-        (_, _) ⇒ Ok
-      }
+      (_, _) ⇒
+        Ok
+    }
   }
 
   def queryAccount(resource: String): Action[AnyContent] = authorised { implicit request ⇒
-    nsiConnector.queryAccount(resource, request.queryString)
-      .fold({
-        e ⇒
+    nsiConnector
+      .queryAccount(resource, request.queryString)
+      .fold(
+        { e ⇒
           val message = s"Could not retrieve $resource due to : $e"
           logger.warn(message)
           Status(500)(message)
-      }, {
-        response ⇒ Option(response.body).fold[Result](Status(response.status))(body ⇒ Status(response.status)(body))
-      })
+        }, { response ⇒
+          Option(response.body).fold[Result](Status(response.status))(body ⇒ Status(response.status)(body))
+        }
+      )
   }
 
-  private def processRequest[T](doRequest: NSIPayload ⇒ EitherT[Future, Error, T])(handleResult: (T, NSIPayload) ⇒ Result)(implicit request: Request[AnyContent]): Future[Result] = { // scalastyle:ignore
+  private def processRequest[T](
+    doRequest: NSIPayload ⇒ EitherT[Future, Error, T])(handleResult: (T, NSIPayload) ⇒ Result)(
+    implicit request: Request[AnyContent]): Future[Result] = { // scalastyle:ignore
     val result: EitherT[Future, Error, (T, NSIPayload)] = for {
       nsiPayload ← EitherT.fromEither[Future](extractNSIPayload(request))
       _ ← validateAgainstJSONSchema(nsiPayload)
       response ← doRequest(nsiPayload)
     } yield (response, nsiPayload)
 
-    result.fold[Result]({
-      case InvalidRequest(m, d) ⇒
-        BadRequest(SubmissionFailure(m, d).toJson)
-      case NSIError(f) ⇒
-        InternalServerError(f.toJson)
-    }, {
-      case (subResult, nsiPayload) ⇒ handleResult(subResult, nsiPayload)
-    }
+    result.fold[Result](
+      {
+        case InvalidRequest(m, d) ⇒
+          BadRequest(SubmissionFailure(m, d).toJson)
+        case NSIError(f) ⇒
+          InternalServerError(f.toJson)
+      }, {
+        case (subResult, nsiPayload) ⇒ handleResult(subResult, nsiPayload)
+      }
     )
   }
 
-  private def validateAgainstJSONSchema(payload: NSIPayload)(implicit ec: ExecutionContext): EitherT[Future, Error, JsValue] = {
+  private def validateAgainstJSONSchema(payload: NSIPayload)(
+    implicit ec: ExecutionContext): EitherT[Future, Error, JsValue] = {
     val json = Json.toJson(payload)
     jsonSchemaValidationToggle(payload.nino).thenOrElse(
-      EitherT.fromEither[Future](jsonSchemaValidationService.validate(json)).leftMap[Error](e ⇒ InvalidRequest("Invalid data found in request", e)),
+      EitherT
+        .fromEither[Future](jsonSchemaValidationService.validate(json))
+        .leftMap[Error](e ⇒ InvalidRequest("Invalid data found in request", e)),
       EitherT.pure(json)
     )
   }
 
-  private def extractNSIPayload(request: Request[AnyContent]): Either[InvalidRequest, NSIPayload] = {
+  private def extractNSIPayload(request: Request[AnyContent]): Either[InvalidRequest, NSIPayload] =
     request.body.asJson.map(_.validate[NSIPayload]) match {
       case Some(JsSuccess(payload, _)) ⇒ Right(payload)
-      case Some(e: JsError)            ⇒ Left(InvalidRequest("Could not parse JSON in request", e.prettyPrint()))
-      case None                        ⇒ Left(InvalidRequest("No JSON found in request", "JSON body required"))
+      case Some(e: JsError) ⇒ Left(InvalidRequest("Could not parse JSON in request", e.prettyPrint()))
+      case None ⇒ Left(InvalidRequest("No JSON found in request", "JSON body required"))
 
     }
-  }
 
 }
 

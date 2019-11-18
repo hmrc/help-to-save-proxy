@@ -29,12 +29,13 @@ import uk.gov.hmrc.play.http.ws.{WSProxy, WSProxyConfiguration}
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class HttpProxyClient(httpAuditing:    HttpAuditing,
-                      config:          Configuration,
-                      wsClient:        WSClient,
-                      proxyConfigPath: String,
-                      actorSystem:     ActorSystem)
-  extends DefaultHttpClient(config, httpAuditing, wsClient, actorSystem) with WSProxy with HttpVerbs {
+class HttpProxyClient(
+  httpAuditing: HttpAuditing,
+  config: Configuration,
+  wsClient: WSClient,
+  proxyConfigPath: String,
+  actorSystem: ActorSystem)
+    extends DefaultHttpClient(config, httpAuditing, wsClient, actorSystem) with WSProxy with HttpVerbs {
 
   override lazy val wsProxyServer: Option[WSProxyServer] = WSProxyConfiguration(proxyConfigPath, config)
 
@@ -46,23 +47,28 @@ class HttpProxyClient(httpAuditing:    HttpAuditing,
   // uk.gov.hmrc.http.RawReads.readRaw as this custom one doesn't throw exceptions
   private val rawHttpReads = new RawHttpReads
 
-  def get(url:         String,
-          queryParams: Seq[(String, String)] = Seq.empty,
-          headers:     Map[String, String]   = Map.empty[String, String]
-  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
+  def get(
+    url: String,
+    queryParams: Seq[(String, String)] = Seq.empty,
+    headers: Map[String, String] = Map.empty[String, String])(
+    implicit hc: HeaderCarrier,
+    ec: ExecutionContext): Future[HttpResponse] =
     GET(url, queryParams)(rawHttpReads, hc.withExtraHeaders(headers.toSeq: _*), ec)
 
-  def post[A](url:     String,
-              body:    A,
-              headers: Map[String, String] = Map.empty[String, String]
-  )(implicit w: Writes[A], hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
+  def post[A](url: String, body: A, headers: Map[String, String] = Map.empty[String, String])(
+    implicit w: Writes[A],
+    hc: HeaderCarrier,
+    ec: ExecutionContext): Future[HttpResponse] =
     POST(url, body, headers.toSeq)(w, rawHttpReads, hc, ec)
 
-  def put[A](url:           String,
-             body:          A,
-             headers:       Map[String, String] = Map.empty[String, String],
-             needsAuditing: Boolean             = true
-  )(implicit w: Writes[A], hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
+  def put[A](
+    url: String,
+    body: A,
+    headers: Map[String, String] = Map.empty[String, String],
+    needsAuditing: Boolean = true)(
+    implicit w: Writes[A],
+    hc: HeaderCarrier,
+    ec: ExecutionContext): Future[HttpResponse] =
     withTracing(PUT, url) {
       val httpResponse = doPut(url, body)(w, hc.withExtraHeaders(headers.toSeq: _*), ec)
       if (needsAuditing) {
@@ -70,6 +76,5 @@ class HttpProxyClient(httpAuditing:    HttpAuditing,
       }
       mapErrors(PUT, url, httpResponse).map(response ⇒ rawHttpReads.read(PUT, url, response))
     }
-  }
 
 }

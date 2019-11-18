@@ -45,8 +45,10 @@ class UCClaimantCheckControllerSpec extends AuthSupport with UCClaimantTestSuppo
   def doUCClaimantCheck(controller: UCClaimantCheckController, encodedNino: String): Future[PlayResult] =
     controller.ucClaimantCheck(encodedNino, transactionId, threshold)(FakeRequest())
 
-  def mockUCClaimantCheck(encodedNino: String, transactionId: UUID, threshold: Double)(result: Either[String, HttpResponse]): Unit =
-    (mockDWPConnector.ucClaimantCheck(_: String, _: UUID, _: Double)(_: HeaderCarrier, _: ExecutionContext))
+  def mockUCClaimantCheck(encodedNino: String, transactionId: UUID, threshold: Double)(
+    result: Either[String, HttpResponse]): Unit =
+    (mockDWPConnector
+      .ucClaimantCheck(_: String, _: UUID, _: Double)(_: HeaderCarrier, _: ExecutionContext))
       .expects(encodedNino, transactionId, threshold, *, *)
       .returning(EitherT.fromEither[Future](result))
 

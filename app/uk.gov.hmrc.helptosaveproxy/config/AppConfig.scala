@@ -24,7 +24,7 @@ import play.api.Configuration
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 @Singleton
-class AppConfig @Inject() (val runModeConfiguration: Configuration, sc: ServicesConfig) {
+class AppConfig @Inject()(val runModeConfiguration: Configuration, sc: ServicesConfig) {
 
   def base64Encode(input: String): Array[Byte] = Base64.getEncoder.encode(input.getBytes)
 
@@ -37,8 +37,10 @@ class AppConfig @Inject() (val runModeConfiguration: Configuration, sc: Services
   val nsiAuthHeaderKey: String = sc.getString("microservice.services.nsi.client.httpheader.header-key")
 
   val nsiBasicAuth: String = {
-    val user = new String(base64Decode(sc.getString("microservice.services.nsi.client.httpheader.basicauth.Base64User")))
-    val password = new String(base64Decode(sc.getString("microservice.services.nsi.client.httpheader.basicauth.Base64Password")))
+    val user = new String(
+      base64Decode(sc.getString("microservice.services.nsi.client.httpheader.basicauth.Base64User")))
+    val password = new String(
+      base64Decode(sc.getString("microservice.services.nsi.client.httpheader.basicauth.Base64Password")))
     val encoding = sc.getString("microservice.services.nsi.client.httpheader.encoding")
 
     s"Basic ${new String(base64Encode(s"$user:$password"), encoding)}"

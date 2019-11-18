@@ -24,16 +24,13 @@ import uk.gov.hmrc.helptosaveproxy.util.Logging._
 object Toggles {
 
   /**
-   *
-   * @param name Name of the feature. Configuration of the feature will be looked for in the path
-   *             'feature-toggles.\$name'
-   * @param enabled Whether or not the feature should be enabled
-   * @param logger The logger to use in logging
-   */
-  case class FEATURE private (name:    String,
-                              enabled: Boolean,
-                              logger:  Logger,
-                              nino:    Option[NINO]) {
+    *
+    * @param name Name of the feature. Configuration of the feature will be looked for in the path
+    *             'feature-toggles.\$name'
+    * @param enabled Whether or not the feature should be enabled
+    * @param logger The logger to use in logging
+    */
+  case class FEATURE private (name: String, enabled: Boolean, logger: Logger, nino: Option[NINO]) {
 
     @inline private def time(): Long = System.nanoTime()
 
@@ -43,9 +40,7 @@ object Toggles {
       val end = time()
       nino.fold(
         logger.info(s"Feature $name (enabled: $enabled) executed in ${nanosToPrettyString(end - start)}")
-      )(n ⇒
-          logger.info(s"Feature $name (enabled: $enabled) executed in ${nanosToPrettyString(end - start)}", n, None)
-        )
+      )(n ⇒ logger.info(s"Feature $name (enabled: $enabled) executed in ${nanosToPrettyString(end - start)}", n, None))
       result
     }
 
@@ -57,11 +52,11 @@ object Toggles {
       configuration.underlying.getConfig(s"feature-toggles.$name")
 
     /**
-     * @param name Name of the feature. Configuration of the feature will be looked for in the path
-     *             'feature-toggles.\$name'
-     * @param configuration The global configuration
-     * @param logger The logger to be used by the feature
-     */
+      * @param name Name of the feature. Configuration of the feature will be looked for in the path
+      *             'feature-toggles.\$name'
+      * @param configuration The global configuration
+      * @param logger The logger to be used by the feature
+      */
     def apply(name: String, configuration: Configuration, logger: Logger, nino: Option[NINO] = None): FEATURE = {
       val config = getConfig(name, configuration)
       FEATURE(name, config.getBoolean("enabled"), logger, nino)

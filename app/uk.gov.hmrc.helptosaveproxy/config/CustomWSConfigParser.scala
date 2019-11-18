@@ -30,8 +30,8 @@ import uk.gov.hmrc.helptosaveproxy.util.{Logging, base64Decode}
 import scala.collection.JavaConverters._
 
 @Singleton
-class CustomWSConfigParser @Inject() (configuration: Configuration, env: Environment)
-  extends WSConfigParser(configuration.underlying, env.classLoader) with Logging {
+class CustomWSConfigParser @Inject()(configuration: Configuration, env: Environment)
+    extends WSConfigParser(configuration.underlying, env.classLoader) with Logging {
 
   logger.info("Starting CustomWSConfigParser")
 
@@ -111,17 +111,19 @@ class CustomWSConfigParser @Inject() (configuration: Configuration, env: Environ
   private def generateCertificates(file: Array[Byte]): Seq[Certificate] = {
     val stream = new ByteArrayInputStream(file)
     try {
-      CertificateFactory.getInstance("X.509")
+      CertificateFactory
+        .getInstance("X.509")
         .generateCertificates(stream)
-        .asScala.toList
+        .asScala
+        .toList
     } finally {
       stream.close()
     }
   }
 
   /**
-   * @return absolute file path with the bytes written to the file
-   */
+    * @return absolute file path with the bytes written to the file
+    */
   def createTempFileForData(data: String): (String, Array[Byte]) = {
     val file = File.createTempFile(getClass.getSimpleName, ".tmp")
     file.deleteOnExit()
@@ -152,10 +154,9 @@ class CustomWSConfigParser @Inject() (configuration: Configuration, env: Environ
 
 class CustomWSConfigParserModule extends Module {
 
-  override def bindings(environment: Environment, configuration: Configuration): Seq[Binding[_]] = {
+  override def bindings(environment: Environment, configuration: Configuration): Seq[Binding[_]] =
     Seq(
       bind[WSConfigParser].to[CustomWSConfigParser]
     )
-  }
 
 }

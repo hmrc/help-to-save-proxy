@@ -26,28 +26,30 @@ import uk.gov.hmrc.helptosaveproxy.models.NSIPayload.ContactDetails
 
 import scala.util.{Failure, Success, Try}
 
-case class NSIPayload(forename:            String,
-                      surname:             String,
-                      dateOfBirth:         LocalDate,
-                      nino:                String,
-                      contactDetails:      ContactDetails,
-                      registrationChannel: String,
-                      nbaDetails:          Option[BankDetails] = None,
-                      version:             Option[String],
-                      systemId:            Option[String])
+case class NSIPayload(
+  forename: String,
+  surname: String,
+  dateOfBirth: LocalDate,
+  nino: String,
+  contactDetails: ContactDetails,
+  registrationChannel: String,
+  nbaDetails: Option[BankDetails] = None,
+  version: Option[String],
+  systemId: Option[String])
 
 object NSIPayload {
 
-  case class ContactDetails(address1:                String,
-                            address2:                String,
-                            address3:                Option[String],
-                            address4:                Option[String],
-                            address5:                Option[String],
-                            postcode:                String,
-                            countryCode:             Option[String],
-                            email:                   Option[String],
-                            phoneNumber:             Option[String],
-                            communicationPreference: String)
+  case class ContactDetails(
+    address1: String,
+    address2: String,
+    address3: Option[String],
+    address4: Option[String],
+    address5: Option[String],
+    postcode: String,
+    countryCode: Option[String],
+    email: Option[String],
+    phoneNumber: Option[String],
+    communicationPreference: String)
 
   private implicit class StringOps(val s: String) {
     def removeAllSpaces: String = s.replaceAll(" ", "")
@@ -62,10 +64,11 @@ object NSIPayload {
     override def writes(o: LocalDate): JsValue = JsString(o.format(formatter))
 
     override def reads(json: JsValue): JsResult[LocalDate] = json match {
-      case JsString(s) ⇒ Try(LocalDate.parse(s, formatter)) match {
-        case Success(date)  ⇒ JsSuccess(date)
-        case Failure(error) ⇒ JsError(s"Could not parse date as yyyyMMdd: ${error.getMessage}")
-      }
+      case JsString(s) ⇒
+        Try(LocalDate.parse(s, formatter)) match {
+          case Success(date) ⇒ JsSuccess(date)
+          case Failure(error) ⇒ JsError(s"Could not parse date as yyyyMMdd: ${error.getMessage}")
+        }
 
       case other ⇒ JsError(s"Expected string but got $other")
     }
@@ -111,7 +114,10 @@ object NSIPayload {
 
     private def formatBankDetails(bankDetails: BankDetails): BankDetails =
       BankDetails(
-        bankDetails.sortCode.cleanupSpecialCharacters.removeAllSpaces.filterNot(allowedSortCodeSeparators.contains).grouped(2).mkString("-"),
+        bankDetails.sortCode.cleanupSpecialCharacters.removeAllSpaces
+          .filterNot(allowedSortCodeSeparators.contains)
+          .grouped(2)
+          .mkString("-"),
         bankDetails.accountNumber.cleanupSpecialCharacters.removeAllSpaces,
         bankDetails.rollNumber.map(_.cleanupSpecialCharacters.removeAllSpaces),
         bankDetails.accountName.trim.cleanupSpecialCharacters

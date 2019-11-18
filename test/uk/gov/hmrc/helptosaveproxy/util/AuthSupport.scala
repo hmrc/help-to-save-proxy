@@ -33,12 +33,14 @@ trait AuthSupport extends TestSupport {
   val mockAuthConnector: AuthConnector = mock[AuthConnector]
 
   def mockAuthResultWithFail()(ex: Throwable): Unit =
-    (mockAuthConnector.authorise(_: Predicate, _: Retrieval[Unit])(_: HeaderCarrier, _: ExecutionContext))
+    (mockAuthConnector
+      .authorise(_: Predicate, _: Retrieval[Unit])(_: HeaderCarrier, _: ExecutionContext))
       .expects(authProviders, EmptyRetrieval, *, *)
       .returning(Future.failed(ex))
 
   def mockAuthResultWithSuccess(): Unit =
-    (mockAuthConnector.authorise(_: Predicate, _: Retrieval[Unit])(_: HeaderCarrier, _: ExecutionContext))
+    (mockAuthConnector
+      .authorise(_: Predicate, _: Retrieval[Unit])(_: HeaderCarrier, _: ExecutionContext))
       .expects(authProviders, EmptyRetrieval, *, *)
       .returning(Future.successful(()))
 

@@ -34,15 +34,19 @@ class NSIConnectionHealthCheckRunnerSpec extends ActorTestSupport("NSIConnection
 
   val payload: Payload = Payload.Payload1
 
-  def newRunner(payload: Payload): ActorRef = system.actorOf(Props(new NSIConnectionHealthCheckRunner(
-    nsiConnector,
-    mockMetrics,
-    payload,
-    ninoLoggingEnabled = true
-  )))
+  def newRunner(payload: Payload): ActorRef =
+    system.actorOf(
+      Props(
+        new NSIConnectionHealthCheckRunner(
+          nsiConnector,
+          mockMetrics,
+          payload,
+          ninoLoggingEnabled = true
+        )))
 
   def mockNSIConnectorTest(expectedPayload: Payload)(result: Option[Either[String, Unit]]): Unit =
-    (nsiConnector.healthCheck(_: NSIPayload)(_: HeaderCarrier, _: ExecutionContext))
+    (nsiConnector
+      .healthCheck(_: NSIPayload)(_: HeaderCarrier, _: ExecutionContext))
       .expects(expectedPayload.value, *, *)
       .returning(
         EitherT(
@@ -57,27 +61,27 @@ class NSIConnectionHealthCheckRunnerSpec extends ActorTestSupport("NSIConnection
 
       "call the NSIConnector to do the test and reply back with a successful result " +
         "if the NSIConnector returns a success" in {
-          mockNSIConnectorTest(Payload1)(Some(Right(())))
+        mockNSIConnectorTest(Payload1)(Some(Right(())))
 
-          val runner = newRunner(Payload1)
-          runner ! PerformHealthCheck
+        val runner = newRunner(Payload1)
+        runner ! PerformHealthCheck
 
-          expectMsgType[HealthCheckResult.Success]
-        }
+        expectMsgType[HealthCheckResult.Success]
+      }
 
       "call the NSIConnector to do the test and reply back with a negative result " +
         "if the NSIConnector returns a failure" in {
-            def test(mockActions: ⇒ Unit): Unit = {
-              mockActions
+        def test(mockActions: ⇒ Unit): Unit = {
+          mockActions
 
-              val runner = newRunner(Payload2)
-              runner ! PerformHealthCheck
-              expectMsgType[HealthCheckResult.Failure]
-            }
-
-          test(mockNSIConnectorTest(Payload2)(Some(Left(""))))
-          test(mockNSIConnectorTest(Payload2)(None))
+          val runner = newRunner(Payload2)
+          runner ! PerformHealthCheck
+          expectMsgType[HealthCheckResult.Failure]
         }
+
+        test(mockNSIConnectorTest(Payload2)(Some(Left(""))))
+        test(mockNSIConnectorTest(Payload2)(None))
+      }
     }
   }
 

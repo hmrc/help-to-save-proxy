@@ -25,11 +25,11 @@ trait UCClaimantTestSupport {
   val nonUCClaimantDetails = UCDetails("N", None)
 
   /**
-   * NINO starting with WP01 is UC claimant and within threshold (Y, Y), returning HTTP status 200
-   * NINO starting with WP02 is UC claimant but outside threshold (Y, N), returning HTTP status 200
-   * NINO starting with WP03 is NOT UC claimant (N), returning HTTP status 200
-   * NINO starting with WSXXX returns HTTP status XXX (currently with no JSON payload), e.g. NINO WS400111D returns HTTP status 400
-   */
+    * NINO starting with WP01 is UC claimant and within threshold (Y, Y), returning HTTP status 200
+    * NINO starting with WP02 is UC claimant but outside threshold (Y, N), returning HTTP status 200
+    * NINO starting with WP03 is NOT UC claimant (N), returning HTTP status 200
+    * NINO starting with WSXXX returns HTTP status XXX (currently with no JSON payload), e.g. NINO WS400111D returns HTTP status 400
+    */
   val encodedNinoForWP01 = "V1AwMTAxMjNB"
   val encodedNinoForWP02 = "V1AwMjAxMjNB"
   val encodedNinoForWP03 = "V1AwMzAxMjNB"

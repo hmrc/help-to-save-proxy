@@ -33,14 +33,15 @@ import scala.concurrent.Future
 import scala.concurrent.duration.FiniteDuration
 import scala.util.control.NonFatal
 
-class DWPConnectionHealthCheck @Inject() (system:            ActorSystem,
-                                          configuration:     Configuration,
-                                          metrics:           Metrics,
-                                          dWPConnector:      DWPConnector,
-                                          mongo:             ReactiveMongoComponent,
-                                          lifecycle:         ApplicationLifecycle,
-                                          pagerDutyAlerting: PagerDutyAlerting
-) extends Logging {
+class DWPConnectionHealthCheck @Inject()(
+  system: ActorSystem,
+  configuration: Configuration,
+  metrics: Metrics,
+  dWPConnector: DWPConnector,
+  mongo: ReactiveMongoComponent,
+  lifecycle: ApplicationLifecycle,
+  pagerDutyAlerting: PagerDutyAlerting)
+    extends Logging {
 
   val name: String = "dwp-connection"
 
@@ -62,18 +63,20 @@ class DWPConnectionHealthCheck @Inject() (system:            ActorSystem,
   // make sure we only have one instance of the health check running across
   // multiple instances of the application in the same environment
   lazy val lockedHealthCheck: ActorRef =
-    system.actorOf(Lock.props[Option[ActorRef]](
-      mongo.mongoConnector.db,
-      s"health-check-$name",
-      lockDuration,
-      system.scheduler,
-      None,
-      _.fold(Some(newHealthCheck()))(Some(_)),
-      _.flatMap{ ref ⇒
-        ref ! PoisonPill
-        None
-      },
-      lifecycle),
+    system.actorOf(
+      Lock.props[Option[ActorRef]](
+        mongo.mongoConnector.db,
+        s"health-check-$name",
+        lockDuration,
+        system.scheduler,
+        None,
+        _.fold(Some(newHealthCheck()))(Some(_)),
+        _.flatMap { ref ⇒
+          ref ! PoisonPill
+          None
+        },
+        lifecycle
+      ),
       s"health-check-$name-lock"
     )
 
@@ -89,7 +92,8 @@ class DWPConnectionHealthCheck @Inject() (system:            ActorSystem,
 
 object DWPConnectionHealthCheck {
 
-  class DWPConnectionHealthCheckRunner(dwpConnector: DWPConnector, metrics: Metrics) extends Actor with HealthCheckRunner with Logging {
+  class DWPConnectionHealthCheckRunner(dwpConnector: DWPConnector, metrics: Metrics)
+      extends Actor with HealthCheckRunner with Logging {
 
     import context.dispatcher
 
@@ -98,12 +102,16 @@ object DWPConnectionHealthCheck {
     override def performTest(): Future[HealthCheckResult] = {
       val timer = metrics.dwpHealthCheckTimer.time()
 
-      dwpConnector.healthCheck().value
+      dwpConnector
+        .healthCheck()
+        .value
         .map { result ⇒
           val time = timer.stop()
-          result.fold[HealthCheckResult](e ⇒ HealthCheckResult.Failure(e, time), _ ⇒ HealthCheckResult.Success("DWP health check returned 200 OK", time))
+          result.fold[HealthCheckResult](
+            e ⇒ HealthCheckResult.Failure(e, time),
+            _ ⇒ HealthCheckResult.Success("DWP health check returned 200 OK", time))
         }
-        .recover{
+        .recover {
           case NonFatal(e) ⇒
             val time = timer.stop()
             HealthCheckResult.Failure(e.getMessage, time)
@@ -113,7 +121,8 @@ object DWPConnectionHealthCheck {
   }
 
   object DWPConnectionHealthCheckRunner {
-    def props(dwpConnector: DWPConnector, metrics: Metrics): Props = Props(new DWPConnectionHealthCheckRunner(dwpConnector, metrics))
+    def props(dwpConnector: DWPConnector, metrics: Metrics): Props =
+      Props(new DWPConnectionHealthCheckRunner(dwpConnector, metrics))
   }
 
 }

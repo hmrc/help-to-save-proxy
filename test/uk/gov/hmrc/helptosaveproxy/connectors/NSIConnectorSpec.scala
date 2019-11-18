@@ -39,27 +39,36 @@ import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.util.Random
 
-class NSIConnectorSpec extends TestSupport with HttpSupport with MockFactory with GeneratorDrivenPropertyChecks with MockPagerDuty {
+class NSIConnectorSpec
+    extends TestSupport with HttpSupport with MockFactory with GeneratorDrivenPropertyChecks with MockPagerDuty {
 
-  override lazy val additionalConfig = Configuration("feature-toggles.log-account-creation-json.enabled" → Random.nextBoolean())
+  override lazy val additionalConfig = Configuration(
+    "feature-toggles.log-account-creation-json.enabled" → Random.nextBoolean())
 
   private val mockAuditor = mock[HttpAuditing]
   private val mockWsClient = mock[WSClient]
 
-  class MockedHttpProxyClient extends HttpProxyClient(mockAuditor, configuration, mockWsClient, "microservice.services.nsi.proxy", fakeApplication.actorSystem)
+  class MockedHttpProxyClient
+      extends HttpProxyClient(
+        mockAuditor,
+        configuration,
+        mockWsClient,
+        "microservice.services.nsi.proxy",
+        fakeApplication.actorSystem)
 
   override val mockProxyClient = mock[MockedHttpProxyClient]
 
-  lazy val nsiConnector = new NSIConnectorImpl(mockAuditor, mockMetrics, mockPagerDuty, mockWsClient, fakeApplication.actorSystem) {
-    override val proxyClient = mockProxyClient
-  }
+  lazy val nsiConnector =
+    new NSIConnectorImpl(mockAuditor, mockMetrics, mockPagerDuty, mockWsClient, fakeApplication.actorSystem) {
+      override val proxyClient = mockProxyClient
+    }
 
   val nsiCreateAccountUrl = appConfig.nsiCreateAccountUrl
   val nsiAuthHeaderKey = appConfig.nsiAuthHeaderKey
   val nsiBasicAuth = appConfig.nsiBasicAuth
 
   val authHeaders = Map(nsiAuthHeaderKey → nsiBasicAuth)
-  val updatePayload = validNSIPayload.copy(version  = None, systemId = None)
+  val updatePayload = validNSIPayload.copy(version = None, systemId = None)
 
   "the updateEmail method" must {
 
@@ -103,7 +112,8 @@ class NSIConnectorSpec extends TestSupport with HttpSupport with MockFactory wit
   "the createAccount Method" must {
 
     "Return a SubmissionSuccess when the status is Created" in {
-      mockPost(nsiCreateAccountUrl, validNSIPayload, authHeaders)(Some(HttpResponse(Status.CREATED, Some(Json.parse("""{"accountNumber" : "1234567890"}""")))))
+      mockPost(nsiCreateAccountUrl, validNSIPayload, authHeaders)(
+        Some(HttpResponse(Status.CREATED, Some(Json.parse("""{"accountNumber" : "1234567890"}""")))))
       val result = nsiConnector.createAccount(validNSIPayload)
       Await.result(result.value, 3.seconds) shouldBe Right(SubmissionSuccess(Some(AccountNumber("1234567890"))))
     }
@@ -118,8 +128,8 @@ class NSIConnectorSpec extends TestSupport with HttpSupport with MockFactory wit
       "the status is BAD_REQUEST" in {
         val submissionFailure = SubmissionFailure(Some("id"), "message", "detail")
         inSequence {
-          mockPost(nsiCreateAccountUrl, validNSIPayload, authHeaders)(Some(
-            HttpResponse(Status.BAD_REQUEST, Some(JsObject(Seq("error" → submissionFailure.toJson))))))
+          mockPost(nsiCreateAccountUrl, validNSIPayload, authHeaders)(
+            Some(HttpResponse(Status.BAD_REQUEST, Some(JsObject(Seq("error" → submissionFailure.toJson))))))
           // WARNING: do not change the message in the following check - this needs to stay in line with the configuration in alert-config
           mockPagerDutyAlert("Received unexpected http status in response to create account")
         }
@@ -129,8 +139,8 @@ class NSIConnectorSpec extends TestSupport with HttpSupport with MockFactory wit
 
       "the status is BAD_REQUEST but fails to parse json in the response body" in {
         inSequence {
-          mockPost(nsiCreateAccountUrl, validNSIPayload, authHeaders)(Some(
-            HttpResponse(Status.BAD_REQUEST, Some(JsString("no json in the response")))))
+          mockPost(nsiCreateAccountUrl, validNSIPayload, authHeaders)(
+            Some(HttpResponse(Status.BAD_REQUEST, Some(JsString("no json in the response")))))
           // WARNING: do not change the message in the following check - this needs to stay in line with the configuration in alert-config
           mockPagerDutyAlert("Received unexpected http status in response to create account")
         }
@@ -140,8 +150,8 @@ class NSIConnectorSpec extends TestSupport with HttpSupport with MockFactory wit
 
       "the status is INTERNAL_SERVER_ERROR" in {
         inSequence {
-          mockPost(nsiCreateAccountUrl, validNSIPayload, authHeaders)(Some(
-            HttpResponse(Status.INTERNAL_SERVER_ERROR, Some(JsString("500 Internal Server Error")))))
+          mockPost(nsiCreateAccountUrl, validNSIPayload, authHeaders)(
+            Some(HttpResponse(Status.INTERNAL_SERVER_ERROR, Some(JsString("500 Internal Server Error")))))
           // WARNING: do not change the message in the following check - this needs to stay in line with the configuration in alert-config
           mockPagerDutyAlert("Received unexpected http status in response to create account")
         }
@@ -151,8 +161,8 @@ class NSIConnectorSpec extends TestSupport with HttpSupport with MockFactory wit
 
       "the status is SERVICE_UNAVAILABLE" in {
         inSequence {
-          mockPost(nsiCreateAccountUrl, validNSIPayload, authHeaders)(Some(
-            HttpResponse(Status.SERVICE_UNAVAILABLE, Some(JsString("502 Bad Gateway")))))
+          mockPost(nsiCreateAccountUrl, validNSIPayload, authHeaders)(
+            Some(HttpResponse(Status.SERVICE_UNAVAILABLE, Some(JsString("502 Bad Gateway")))))
           // WARNING: do not change the message in the following check - this needs to stay in line with the configuration in alert-config
           mockPagerDutyAlert("Received unexpected http status in response to create account")
         }
@@ -170,7 +180,7 @@ class NSIConnectorSpec extends TestSupport with HttpSupport with MockFactory wit
         val result = nsiConnector.createAccount(validNSIPayload).value
         Await.result(result, 3.seconds) match {
           case Right(_) ⇒ fail()
-          case Left(_)  ⇒ ()
+          case Left(_) ⇒ ()
         }
       }
 
@@ -220,11 +230,12 @@ class NSIConnectorSpec extends TestSupport with HttpSupport with MockFactory wit
       "correlationId" → Seq(correlationId.toString)
     )
 
-    val queryParamsSeq = Seq("nino" -> nino, "version" -> version, "systemId" -> systemId, "correlationId" -> correlationId.toString)
+    val queryParamsSeq =
+      Seq("nino" -> nino, "version" -> version, "systemId" -> systemId, "correlationId" -> correlationId.toString)
 
-      def doRequest = nsiConnector.queryAccount(resource, queryParameters)
+    def doRequest = nsiConnector.queryAccount(resource, queryParameters)
 
-      def url = s"${appConfig.nsiQueryAccountUrl}/$resource"
+    def url = s"${appConfig.nsiQueryAccountUrl}/$resource"
 
     "handle the successful response and return it" in {
       val responseBody = s"""{"version":$version,"correlationId":"$correlationId"}"""
