@@ -50,40 +50,6 @@ lazy val scoverageSettings = {
   )
 }
 
-lazy val scalariformSettings = {
-  import com.typesafe.sbt.SbtScalariform.ScalariformKeys
-
-  import scalariform.formatter.preferences._
-  // description of options found here -> https://github.com/scala-ide/scalariform
-  ScalariformKeys.preferences := ScalariformKeys.preferences.value
-    .setPreference(AlignArguments, true)
-    .setPreference(AlignParameters, true)
-    .setPreference(AlignSingleLineCaseStatements, true)
-    .setPreference(CompactControlReadability, false)
-    .setPreference(CompactStringConcatenation, false)
-    .setPreference(DanglingCloseParenthesis, Preserve)
-    .setPreference(DoubleIndentConstructorArguments, true)
-    .setPreference(DoubleIndentMethodDeclaration, true)
-    .setPreference(FirstArgumentOnNewline, Preserve)
-    .setPreference(FirstParameterOnNewline, Preserve)
-    .setPreference(FormatXml, true)
-    .setPreference(IndentLocalDefs, true)
-    .setPreference(IndentPackageBlocks, true)
-    .setPreference(IndentSpaces, 2)
-    .setPreference(IndentWithTabs, false)
-    .setPreference(MultilineScaladocCommentsStartOnFirstLine, false)
-    .setPreference(NewlineAtEndOfFile, true)
-    .setPreference(PlaceScaladocAsterisksBeneathSecondAsterisk, false)
-    .setPreference(PreserveSpaceBeforeArguments, true)
-    .setPreference(RewriteArrowSymbols, true)
-    .setPreference(SpaceBeforeColon, false)
-    .setPreference(SpaceBeforeContextColon, false)
-    .setPreference(SpaceInsideBrackets, false)
-    .setPreference(SpaceInsideParentheses, false)
-    .setPreference(SpacesAroundMultiImports, false)
-    .setPreference(SpacesWithinPatternBinders, true)
-}
-
 lazy val wartRemoverSettings = {
   // list of warts here: http://www.wartremover.org/doc/warts.html
   val excludedWarts = Seq(
@@ -112,7 +78,7 @@ lazy val microservice = Project(appName, file("."))
   .settings(publishingSettings: _*)
   .settings(defaultSettings(): _*)
   .settings(PlayKeys.playDefaultPort := 7005)
-  .settings(scalariformSettings: _*)
+  .settings(scalafmtOnCompile := true)
   .settings(wartRemoverSettings)
   // disable some wart remover checks in tests - (Any, Null, PublicInference) seems to struggle with
   // scalamock, (Equals) seems to struggle with stub generator AutoGen and (NonUnitStatements) is
@@ -139,3 +105,10 @@ lazy val microservice = Project(appName, file("."))
     "emueller-bintray" at "http://dl.bintray.com/emueller/maven" // for play json schema validator
   ))
   .settings(scalacOptions += "-Xcheckinit")
+
+lazy val compileAll = taskKey[Unit]("Compiles sources in all configurations.")
+
+compileAll := {
+  val a = (compile in Test).value
+  ()
+}
