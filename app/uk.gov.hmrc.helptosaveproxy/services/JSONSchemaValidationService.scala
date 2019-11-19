@@ -36,7 +36,7 @@ trait JSONSchemaValidationService {
 }
 
 @Singleton
-class JSONSchemaValidationServiceImpl @Inject() (conf: Configuration) extends JSONSchemaValidationService {
+class JSONSchemaValidationServiceImpl @Inject()(conf: Configuration) extends JSONSchemaValidationService {
 
   private val validationSchema: SchemaType = {
     val schemaStr = conf.underlying.getString("schema")
@@ -57,24 +57,24 @@ class JSONSchemaValidationServiceImpl @Inject() (conf: Configuration) extends JS
     if (date.isAfter(today)) Left("FEATURE outgoing-json-validation: Date of birth in the future") else Right(date)
   }
 
-  private def extractDateOfBirth(userInfo: JsValue): Either[String, LocalDate] = {
+  private def extractDateOfBirth(userInfo: JsValue): Either[String, LocalDate] =
     (userInfo \ "dateOfBirth").toEither.fold[Either[String, LocalDate]](
-      _ ⇒ Left("No date of birth found"),
-      {
+      _ ⇒ Left("No date of birth found"), {
         case JsString(s) ⇒
           Try(LocalDate.parse(s, dateFormatter)) match {
-            case Failure(e)     ⇒ Left(s"Could not parse date of birth: ${e.getMessage}")
+            case Failure(e) ⇒ Left(s"Could not parse date of birth: ${e.getMessage}")
             case Success(value) ⇒ Right(value)
           }
 
         case _ ⇒ Left("Date of birth was not a string")
       }
     )
-  }
 
   private def validateAgainstSchema(userInfo: JsValue): Either[String, JsValue] =
     jsonValidator.validate(validationSchema, userInfo) match {
-      case e: JsError      ⇒ Left(s"The following fields were either invalid or missing: [${e.errors.map(_._1.toJsonString).mkString(",")}]")
+      case e: JsError ⇒
+        Left(
+          s"The following fields were either invalid or missing: [${e.errors.map(_._1.toJsonString).mkString(",")}]")
       case JsSuccess(u, _) ⇒ Right(u)
     }
 

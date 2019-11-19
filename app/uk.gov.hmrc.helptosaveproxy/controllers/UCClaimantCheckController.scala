@@ -29,23 +29,24 @@ import uk.gov.hmrc.play.bootstrap.controller.BackendController
 
 import scala.concurrent.ExecutionContext
 
-class UCClaimantCheckController @Inject() (dwpConnector:               DWPConnector,
-                                           override val authConnector: AuthConnector,
-                                           cc:                         ControllerComponents
-)(implicit transformer: LogMessageTransformer, ec: ExecutionContext)
-  extends BackendController(cc) with Auth with Logging {
+class UCClaimantCheckController @Inject()(
+  dwpConnector: DWPConnector,
+  override val authConnector: AuthConnector,
+  cc: ControllerComponents)(implicit transformer: LogMessageTransformer, ec: ExecutionContext)
+    extends BackendController(cc) with Auth with Logging {
 
-  def ucClaimantCheck(nino: String, transactionId: UUID, threshold: Double): Action[AnyContent] = authorised { implicit request ⇒
-    dwpConnector.ucClaimantCheck(nino, transactionId, threshold).fold(
-      {
-        e ⇒
-          logger.warn(s"Could not perform UC Claimant check: $e")
-          InternalServerError
-      }, {
-        r ⇒
-          Ok(r.json)
-      }
-    )
+  def ucClaimantCheck(nino: String, transactionId: UUID, threshold: Double): Action[AnyContent] = authorised {
+    implicit request ⇒
+      dwpConnector
+        .ucClaimantCheck(nino, transactionId, threshold)
+        .fold(
+          { e ⇒
+            logger.warn(s"Could not perform UC Claimant check: $e")
+            InternalServerError
+          }, { r ⇒
+            Ok(r.json)
+          }
+        )
   }
 
 }

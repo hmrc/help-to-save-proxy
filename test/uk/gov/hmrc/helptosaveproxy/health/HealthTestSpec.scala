@@ -82,29 +82,31 @@ class HealthTestSpec extends ActorTestSupport("HealthTestSpec") {
 
   val mockPagerDutyAlerting: PagerDutyAlerting = mock[PagerDutyAlerting]
 
-  def newHealthCheck(maximumConsecutiveFailures: Int            = maximumConsecutiveFailures,
-                     minimumTimeBetweenTests:    FiniteDuration = minimumTimeBetweenTests): (ActorRef, VirtualTime) = {
+  def newHealthCheck(
+    maximumConsecutiveFailures: Int = maximumConsecutiveFailures,
+    minimumTimeBetweenTests: FiniteDuration = minimumTimeBetweenTests): (ActorRef, VirtualTime) = {
     val time = new VirtualTime
-    val ref = system.actorOf(HealthCheck.props(
-      testName,
-      ConfigFactory.parseString(
-        s"""
-           |health.$testName {
-           |  poll-period = ${timeBetweenTests.toString}
-           |  minimum-poll-period = ${minimumTimeBetweenTests.toString}
-           |  poll-timeout = ${testTimeout.toString}
-           |  poll-count-between-updates = $numberOfTestsBetweenUpdates
-           |  poll-count-failures-to-alert = $maximumConsecutiveFailures
-           |  poll-count-between-pager-duty-alerts = $numberOfTestsBetweenAlerts
-           |}
+    val ref = system.actorOf(
+      HealthCheck.props(
+        testName,
+        ConfigFactory.parseString(
+          s"""
+             |health.$testName {
+             |  poll-period = ${timeBetweenTests.toString}
+             |  minimum-poll-period = ${minimumTimeBetweenTests.toString}
+             |  poll-timeout = ${testTimeout.toString}
+             |  poll-count-between-updates = $numberOfTestsBetweenUpdates
+             |  poll-count-failures-to-alert = $maximumConsecutiveFailures
+             |  poll-count-between-pager-duty-alerts = $numberOfTestsBetweenAlerts
+             |}
       """.stripMargin
-      ),
-      time.scheduler,
-      metrics,
-      () ⇒ pagerDutyListener.ref ! PagerDutyAlert,
-      Props(new ProxyActor(runnerListener.ref, runnerName1)),
-      Props(new ProxyActor(runnerListener.ref, runnerName2))
-    ))
+        ),
+        time.scheduler,
+        metrics,
+        () ⇒ pagerDutyListener.ref ! PagerDutyAlert,
+        Props(new ProxyActor(runnerListener.ref, runnerName1)),
+        Props(new ProxyActor(runnerListener.ref, runnerName2))
+      ))
 
     ref → time
   }
@@ -163,47 +165,47 @@ class HealthTestSpec extends ActorTestSupport("HealthTestSpec") {
         "create a child runner with the next set of props when " +
           "the configured number of successful tests between updates have " +
           "been performed" in {
-            (2 until numberOfTestsBetweenUpdates).foreach { _ ⇒
-              time.advance(timeBetweenTests)
-              mockTest(runnerName1, Right(()))
-              metricsListener.expectMsg(0)
-            }
-
-            time.advance(timeBetweenTests)
-            mockTest(runnerName2, Right(()))
-            metricsListener.expectMsg(0)
-          }
-
-        "create a child runner with the first set of props when " +
-          "the configured number of successful tests between updates have " +
-          "been performed and all the props given have been used" in {
-            (1 until numberOfTestsBetweenUpdates).foreach { _ ⇒
-              time.advance(timeBetweenTests)
-              mockTest(runnerName2, Right(()))
-              metricsListener.expectMsg(0)
-            }
-
+          (2 until numberOfTestsBetweenUpdates).foreach { _ ⇒
             time.advance(timeBetweenTests)
             mockTest(runnerName1, Right(()))
             metricsListener.expectMsg(0)
           }
 
+          time.advance(timeBetweenTests)
+          mockTest(runnerName2, Right(()))
+          metricsListener.expectMsg(0)
+        }
+
+        "create a child runner with the first set of props when " +
+          "the configured number of successful tests between updates have " +
+          "been performed and all the props given have been used" in {
+          (1 until numberOfTestsBetweenUpdates).foreach { _ ⇒
+            time.advance(timeBetweenTests)
+            mockTest(runnerName2, Right(()))
+            metricsListener.expectMsg(0)
+          }
+
+          time.advance(timeBetweenTests)
+          mockTest(runnerName1, Right(()))
+          metricsListener.expectMsg(0)
+        }
+
         "fall back to the minimum time between tests if the configured time between tests falls " +
           "below the configured minimum threshold" in {
-            val minimumTimeBetweenTests = timeBetweenTests + 1.second
-            val (healthCheck, time) = newHealthCheck(minimumTimeBetweenTests = minimumTimeBetweenTests)
+          val minimumTimeBetweenTests = timeBetweenTests + 1.second
+          val (healthCheck, time) = newHealthCheck(minimumTimeBetweenTests = minimumTimeBetweenTests)
 
-            awaitActorReady(healthCheck)
+          awaitActorReady(healthCheck)
 
-            time.advance(timeBetweenTests)
-            runnerListener.expectNoMessage()
+          time.advance(timeBetweenTests)
+          runnerListener.expectNoMessage()
 
-            time.advance(1.second)
-            mockTest(runnerName1, Left(""))
+          time.advance(1.second)
+          mockTest(runnerName1, Left(""))
 
-            metricsListener.expectMsg(1)
+          metricsListener.expectMsg(1)
 
-          }
+        }
 
       }
 
@@ -217,15 +219,15 @@ class HealthTestSpec extends ActorTestSupport("HealthTestSpec") {
 
         "record the number of failures as 1 and alert pager duty if the " +
           "maximum number of consecutive failures is 1" in {
-            val (healthCheck, time) = newHealthCheck(1)
-            awaitActorReady(healthCheck)
+          val (healthCheck, time) = newHealthCheck(1)
+          awaitActorReady(healthCheck)
 
-            time.advance(timeBetweenTests)
-            mockTest(runnerName1, Left(""))
+          time.advance(timeBetweenTests)
+          mockTest(runnerName1, Left(""))
 
-            pagerDutyListener.expectMsg(PagerDutyAlert)
-            metricsListener.expectMsg(1)
-          }
+          pagerDutyListener.expectMsg(PagerDutyAlert)
+          metricsListener.expectMsg(1)
+        }
       }
 
       "a test times out" must {
@@ -266,7 +268,7 @@ class HealthTestSpec extends ActorTestSupport("HealthTestSpec") {
       "the configured number of maximum consecutive test failures has been reached" must {
 
         "record the appropriate number of failures and trigger pager duty" in {
-          (1 until maximumConsecutiveFailures).foreach{ i ⇒
+          (1 until maximumConsecutiveFailures).foreach { i ⇒
             time.advance(timeBetweenTests)
             mockTest(runnerName1, Left(""))
             metricsListener.expectMsg(i)
@@ -287,7 +289,7 @@ class HealthTestSpec extends ActorTestSupport("HealthTestSpec") {
       "the configured number of test failures between pager duty alerts has been reached" must {
 
         "record the appropriate number of failures and trigger pager duty again" in {
-          (1 until numberOfTestsBetweenAlerts).foreach{ i ⇒
+          (1 until numberOfTestsBetweenAlerts).foreach { i ⇒
             time.advance(timeBetweenTests)
             mockTest(runnerName1, Left(""))
             metricsListener.expectMsg(maximumConsecutiveFailures + i)
@@ -330,22 +332,26 @@ object HealthTestSpec {
   class TestNSIConnector(reportTo: ActorRef) extends NSIConnector {
     implicit val timeout: Timeout = Timeout(3.seconds)
 
-    override def createAccount(userInfo: NSIPayload)(implicit hc: HeaderCarrier, ex: ExecutionContext): EitherT[Future, SubmissionFailure, SubmissionSuccess] =
+    override def createAccount(userInfo: NSIPayload)(
+      implicit hc: HeaderCarrier,
+      ex: ExecutionContext): EitherT[Future, SubmissionFailure, SubmissionSuccess] =
       sys.error("Not used")
 
     override def updateEmail(userInfo: NSIPayload)(implicit hc: HeaderCarrier, ex: ExecutionContext): Result[Unit] =
       sys.error("Not used")
 
     override def healthCheck(userInfo: NSIPayload)(implicit hc: HeaderCarrier, ex: ExecutionContext): Result[Unit] = {
-      val result: Future[Option[Either[String, Unit]]] = (reportTo ? GetTestResult(userInfo)).mapTo[GetTestResultResponse].map(_.result)
-      EitherT(result.flatMap{
+      val result: Future[Option[Either[String, Unit]]] =
+        (reportTo ? GetTestResult(userInfo)).mapTo[GetTestResultResponse].map(_.result)
+      EitherT(result.flatMap {
         _.fold[Future[Either[String, Unit]]](Future.failed(new Exception("")))(Future.successful)
       })
     }
 
-    override def queryAccount(resource: String, queryString: Map[String, Seq[String]])(implicit hc: HeaderCarrier, ex: ExecutionContext): Result[HttpResponse] = {
+    override def queryAccount(resource: String, queryString: Map[String, Seq[String]])(
+      implicit hc: HeaderCarrier,
+      ex: ExecutionContext): Result[HttpResponse] =
       sys.error("Not used")
-    }
   }
 
   object TestNSIConnector {

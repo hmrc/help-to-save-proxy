@@ -40,13 +40,15 @@ import scala.util.control.NonFatal
 
 // $COVERAGE-OFF$
 @Singleton
-class NSIConnectionHealthCheck @Inject() (system:            ActorSystem,
-                                          configuration:     Configuration,
-                                          metrics:           Metrics,
-                                          nSIConnector:      NSIConnector,
-                                          mongo:             ReactiveMongoComponent,
-                                          lifecycle:         ApplicationLifecycle,
-                                          pagerDutyAlerting: PagerDutyAlerting) extends Logging {
+class NSIConnectionHealthCheck @Inject()(
+  system: ActorSystem,
+  configuration: Configuration,
+  metrics: Metrics,
+  nSIConnector: NSIConnector,
+  mongo: ReactiveMongoComponent,
+  lifecycle: ApplicationLifecycle,
+  pagerDutyAlerting: PagerDutyAlerting)
+    extends Logging {
 
   val name: String = "nsi-connection"
 
@@ -71,18 +73,20 @@ class NSIConnectionHealthCheck @Inject() (system:            ActorSystem,
   // make sure we only have one instance of the health check running across
   // multiple instances of the application in the same environment
   lazy val lockedHealthCheck: ActorRef =
-    system.actorOf(Lock.props[Option[ActorRef]](
-      mongo.mongoConnector.db,
-      s"health-check-$name",
-      lockDuration,
-      system.scheduler,
-      None,
-      _.fold(Some(newHealthCheck()))(Some(_)),
-      _.flatMap{ ref ⇒
-        ref ! PoisonPill
-        None
-      },
-      lifecycle),
+    system.actorOf(
+      Lock.props[Option[ActorRef]](
+        mongo.mongoConnector.db,
+        s"health-check-$name",
+        lockDuration,
+        system.scheduler,
+        None,
+        _.fold(Some(newHealthCheck()))(Some(_)),
+        _.flatMap { ref ⇒
+          ref ! PoisonPill
+          None
+        },
+        lifecycle
+      ),
       s"health-check-$name-lock"
     )
 
@@ -99,8 +103,12 @@ class NSIConnectionHealthCheck @Inject() (system:            ActorSystem,
 
 object NSIConnectionHealthCheck {
 
-  class NSIConnectionHealthCheckRunner(nsiConnector: NSIConnector, metrics: Metrics, payload: Payload, ninoLoggingEnabled: Boolean)
-    extends Actor with HealthCheckRunner with Logging {
+  class NSIConnectionHealthCheckRunner(
+    nsiConnector: NSIConnector,
+    metrics: Metrics,
+    payload: Payload,
+    ninoLoggingEnabled: Boolean)
+      extends Actor with HealthCheckRunner with Logging {
 
     import context.dispatcher
 
@@ -114,12 +122,16 @@ object NSIConnectionHealthCheck {
     override def performTest(): Future[HealthCheckResult] = {
       val timer = metrics.nsiHealthCheckTimer.time()
 
-      nsiConnector.healthCheck(payload.value).value
+      nsiConnector
+        .healthCheck(payload.value)
+        .value
         .map { result ⇒
           val time = timer.stop()
-          result.fold[HealthCheckResult](e ⇒ HealthCheckResult.Failure(e, time), _ ⇒ HealthCheckResult.Success(successMessage, time))
+          result.fold[HealthCheckResult](
+            e ⇒ HealthCheckResult.Failure(e, time),
+            _ ⇒ HealthCheckResult.Success(successMessage, time))
         }
-        .recover{
+        .recover {
           case NonFatal(e) ⇒
             val time = timer.stop()
             HealthCheckResult.Failure(e.getMessage, time)
@@ -139,9 +151,18 @@ object NSIConnectionHealthCheck {
 
     object Payload {
 
-      private def payload(email: Email): NSIPayload = NSIPayload(
-        "Service", "Account", LocalDate.ofEpochDay(0L), "XX999999X",
-                              ContactDetails("Health", "Check", None, None, None, "AB12CD", None, Some(email), None, "02"), "online", None, None, None)
+      private def payload(email: Email): NSIPayload =
+        NSIPayload(
+          "Service",
+          "Account",
+          LocalDate.ofEpochDay(0L),
+          "XX999999X",
+          ContactDetails("Health", "Check", None, None, None, "AB12CD", None, Some(email), None, "02"),
+          "online",
+          None,
+          None,
+          None
+        )
 
       private[health] case object Payload1 extends Payload {
         override val value: NSIPayload = payload("healthcheck_ping@noreply.com")

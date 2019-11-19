@@ -24,13 +24,15 @@ object SubmissionResult {
   // Some means account was created, None means the account already existed
   case class SubmissionSuccess(accountNumber: Option[AccountNumber]) extends SubmissionResult
 
-  case class SubmissionFailure(errorMessageId: Option[String], errorMessage: String, errorDetail: String) extends SubmissionResult
+  case class SubmissionFailure(errorMessageId: Option[String], errorMessage: String, errorDetail: String)
+      extends SubmissionResult
 
   object SubmissionFailure {
 
     implicit val submissionFailureFormat: Format[SubmissionFailure] = Json.format[SubmissionFailure]
 
-    def apply(errorMessage: String, errorDetail: String): SubmissionFailure = SubmissionFailure(Some(""), errorMessage, errorDetail)
+    def apply(errorMessage: String, errorDetail: String): SubmissionFailure =
+      SubmissionFailure(Some(""), errorMessage, errorDetail)
 
     implicit class SubmissionFailureOps(val failure: SubmissionFailure) extends AnyVal {
       def toJson: JsValue = submissionFailureFormat.writes(failure)
@@ -39,4 +41,3 @@ object SubmissionResult {
   }
 
 }
-

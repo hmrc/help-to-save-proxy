@@ -53,7 +53,7 @@ class AuthSpec extends AuthSupport {
     }
 
     "handle various auth related exceptions and throw an error" in {
-        def mockAuthWith(error: String) = mockAuthResultWithFail()(fromString(error))
+      def mockAuthWith(error: String) = mockAuthResultWithFail()(fromString(error))
 
       val exceptions = List(
         "InsufficientConfidenceLevel" → Status.FORBIDDEN,
@@ -66,7 +66,8 @@ class AuthSpec extends AuthSupport {
         "InvalidBearerToken" → Status.UNAUTHORIZED,
         "SessionRecordNotFound" → Status.UNAUTHORIZED,
         "IncorrectCredentialStrength" → Status.FORBIDDEN,
-        "unknown-blah" → Status.INTERNAL_SERVER_ERROR)
+        "unknown-blah" → Status.INTERNAL_SERVER_ERROR
+      )
 
       exceptions.foreach {
         case (error, expectedStatus) ⇒

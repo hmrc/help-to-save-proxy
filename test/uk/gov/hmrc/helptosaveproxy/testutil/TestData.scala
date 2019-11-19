@@ -28,20 +28,21 @@ object TestData {
 
   object UserData {
 
-    implicit def providerLocalDate(s: String): GenProvider[LocalDate] = instance({
-      s.toLowerCase match {
-        case "dateofbirth" | "dob" | "birthdate" ⇒ Gen.date(LocalDate.of(1900, 1, 1), LocalDate.now())
-        case _                                   ⇒ Gen.date
-      }
-    })
+    implicit def providerLocalDate(s: String): GenProvider[LocalDate] =
+      instance({
+        s.toLowerCase match {
+          case "dateofbirth" | "dob" | "birthdate" ⇒ Gen.date(LocalDate.of(1900, 1, 1), LocalDate.now())
+          case _ ⇒ Gen.date
+        }
+      })
 
     implicit val userInfoGen: Gen[NSIPayload] = AutoGen[NSIPayload]
 
     def randomUserInfo(): NSIPayload = sample(userInfoGen)
 
     /**
-     * Valid user details which will pass NSI validation checks
-     */
+      * Valid user details which will pass NSI validation checks
+      */
     val (nsiValidContactDetails, validNSIPayload, validBankDetails) = {
       val (forename, surname) = "Tyrion" → "Lannister"
       val dateOfBirth = LocalDate.ofEpochDay(0L)
@@ -59,9 +60,28 @@ object TestData {
       val bankDetails = BankDetails("12-34-56", "12345678", Some("rollnumber"), "account name")
 
       val nsiValidContactDetails =
-        ContactDetails(addressLine1, addressLine2, Some(addressLine3), None, None, postcode, Some(country), Some(email), Some(phone), comms)
+        ContactDetails(
+          addressLine1,
+          addressLine2,
+          Some(addressLine3),
+          None,
+          None,
+          postcode,
+          Some(country),
+          Some(email),
+          Some(phone),
+          comms)
       val nsiPayload =
-        NSIPayload(forename, surname, dateOfBirth, nino, nsiValidContactDetails, regChannel, Some(bankDetails), Some("V2.0"), Some("systemId"))
+        NSIPayload(
+          forename,
+          surname,
+          dateOfBirth,
+          nino,
+          nsiValidContactDetails,
+          regChannel,
+          Some(bankDetails),
+          Some("V2.0"),
+          Some("systemId"))
 
       (nsiValidContactDetails, nsiPayload, bankDetails)
     }

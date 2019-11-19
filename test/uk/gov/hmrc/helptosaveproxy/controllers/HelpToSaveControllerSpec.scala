@@ -48,22 +48,27 @@ class HelpToSaveControllerSpec extends AuthSupport {
   val ggRetrievals: Option[Credentials] = Some(ggCreds)
 
   def mockJSONSchemaValidationService(expectedInfo: NSIPayload)(result: Either[String, Unit]) =
-    (mockJsonSchema.validate(_: JsValue))
+    (mockJsonSchema
+      .validate(_: JsValue))
       .expects(Json.toJson(expectedInfo))
       .returning(result.map(_ ⇒ Json.toJson(expectedInfo)))
 
   def mockCreateAccount(expectedInfo: NSIPayload)(result: Either[SubmissionFailure, SubmissionSuccess]): Unit =
-    (mockNSIConnector.createAccount(_: NSIPayload)(_: HeaderCarrier, _: ExecutionContext))
+    (mockNSIConnector
+      .createAccount(_: NSIPayload)(_: HeaderCarrier, _: ExecutionContext))
       .expects(expectedInfo, *, *)
       .returning(EitherT.fromEither[Future](result))
 
   def mockUpdateEmail(expectedInfo: NSIPayload)(result: Either[String, Unit]) =
-    (mockNSIConnector.updateEmail(_: NSIPayload)(_: HeaderCarrier, _: ExecutionContext))
+    (mockNSIConnector
+      .updateEmail(_: NSIPayload)(_: HeaderCarrier, _: ExecutionContext))
       .expects(expectedInfo, *, *)
       .returning(EitherT.fromEither[Future](result))
 
-  def mockGetAccountByNino(resource: String, queryString: Map[String, Seq[String]])(result: Either[String, HttpResponse]): Unit =
-    (mockNSIConnector.queryAccount(_: String, _: Map[String, Seq[String]])(_: HeaderCarrier, _: ExecutionContext))
+  def mockGetAccountByNino(resource: String, queryString: Map[String, Seq[String]])(
+    result: Either[String, HttpResponse]): Unit =
+    (mockNSIConnector
+      .queryAccount(_: String, _: Map[String, Seq[String]])(_: HeaderCarrier, _: ExecutionContext))
       .expects(resource, queryString, *, *)
       .returning(EitherT.fromEither[Future](result))
 
@@ -71,8 +76,9 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
     val correlationId = "correlationId"
 
-      def doCreateAccountRequest(userInfo: NSIPayload) =
-        controller.createAccount()(FakeRequest().withJsonBody(Json.toJson(userInfo)).withHeaders("X-Correlation-Id" → correlationId))
+    def doCreateAccountRequest(userInfo: NSIPayload) =
+      controller.createAccount()(
+        FakeRequest().withJsonBody(Json.toJson(userInfo)).withHeaders("X-Correlation-Id" → correlationId))
 
     behave like commonBehaviour(
       controller.createAccount,
@@ -105,15 +111,12 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
   "The updateEmail method" must {
 
-      def doUpdateEmailRequest(userInfo: NSIPayload) =
-        controller.updateEmail()(FakeRequest().withJsonBody(Json.toJson(userInfo)))
+    def doUpdateEmailRequest(userInfo: NSIPayload) =
+      controller.updateEmail()(FakeRequest().withJsonBody(Json.toJson(userInfo)))
 
-    val updatePayload = validNSIPayload.copy(version  = None, systemId = None)
+    val updatePayload = validNSIPayload.copy(version = None, systemId = None)
 
-    behave like commonBehaviour(
-      controller.updateEmail,
-      () ⇒ mockUpdateEmail(updatePayload)(Left("")),
-      updatePayload)
+    behave like commonBehaviour(controller.updateEmail, () ⇒ mockUpdateEmail(updatePayload)(Left("")), updatePayload)
 
     "return an OK status when a user successfully updates their email address" in {
       inSequence {
@@ -146,7 +149,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
     val queryString = s"nino=$nino&version=$version&systemId=$systemId&correlationId=$correlationId"
 
-      def doRequest() = controller.queryAccount(resource)(FakeRequest("GET", s"/nsi-services/account?$queryString"))
+    def doRequest() = controller.queryAccount(resource)(FakeRequest("GET", s"/nsi-services/account?$queryString"))
 
     "handle successful response" in {
 
@@ -173,9 +176,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
     }
   }
 
-  def commonBehaviour(doCall:         () ⇒ Action[AnyContent],
-                      mockNSIFailure: () ⇒ Unit,
-                      nsiPayload:     NSIPayload): Unit = {
+  def commonBehaviour(doCall: () ⇒ Action[AnyContent], mockNSIFailure: () ⇒ Unit, nsiPayload: NSIPayload): Unit = {
 
     "return an InternalServerError status when the call to NSI returns an error" in {
       inSequence {

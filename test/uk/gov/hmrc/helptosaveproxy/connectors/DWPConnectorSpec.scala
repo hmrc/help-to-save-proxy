@@ -33,29 +33,41 @@ import uk.gov.hmrc.play.audit.http.HttpAuditing
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
-class DWPConnectorSpec extends TestSupport with HttpSupport with MockFactory with EitherValues with UCClaimantTestSupport with MockPagerDuty {
+class DWPConnectorSpec
+    extends TestSupport with HttpSupport with MockFactory with EitherValues with UCClaimantTestSupport
+    with MockPagerDuty {
 
   private val mockAuditor = mock[HttpAuditing]
   private val mockWsClient = mock[WSClient]
 
-  class MockedHttpProxyClient extends HttpProxyClient(mockAuditor, configuration, mockWsClient, "microservice.services.dwp.proxy", fakeApplication.actorSystem)
+  class MockedHttpProxyClient
+      extends HttpProxyClient(
+        mockAuditor,
+        configuration,
+        mockWsClient,
+        "microservice.services.dwp.proxy",
+        fakeApplication.actorSystem)
 
   override val mockProxyClient = mock[MockedHttpProxyClient]
 
-  lazy val connector = new DWPConnectorImpl(mockAuditor, mockMetrics, mockPagerDuty, mockWsClient, fakeApplication.actorSystem) {
-    override val proxyClient = mockProxyClient
-  }
+  lazy val connector =
+    new DWPConnectorImpl(mockAuditor, mockMetrics, mockPagerDuty, mockWsClient, fakeApplication.actorSystem) {
+      override val proxyClient = mockProxyClient
+    }
 
   val transactionId = UUID.randomUUID()
   val threshold = 650.0
 
-  def build200Response(uCDetails: UCDetails): HttpResponse = {
+  def build200Response(uCDetails: UCDetails): HttpResponse =
     HttpResponse(200, Some(Json.toJson(uCDetails))) // scalastyle:ignore magic.number
-  }
 
-  def resultValue(result: EitherT[Future, String, HttpResponse]): Either[String, HttpResponse] = Await.result(result.value, 3.seconds)
+  def resultValue(result: EitherT[Future, String, HttpResponse]): Either[String, HttpResponse] =
+    Await.result(result.value, 3.seconds)
 
-  val queryParams = Seq("systemId" -> appConfig.systemId, "thresholdAmount" -> threshold.toString, "transactionId" -> transactionId.toString)
+  val queryParams = Seq(
+    "systemId"        -> appConfig.systemId,
+    "thresholdAmount" -> threshold.toString,
+    "transactionId"   -> transactionId.toString)
 
   "the ucClaimantCheck call" must {
     "return a Right with HttpResponse(200, Some(Y, Y)) when given an eligible NINO of a UC Claimant within the threshold" in {

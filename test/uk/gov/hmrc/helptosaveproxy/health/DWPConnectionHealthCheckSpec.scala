@@ -32,7 +32,8 @@ class DWPConnectionHealthCheckSpec extends ActorTestSupport("DWPConnectionHealth
   def newRunner(): ActorRef = system.actorOf(Props(new DWPConnectionHealthCheckRunner(dwpConnector, mockMetrics)))
 
   def mockDwpConnectorTest(result: Option[Either[String, Unit]]): Unit =
-    (dwpConnector.healthCheck()(_: HeaderCarrier, _: ExecutionContext))
+    (dwpConnector
+      .healthCheck()(_: HeaderCarrier, _: ExecutionContext))
       .expects(*, *)
       .returning(
         EitherT(result.fold[Future[Either[String, Unit]]](Future.failed(new Exception("")))(Future.successful))
@@ -44,26 +45,26 @@ class DWPConnectionHealthCheckSpec extends ActorTestSupport("DWPConnectionHealth
 
       "call the DWPConnector to do the test and reply back with a successful result " +
         "if the DWPConnector returns a success" in {
-          mockDwpConnectorTest(Some(Right(())))
+        mockDwpConnectorTest(Some(Right(())))
 
-          val runner = newRunner()
-          runner ! PerformHealthCheck
-          expectMsgType[HealthCheckResult.Success]
-        }
+        val runner = newRunner()
+        runner ! PerformHealthCheck
+        expectMsgType[HealthCheckResult.Success]
+      }
 
       "call the DWPConnector to do the test and reply back with a negative result " +
         "if the DWPConnector returns a failure" in {
-            def test(mockActions: ⇒ Unit): Unit = {
-              mockActions
+        def test(mockActions: ⇒ Unit): Unit = {
+          mockActions
 
-              val runner = newRunner()
-              runner ! PerformHealthCheck
-              expectMsgType[HealthCheckResult.Failure]
-            }
-
-          test(mockDwpConnectorTest(Some(Left(""))))
-          test(mockDwpConnectorTest(None))
+          val runner = newRunner()
+          runner ! PerformHealthCheck
+          expectMsgType[HealthCheckResult.Failure]
         }
+
+        test(mockDwpConnectorTest(Some(Left(""))))
+        test(mockDwpConnectorTest(None))
+      }
     }
 
   }

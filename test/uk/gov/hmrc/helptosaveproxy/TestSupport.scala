@@ -37,26 +37,24 @@ import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.ExecutionContext
 
-trait TestSupport extends UnitSpec with MockFactory with BeforeAndAfterAll with ScalaFutures {
-  this: Suite ⇒
+trait TestSupport extends UnitSpec with MockFactory with BeforeAndAfterAll with ScalaFutures { this: Suite ⇒
 
   lazy val additionalConfig = Configuration()
 
   lazy implicit val configuration: Configuration = fakeApplication.injector.instanceOf[Configuration]
 
-  def buildFakeApplication(additionalConfig: Configuration): Application = {
+  def buildFakeApplication(additionalConfig: Configuration): Application =
     new GuiceApplicationBuilder()
-      .configure(Configuration(
-        ConfigFactory.parseString(
-          """
-            | metrics.enabled       = true
-            | play.modules.disabled = [ "uk.gov.hmrc.helptosaveproxy.config.HealthCheckModule",
-            | "play.api.libs.ws.ahc.AhcWSModule",
-            | "play.api.mvc.LegacyCookiesModule" ]
+      .configure(
+        Configuration(
+          ConfigFactory.parseString("""
+                                      | metrics.enabled       = true
+                                      | play.modules.disabled = [ "uk.gov.hmrc.helptosaveproxy.config.HealthCheckModule",
+                                      | "play.api.libs.ws.ahc.AhcWSModule",
+                                      | "play.api.mvc.LegacyCookiesModule" ]
           """.stripMargin)
-      ) ++ additionalConfig)
+        ) ++ additionalConfig)
       .build()
-  }
 
   lazy val fakeApplication: Application = buildFakeApplication(additionalConfig)
 
@@ -65,7 +63,7 @@ trait TestSupport extends UnitSpec with MockFactory with BeforeAndAfterAll with 
   implicit lazy val ec: ExecutionContext = fakeApplication.injector.instanceOf[ExecutionContext]
 
   implicit val headerCarrier: HeaderCarrier =
-    HeaderCarrier(sessionId     = Some(SessionId(UUID.randomUUID().toString)), authorization = Some(Authorization("auth")))
+    HeaderCarrier(sessionId = Some(SessionId(UUID.randomUUID().toString)), authorization = Some(Authorization("auth")))
 
   override def beforeAll() {
     Play.start(fakeApplication)
