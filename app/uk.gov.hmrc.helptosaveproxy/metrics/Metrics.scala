@@ -40,6 +40,10 @@ class Metrics @Inject()(val metrics: com.kenshoo.play.metrics.Metrics) {
 
   val nsiUpdateEmailErrorCounter: Counter = counter("proxy.nsi-update-email-error.count")
 
+  val nsiAccountQueryTimer: Timer = timer("proxy.nsi-account-query-time")
+
+  val nsiAccountQueryErrorCounter: Counter = counter("proxy.nsi-account-query-error.count")
+
   val authTimer: Timer = timer("proxy.auth-timer")
 
   val nsiHealthCheckTimer: Timer = timer("health.nsi-connection.timer")

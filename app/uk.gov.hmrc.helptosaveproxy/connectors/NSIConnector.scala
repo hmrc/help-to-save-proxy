@@ -88,7 +88,7 @@ class NSIConnectorImpl @Inject()(
 
     logCreateAccount(payload)
     val correlationId = getCorrelationId
-    val timeContext: Timer.Context = metrics.nsiAccountCreationTimer.time()
+    val timeContext = metrics.nsiAccountCreationTimer.time()
     EitherT(proxyClient
       .post(nsiCreateAccountUrl, payload, Map(nsiAuthHeaderKey → nsiBasicAuth))(
         nsiPayloadFormat,
@@ -132,7 +132,7 @@ class NSIConnectorImpl @Inject()(
     val nino = payload.nino
     val correlationId = getCorrelationId
 
-    logger.info(s"Trying to create an account using NSI endpoint $nsiCreateAccountUrl", nino, correlationId)
+    logger.info(s"Trying to create an account using NS&I endpoint $nsiCreateAccountUrl", nino, correlationId)
 
     FEATURE("log-account-creation-json", appConfig.runModeConfiguration, logger).thenOrElse(
       logger.info(s"CreateAccount JSON is ${Json.toJson(payload)}", nino, correlationId),
@@ -142,7 +142,7 @@ class NSIConnectorImpl @Inject()(
 
   override def updateEmail(payload: NSIPayload)(implicit hc: HeaderCarrier, ec: ExecutionContext): Result[Unit] = {
     val nino = payload.nino
-    val timeContext: Timer.Context = metrics.nsiUpdateEmailTimer.time()
+    val timeContext = metrics.nsiUpdateEmailTimer.time()
     val correlationId = getCorrelationId
 
     EitherT(
@@ -156,7 +156,7 @@ class NSIConnectorImpl @Inject()(
 
           response.status match {
             case Status.OK ⇒
-              logger.info(s"createAccount/update returned 200 OK from NSI $time", nino, correlationId)
+              logger.info(s"createAccount/update returned 200 OK from NS&I $time", nino, correlationId)
               Right(())
 
             case other ⇒
@@ -198,7 +198,7 @@ class NSIConnectorImpl @Inject()(
           }
         }
         .recover {
-          case e ⇒ Left(s"Encountered error while trying to create account: ${e.getMessage}")
+          case e ⇒ Left(s"Encountered error while trying to do health-check: ${e.getMessage}")
         })
 
   override def queryAccount(resource: String, queryParameters: Map[String, Seq[String]])(
@@ -206,15 +206,28 @@ class NSIConnectorImpl @Inject()(
     ec: ExecutionContext): Result[HttpResponse] = {
     val url = s"${appConfig.nsiQueryAccountUrl}/$resource"
     logger.info(s"Trying to query account: $url")
+    val timeContext: Timer.Context = metrics.nsiAccountQueryTimer.time()
 
     val queryParams = queryParameters.toSeq.flatMap { case (name, values) ⇒ values.map(value ⇒ (name, value)) }
 
     EitherT(
       proxyClient
         .get(url, queryParams, Map(nsiAuthHeaderKey → nsiBasicAuth))(hc.copy(authorization = None), ec)
-        .map[Either[String, HttpResponse]](Right(_))
+        .map[Either[String, HttpResponse]] { response ⇒
+          val time = timeContext.stop()
+          response.status match {
+            case Status.OK ⇒ Right(response)
+            case other ⇒
+              Left(s"Received unexpected status $other from NS&I while trying to query account. Body was ${maskNino(
+                response.body)} $time")
+          }
+        }
         .recover {
-          case e ⇒ Left(e.getMessage)
+          case e ⇒
+            val time = timeContext.stop()
+            pagerDutyAlerting.alert("Failed to make call to create account")
+            metrics.nsiAccountQueryErrorCounter.inc()
+            Left(s"Encountered error while trying to query account: ${e.getMessage} $time")
         })
   }
 
@@ -228,28 +241,26 @@ class NSIConnectorImpl @Inject()(
 
     status match {
       case Status.BAD_REQUEST ⇒
-        logger.warn(
-          s"Failed to create account as NSI, received status 400 (Bad Request) from NSI $time",
-          nino,
-          correlationId)
+        logger
+          .warn(s"Failed to create account, received status 400 (Bad Request) from NS&I $time", nino, correlationId)
         handleBadRequest(response)
 
       case Status.INTERNAL_SERVER_ERROR ⇒
         logger.warn(
-          s"Failed to create account as NSI, received status 500 (Internal Server Error) from NSI $time",
+          s"Failed to create account, received status 500 (Internal Server Error) from NS&I $time",
           nino,
           correlationId)
         handleError(response)
 
       case Status.SERVICE_UNAVAILABLE ⇒
         logger.warn(
-          s"Failed to create account as NSI, received status 503 (Service Unavailable) from NSI $time",
+          s"Failed to create account, received status 503 (Service Unavailable) from NS&I $time",
           nino,
           correlationId)
         handleError(response)
 
       case other ⇒
-        logger.warn(s"Unexpected error during creating account, received status $other $time", nino, correlationId)
+        logger.warn(s"Unexpected error when creating account, received status $other $time", nino, correlationId)
         handleError(response)
     }
   }
@@ -259,12 +270,12 @@ class NSIConnectorImpl @Inject()(
       case Right(submissionFailure) ⇒ submissionFailure
       case Left(error) ⇒
         logger.warn(
-          s"error parsing bad request response from NSI, error = $error, response body is = ${maskNino(response.body)}")
+          s"error parsing bad request response from NS&I, error = $error, response body is = ${maskNino(response.body)}")
         SubmissionFailure("Bad request", "")
     }
 
   private def handleError(response: HttpResponse): SubmissionFailure = {
-    logger.warn(s"response body from NSI=${maskNino(response.body)}")
+    logger.warn(s"response body from NS&I=${maskNino(response.body)}")
     SubmissionFailure("Server error", "")
   }
 }
