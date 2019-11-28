@@ -240,7 +240,7 @@ class NSIConnectorSpec
 
     "handle unexpected errors" in {
       forAll { status: Int ⇒
-        whenever(status > 0 && status =!= Status.OK && status =!= Status.NOT_FOUND) {
+        whenever(status > 0 && status =!= Status.OK && status =!= Status.BAD_REQUEST) {
           mockGet(url, queryParamsSeq, authHeaders)(Some(HttpResponse(status)))
           Await.result(doRequest.value, 3.seconds).isLeft shouldBe true
         }
