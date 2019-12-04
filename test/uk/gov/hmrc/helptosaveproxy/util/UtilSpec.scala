@@ -17,7 +17,6 @@
 package uk.gov.hmrc.helptosaveproxy.util
 
 import org.scalatest.Matchers
-import uk.gov.hmrc.play.test.UnitSpec
 
 class UtilSpec extends Matchers with UnitSpec {
 
