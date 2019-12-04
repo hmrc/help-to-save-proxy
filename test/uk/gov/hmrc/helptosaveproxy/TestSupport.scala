@@ -19,7 +19,7 @@ package uk.gov.hmrc.helptosaveproxy
 import java.util.UUID
 
 import com.codahale.metrics._
-import com.kenshoo.play.metrics.{Metrics ⇒ PlayMetrics}
+import com.kenshoo.play.metrics.{Metrics => PlayMetrics}
 import com.typesafe.config.ConfigFactory
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.ScalaFutures
@@ -30,10 +30,9 @@ import play.api.{Application, Configuration, Play}
 import uk.gov.hmrc.helptosaveproxy.config.AppConfig
 import uk.gov.hmrc.helptosaveproxy.metrics.Metrics
 import uk.gov.hmrc.helptosaveproxy.testutil.TestLogMessageTransformer
-import uk.gov.hmrc.helptosaveproxy.util.LogMessageTransformer
+import uk.gov.hmrc.helptosaveproxy.util.{LogMessageTransformer, UnitSpec}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.logging.{Authorization, SessionId}
-import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.ExecutionContext
 
