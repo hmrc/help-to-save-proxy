@@ -229,8 +229,7 @@ class JSONSchemaValidationServiceImplSpec extends TestSupport {
     }
 
     "when given a NSIPayload that the json validation schema reports that the communicationPreference field does not meet regex" in {
-      testError(
-        validNSIPayloadJSON.replaceInner(Fields.contactDetails, Fields.communicationPreference, JsString("01")))
+      testError(validNSIPayloadJSON.replaceInner(Fields.contactDetails, Fields.communicationPreference, JsString("01")))
     }
 
     "when given a NSIPayload that the json validation schema reports that the communicationPreference field is missing, return a message" in {
@@ -300,10 +299,8 @@ class JSONSchemaValidationServiceImplSpec extends TestSupport {
     }
 
     "when given a NSIPayload that the json validation schema reports that the accountNumber is invalid - too long, return a message" in {
-      testError(
-        validNSIPayloadJSON.replace(
-          Fields.nbaDetails,
-          Json.toJson(BankDetails("12-34-56", "123456789", Some("897/98X"), "account name"))))
+      testError(validNSIPayloadJSON
+        .replace(Fields.nbaDetails, Json.toJson(BankDetails("12-34-56", "123456789", Some("897/98X"), "account name"))))
     }
 
     "when given a NSIPayload that the json validation schema reports that the accountNumber is invalid - it contains a non digit, return a message" in {

@@ -73,8 +73,7 @@ class JSONSchemaValidationServiceImpl @Inject()(conf: Configuration) extends JSO
   private def validateAgainstSchema(userInfo: JsValue): Either[String, JsValue] =
     jsonValidator.validate(validationSchema, userInfo) match {
       case e: JsError ⇒
-        Left(
-          s"The following fields were either invalid or missing: [${e.errors.map(_._1.toJsonString).mkString(",")}]")
+        Left(s"The following fields were either invalid or missing: [${e.errors.map(_._1.toJsonString).mkString(",")}]")
       case JsSuccess(u, _) ⇒ Right(u)
     }
 

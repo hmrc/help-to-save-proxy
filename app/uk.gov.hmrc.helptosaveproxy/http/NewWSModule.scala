@@ -15,25 +15,22 @@
  */
 
 package uk.gov.hmrc.helptosaveproxy.http
-import javax.inject.Inject
-import play.api.{Configuration, Environment}
-import play.api.inject.{bind, _}
-import play.api.libs.ws.ahc.{AhcWSClientProvider, AsyncHttpClientProvider, OptionalAhcHttpCacheProvider, _}
-import scala.concurrent.ExecutionContext
+import play.api.inject._
+import play.api.libs.ws.ahc._
 import java.net.URI
+
 import javax.cache.configuration.FactoryBuilder.SingletonFactory
 import javax.cache.configuration.MutableConfiguration
 import javax.cache.expiry.EternalExpiryPolicy
 import javax.cache.CacheManager
 import javax.cache.Caching
-import javax.cache.{Cache ⇒ JCache}
+import javax.cache.{Cache => JCache}
 import javax.inject.Inject
 import javax.inject.Provider
 import javax.inject.Singleton
 import akka.stream.Materializer
 import com.typesafe.sslconfig.ssl.SystemConfiguration
 import com.typesafe.sslconfig.ssl.debug.DebugConfiguration
-import org.slf4j.LoggerFactory
 import play.api.libs.ws._
 import play.api.libs.ws.ahc.cache._
 import play.api.Configuration
@@ -98,7 +95,6 @@ class AsyncHttpClientProvider @Inject()(
   private def configure(): Unit = {
     // JSSE depends on various system properties which must be set before JSSE classes
     // are pulled into memory, so these must come first.
-    lazy val logger = LoggerFactory.getLogger(this.getClass)
     lazy val loggerFactory = new AhcLoggerFactory(
       org.slf4j.LoggerFactory.getILoggerFactory
     )

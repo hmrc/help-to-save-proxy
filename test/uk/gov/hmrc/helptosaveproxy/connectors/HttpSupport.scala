@@ -43,8 +43,7 @@ trait HttpSupport { this: MockFactory with Matchers ⇒
           hdrs shouldBe headers
           true
       })
-      .returning(
-        response.fold(Future.failed[HttpResponse](new Exception("Test exception message")))(Future.successful))
+      .returning(response.fold(Future.failed[HttpResponse](new Exception("Test exception message")))(Future.successful))
 
   def mockPut[A](url: String, body: A, headers: Map[String, String] = Map.empty, needsAuditing: Boolean = true)(
     result: Option[HttpResponse]): Unit =

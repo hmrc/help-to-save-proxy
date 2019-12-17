@@ -156,8 +156,8 @@ class NSIPayloadSpec extends WordSpec with Matchers { // scalastyle:off magic.nu
           "comms"
         )
 
-        val json: JsValue = Json.toJson(
-          validNSIPayload.copy(forename = longName, surname = longSurname, contactDetails = specialAddress))
+        val json: JsValue =
+          Json.toJson(validNSIPayload.copy(forename = longName, surname = longSurname, contactDetails = specialAddress))
         val result = json.validate[NSIPayload].get
 
         result.forename shouldBe "John Paul Harry"

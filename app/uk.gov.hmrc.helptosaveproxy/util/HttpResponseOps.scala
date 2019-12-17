@@ -17,9 +17,10 @@
 package uk.gov.hmrc.helptosaveproxy.util
 
 import play.api.libs.json.{JsDefined, JsError, JsLookupResult, Reads}
-import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.helptosaveproxy.util.JsErrorOps._
+import uk.gov.hmrc.http.HttpResponse
 
+import scala.language.implicitConversions
 import scala.util.{Failure, Success, Try}
 
 object HttpResponseOps {
@@ -45,8 +46,7 @@ class HttpResponseOps(val response: HttpResponse) extends AnyVal {
           ))
       case Failure(error) ⇒
         // response.json failed in this case - there was no JSON in the response
-        Left(
-          s"Could not read http response as JSON: ${error.getMessage}. Response body was ${maskNino(response.body)}")
+        Left(s"Could not read http response as JSON: ${error.getMessage}. Response body was ${maskNino(response.body)}")
     }
 
 }
