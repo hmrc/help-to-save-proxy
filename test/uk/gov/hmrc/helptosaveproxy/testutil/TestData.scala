@@ -18,11 +18,13 @@ package uk.gov.hmrc.helptosaveproxy.testutil
 
 import java.time.LocalDate
 
+import org.scalacheck.Gen
+import uk.gov.hmrc.helptosaveproxy.models.NSIPayload.ContactDetails
+import uk.gov.hmrc.helptosaveproxy.models.{BankDetails, NSIPayload}
 import uk.gov.hmrc.smartstub.AutoGen.{GenProvider, instance}
 import uk.gov.hmrc.smartstub._
-import org.scalacheck.Gen
-import uk.gov.hmrc.helptosaveproxy.models.{BankDetails, NSIPayload}
-import uk.gov.hmrc.helptosaveproxy.models.NSIPayload.ContactDetails
+
+import scala.language.implicitConversions
 
 object TestData {
 

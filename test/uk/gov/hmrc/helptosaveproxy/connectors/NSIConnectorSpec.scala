@@ -18,11 +18,10 @@ package uk.gov.hmrc.helptosaveproxy.connectors
 
 import java.util.UUID
 
-import cats.data.EitherT
 import cats.instances.int._
 import cats.syntax.eq._
 import org.scalamock.scalatest.MockFactory
-import org.scalatest.prop.GeneratorDrivenPropertyChecks
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.Configuration
 import play.api.http.Status
 import play.api.libs.json.{JsObject, JsString, Json}
@@ -41,7 +40,7 @@ import scala.concurrent.duration._
 import scala.util.Random
 
 class NSIConnectorSpec
-    extends TestSupport with HttpSupport with MockFactory with GeneratorDrivenPropertyChecks with MockPagerDuty {
+    extends TestSupport with HttpSupport with MockFactory with ScalaCheckDrivenPropertyChecks with MockPagerDuty {
 
   override lazy val additionalConfig = Configuration(
     "feature-toggles.log-account-creation-json.enabled" → Random.nextBoolean())
@@ -59,7 +58,7 @@ class NSIConnectorSpec
 
   override val mockProxyClient = mock[MockedHttpProxyClient]
 
-  lazy val nsiConnector =
+  lazy val nsiConnector: NSIConnectorImpl =
     new NSIConnectorImpl(mockAuditor, mockMetrics, mockPagerDuty, mockWsClient, fakeApplication.actorSystem) {
       override val proxyClient = mockProxyClient
     }
