@@ -15,13 +15,27 @@ val test = "test"
 lazy val plugins: Seq[Plugins] = Seq.empty
 lazy val playSettings: Seq[Setting[_]] = Seq.empty
 
+val akkaVersion = "2.5.23"
+
+val akkaHttpVersion = "10.0.15"
+
+dependencyOverrides += "com.typesafe.akka" %% "akka-stream" % akkaVersion
+
+dependencyOverrides += "com.typesafe.akka" %% "akka-protobuf" % akkaVersion
+
+dependencyOverrides += "com.typesafe.akka" %% "akka-slf4j" % akkaVersion
+
+dependencyOverrides += "com.typesafe.akka" %% "akka-actor" % akkaVersion
+
+dependencyOverrides += "com.typesafe.akka" %% "akka-http-core" % akkaHttpVersion
+
 lazy val dependencies = Seq(
   ws,
-  hmrc                %% "auth-client"                % "2.32.0-play-26",
+  hmrc                %% "auth-client"                % "2.33.0-play-26",
   hmrc                %% "domain"                     % "5.6.0-play-26",
-  hmrc                %% "mongo-lock"                 % "6.15.0-play-26",
+  hmrc                %% "mongo-lock"                 % "6.18.0-play-26",
   hmrc                %% "bootstrap-play-26"          % "1.3.0",
-  hmrc                %% "simple-reactivemongo"       % "7.20.0-play-26",
+  hmrc                %% "simple-reactivemongo"       % "7.23.0-play-26",
   "com.eclipsesource" %% "play-json-schema-validator" % "0.9.4",
   "org.typelevel"     %% "cats-core"                  % "2.0.0",
   "com.github.kxbmap" %% "configs"                    % "0.4.4"
@@ -114,7 +128,7 @@ lazy val microservice =
     .settings(resolvers ++= Seq(
       Resolver.bintrayRepo("hmrc", "releases"),
       Resolver.jcenterRepo,
-      "emueller-bintray" at "http://dl.bintray.com/emueller/maven" // for play json schema validator
+      "emueller-bintray" at "https://dl.bintray.com/emueller/maven" // for play json schema validator
     ))
     .settings(scalacOptions ++= Seq("-Xcheckinit", "-feature"))
 
