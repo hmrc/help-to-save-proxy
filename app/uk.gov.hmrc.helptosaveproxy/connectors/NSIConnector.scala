@@ -173,7 +173,7 @@ class NSIConnectorImpl @Inject()(
             pagerDutyAlerting.alert("Failed to make call to update email")
             metrics.nsiUpdateEmailErrorCounter.inc()
 
-            Left(s"Encountered error while trying to create account: ${e.getMessage} $time")
+            Left(s"Encountered error while trying to update email: ${e.getMessage} $time")
         })
   }
 
