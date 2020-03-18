@@ -17,12 +17,13 @@
 package uk.gov.hmrc.helptosaveproxy.connectors
 
 import org.scalamock.scalatest.MockFactory
-import org.scalatest.Matchers
 import play.api.libs.json.Writes
 import uk.gov.hmrc.helptosaveproxy.http.HttpProxyClient
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 
 import scala.concurrent.{ExecutionContext, Future}
+import org.scalatest.matchers.should.Matchers
+
 
 trait HttpSupport { this: MockFactory with Matchers ⇒
 

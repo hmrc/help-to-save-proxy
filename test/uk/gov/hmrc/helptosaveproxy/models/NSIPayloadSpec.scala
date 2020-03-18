@@ -18,12 +18,13 @@ package uk.gov.hmrc.helptosaveproxy.models
 
 import java.time.LocalDate
 
-import org.scalatest.{Matchers, WordSpec}
 import play.api.libs.json._
 import uk.gov.hmrc.helptosaveproxy.models.NSIPayload.ContactDetails
 import uk.gov.hmrc.helptosaveproxy.testutil.TestData.UserData.{validBankDetails, validNSIPayload}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 
-class NSIPayloadSpec extends WordSpec with Matchers { // scalastyle:off magic.number
+class NSIPayloadSpec extends AnyWordSpec with Matchers { // scalastyle:off magic.number
 
   val email = validNSIPayload.contactDetails.email
 
