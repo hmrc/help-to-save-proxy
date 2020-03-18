@@ -52,6 +52,8 @@ object NSIPayload {
     communicationPreference: String)
 
   private implicit class StringOps(val s: String) {
+    def removeHyphenedSuffix: String = s.replaceFirst("-[A-Za-z]+$", "")
+
     def removeAllSpaces: String = s.replaceAll(" ", "")
 
     def cleanupSpecialCharacters: String = s.replaceAll("\t|\n|\r", " ").trim.replaceAll("\\s{2,}", " ")
@@ -97,7 +99,9 @@ object NSIPayload {
           c.address4.map(_.cleanupSpecialCharacters),
           c.address5.map(_.cleanupSpecialCharacters),
           c.postcode.cleanupSpecialCharacters.removeAllSpaces,
-          c.countryCode.map(_.cleanupSpecialCharacters.removeAllSpaces).filter(_.toLowerCase =!= "other"),
+          c.countryCode
+            .map(_.cleanupSpecialCharacters.removeAllSpaces.removeHyphenedSuffix)
+            .filter(_.toLowerCase =!= "other"),
           c.email,
           c.phoneNumber,
           c.communicationPreference.cleanupSpecialCharacters.removeAllSpaces
