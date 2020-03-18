@@ -179,6 +179,14 @@ class NSIPayloadSpec extends WordSpec with Matchers { // scalastyle:off magic.nu
         }
       }
 
+      "remove hyphened suffix from country codes" in {
+        Set("GB-ENG", "GB-NIR", "GB-SCT", "GB-WLS").foreach { gb ⇒
+          val result = performReads(
+            validNSIPayload.copy(contactDetails = validNSIPayload.contactDetails.copy(countryCode = Some(gb))))
+          result.contactDetails.countryCode shouldBe Some("GB")
+        }
+      }
+
       "formats sort codes correctly" in {
         List(
           "1234-56",
