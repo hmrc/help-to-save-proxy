@@ -42,14 +42,16 @@ lazy val dependencies = Seq(
 )
 
 lazy val testDependencies = Seq(
-  hmrc                %% "service-integration-test"    % "0.10.0-play-26"    % test,
-  hmrc                %% "stub-data-generator"         % "0.5.3"             % test,
-  "org.scalatest"     %% "scalatest"                   % "3.0.8"             % test,
-  "org.pegdown"       % "pegdown"                      % "1.6.0"             % test,
-  "com.typesafe.play" %% "play-test"                   % PlayVersion.current % test,
-  "org.scalamock"     %% "scalamock-scalatest-support" % "3.6.0"             % test,
-  "com.miguno.akka"   %% "akka-mock-scheduler"         % "0.5.5"             % test,
-  "com.typesafe.akka" %% "akka-testkit"                % "2.5.23"            % test
+  hmrc                   %% "service-integration-test"    % "0.10.0-play-26"    % test,
+  hmrc                   %% "stub-data-generator"         % "0.5.3"             % test,
+  "org.scalatest"        %% "scalatest"                   % "3.1.1"             % test,
+  "com.vladsch.flexmark" % "flexmark-all"                 % "0.35.10"           % test,
+  "org.scalatestplus"    %% "scalatestplus-scalacheck"    % "3.1.0.0-RC2"       % test,
+  "org.pegdown"          % "pegdown"                      % "1.6.0"             % test,
+  "com.typesafe.play"    %% "play-test"                   % PlayVersion.current % test,
+  "org.scalamock"        %% "scalamock-scalatest-support" % "3.6.0"             % test,
+  "com.miguno.akka"      %% "akka-mock-scheduler"         % "0.5.5"             % test,
+  "com.typesafe.akka"    %% "akka-testkit"                % "2.5.23"            % test
 )
 
 lazy val scoverageSettings = {
