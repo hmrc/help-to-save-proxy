@@ -96,8 +96,10 @@ class HelpToSaveController @Inject()(
 
     result.fold[Result](
       {
-        case InvalidRequest(m, d) ⇒
+        case InvalidRequest(m, d) ⇒ {
+          logger.warn(s"Invalid request: $m, $d")
           BadRequest(SubmissionFailure(m, d).toJson)
+        }
         case NSIError(f) ⇒
           InternalServerError(f.toJson)
       }, {
