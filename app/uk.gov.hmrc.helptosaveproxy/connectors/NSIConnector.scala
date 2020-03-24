@@ -114,6 +114,10 @@ class NSIConnectorImpl @Inject()(
 
           case other ⇒
             pagerDutyAlerting.alert("Received unexpected http status in response to create account")
+            logger.info(
+              s"createAccount/insert returned unexpected status ${response.status} $time body ${response.body}",
+              payload.nino,
+              correlationId)
             Left(handleErrorStatus(other, response, payload.nino, time, correlationId))
         }
       }
