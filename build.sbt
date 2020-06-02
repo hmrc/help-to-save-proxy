@@ -31,20 +31,20 @@ dependencyOverrides += "com.typesafe.akka" %% "akka-http-core" % akkaHttpVersion
 
 lazy val dependencies = Seq(
   ws,
-  hmrc                %% "auth-client"                % "2.35.0-play-26",
-  hmrc                %% "domain"                     % "5.6.0-play-26",
-  hmrc                %% "mongo-lock"                 % "6.20.0-play-26",
-  hmrc                %% "bootstrap-play-26"          % "1.5.0",
-  hmrc                %% "simple-reactivemongo"       % "7.25.0-play-26",
+  hmrc                %% "auth-client"                % "3.0.0-play-26",
+  hmrc                %% "domain"                     % "5.9.0-play-26",
+  hmrc                %% "mongo-lock"                 % "6.21.0-play-26",
+  hmrc                %% "bootstrap-play-26"          % "1.8.0",
+  hmrc                %% "simple-reactivemongo"       % "7.27.0-play-26",
   "com.eclipsesource" %% "play-json-schema-validator" % "0.9.4",
   "org.typelevel"     %% "cats-core"                  % "2.0.0",
   "com.github.kxbmap" %% "configs"                    % "0.4.4"
 )
 
 lazy val testDependencies = Seq(
-  hmrc                   %% "service-integration-test"    % "0.10.0-play-26"    % test,
+  hmrc                   %% "service-integration-test"    % "0.12.0-play-26"    % test,
   hmrc                   %% "stub-data-generator"         % "0.5.3"             % test,
-  "org.scalatest"        %% "scalatest"                   % "3.1.1"             % test,
+  "org.scalatest"        %% "scalatest"                   % "3.1.2"             % test,
   "com.vladsch.flexmark" % "flexmark-all"                 % "0.35.10"           % test,
   "org.scalatestplus"    %% "scalatestplus-scalacheck"    % "3.1.0.0-RC2"       % test,
   "org.pegdown"          % "pegdown"                      % "1.6.0"             % test,
