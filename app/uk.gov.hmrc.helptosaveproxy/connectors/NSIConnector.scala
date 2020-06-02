@@ -216,7 +216,9 @@ class NSIConnectorImpl @Inject()(
         .map[Either[String, HttpResponse]] { response ⇒
           val time = timeContext.stop()
           response.status match {
-            case Status.OK | Status.BAD_REQUEST ⇒ Right(response)
+            case Status.OK | Status.BAD_REQUEST ⇒
+              logger.debug(s"queryAccount resource: $resource, response: ${response.body}")
+              Right(response)
             case other ⇒
               Left(s"Received unexpected status $other from NS&I while trying to query account. Body was ${maskNino(
                 response.body)} $time")

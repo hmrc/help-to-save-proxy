@@ -47,6 +47,8 @@
 
     <logger name="uk.gov" level="INFO"/>
 
+    <logger name="uk.gov.hmrc.helptosaveproxy" level="${logger.help-to-save-proxy:-INFO}"/>
+
     <logger name="application" level="INFO"/>
 
     <logger name="connector" level="TRACE">
