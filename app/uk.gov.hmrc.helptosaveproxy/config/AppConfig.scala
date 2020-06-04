@@ -32,16 +32,17 @@ class AppConfig @Inject()(val runModeConfiguration: Configuration, sc: ServicesC
 
   def getString(key: String): String = sc.getString(key)
 
-  val appName: String = sc.getString("appName")
+  val logLevel: String = getString("logger.application")
 
-  val nsiAuthHeaderKey: String = sc.getString("microservice.services.nsi.client.httpheader.header-key")
+  val appName: String = getString("appName")
+
+  val nsiAuthHeaderKey: String = getString("microservice.services.nsi.client.httpheader.header-key")
 
   val nsiBasicAuth: String = {
-    val user = new String(
-      base64Decode(sc.getString("microservice.services.nsi.client.httpheader.basicauth.Base64User")))
+    val user = new String(base64Decode(getString("microservice.services.nsi.client.httpheader.basicauth.Base64User")))
     val password = new String(
-      base64Decode(sc.getString("microservice.services.nsi.client.httpheader.basicauth.Base64Password")))
-    val encoding = sc.getString("microservice.services.nsi.client.httpheader.encoding")
+      base64Decode(getString("microservice.services.nsi.client.httpheader.basicauth.Base64Password")))
+    val encoding = getString("microservice.services.nsi.client.httpheader.encoding")
 
     s"Basic ${new String(base64Encode(s"$user:$password"), encoding)}"
   }
@@ -50,7 +51,7 @@ class AppConfig @Inject()(val runModeConfiguration: Configuration, sc: ServicesC
 
   val nsiQueryAccountUrl: String = s"${sc.baseUrl("nsi")}/nsi-services"
 
-  val systemId: String = sc.getString("microservice.services.dwp.system-id")
+  val systemId: String = getString("microservice.services.dwp.system-id")
 
   val dwpBaseUrl: String = sc.baseUrl("dwp")
 
