@@ -32,7 +32,7 @@ class AppConfig @Inject()(val runModeConfiguration: Configuration, sc: ServicesC
 
   def getString(key: String): String = sc.getString(key)
 
-  def logLevel: String = sc.getString("logger.help-to-save-proxy")
+  def logLevel: String = sc.getConfString("logger.help-to-save-proxy", "none")
 
   val appName: String = sc.getString("appName")
 
