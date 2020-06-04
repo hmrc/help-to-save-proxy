@@ -32,6 +32,8 @@ class AppConfig @Inject()(val runModeConfiguration: Configuration, sc: ServicesC
 
   def getString(key: String): String = sc.getString(key)
 
+  def logLevel: String = sc.getString("logger.help-to-save-proxy")
+
   val appName: String = sc.getString("appName")
 
   val nsiAuthHeaderKey: String = sc.getString("microservice.services.nsi.client.httpheader.header-key")

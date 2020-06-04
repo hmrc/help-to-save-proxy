@@ -47,6 +47,8 @@ class HelpToSaveController @Inject()(
 
   lazy val correlationIdHeaderName: String = appConfig.getString("microservice.correlationIdHeaderName")
 
+  logger.info(s"Logger level: ${appConfig.logLevel}")
+
   def jsonSchemaValidationToggle(nino: NINO): FEATURE =
     FEATURE("create-account-json-validation", appConfig.runModeConfiguration, logger, Some(nino))
 

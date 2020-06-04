@@ -132,6 +132,7 @@ class NSIConnectorImpl @Inject()(
     val nino = payload.nino
     val correlationId = getCorrelationId
 
+    logger.debug(s"Trying to create an account using NS&I endpoint $nsiCreateAccountUrl", nino, correlationId)
     logger.info(s"Trying to create an account using NS&I endpoint $nsiCreateAccountUrl", nino, correlationId)
 
     FEATURE("log-account-creation-json", appConfig.runModeConfiguration, logger).thenOrElse(
@@ -205,6 +206,7 @@ class NSIConnectorImpl @Inject()(
     implicit hc: HeaderCarrier,
     ec: ExecutionContext): Result[HttpResponse] = {
     val url = s"${appConfig.nsiQueryAccountUrl}/$resource"
+    logger.debug(s"Trying to query account: $url")
     logger.info(s"Trying to query account: $url")
     val timeContext: Timer.Context = metrics.nsiAccountQueryTimer.time()
 
@@ -218,6 +220,7 @@ class NSIConnectorImpl @Inject()(
           response.status match {
             case Status.OK | Status.BAD_REQUEST ⇒
               logger.debug(s"queryAccount resource: $resource, response: ${response.body}")
+              logger.info(s"queryAccount resource: $resource, response: ${response.body}")
               Right(response)
             case other ⇒
               Left(s"Received unexpected status $other from NS&I while trying to query account. Body was ${maskNino(
