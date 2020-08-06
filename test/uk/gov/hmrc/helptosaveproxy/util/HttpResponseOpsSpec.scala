@@ -33,6 +33,9 @@ class HttpResponseOpsSpec extends TestSupport {
     override def json: JsValue = sys.error("Oh no!")
 
     override def body: String = ""
+
+    def allHeaders: Map[String, Seq[String]] = ???
+    def status: Int = ???
   }
 
   "HttpResponseOps" must {

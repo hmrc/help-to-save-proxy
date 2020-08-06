@@ -9,50 +9,11 @@ import uk.gov.hmrc.versioning.SbtGitVersioning
 import wartremover.{Wart, Warts, wartremoverErrors, wartremoverExcluded}
 
 val appName = "help-to-save-proxy"
-val hmrc = "uk.gov.hmrc"
-val test = "test"
 
 lazy val plugins: Seq[Plugins] = Seq.empty
 lazy val playSettings: Seq[Setting[_]] = Seq.empty
 
-val akkaVersion = "2.5.23"
-
-val akkaHttpVersion = "10.0.15"
-
-dependencyOverrides += "com.typesafe.akka" %% "akka-stream" % akkaVersion
-
-dependencyOverrides += "com.typesafe.akka" %% "akka-protobuf" % akkaVersion
-
-dependencyOverrides += "com.typesafe.akka" %% "akka-slf4j" % akkaVersion
-
-dependencyOverrides += "com.typesafe.akka" %% "akka-actor" % akkaVersion
-
-dependencyOverrides += "com.typesafe.akka" %% "akka-http-core" % akkaHttpVersion
-
-lazy val dependencies = Seq(
-  ws,
-  hmrc                %% "auth-client"                % "3.0.0-play-26",
-  hmrc                %% "domain"                     % "5.9.0-play-26",
-  hmrc                %% "mongo-lock"                 % "6.21.0-play-26",
-  hmrc                %% "bootstrap-play-26"          % "1.8.0",
-  hmrc                %% "simple-reactivemongo"       % "7.27.0-play-26",
-  "com.eclipsesource" %% "play-json-schema-validator" % "0.9.4",
-  "org.typelevel"     %% "cats-core"                  % "2.0.0",
-  "com.github.kxbmap" %% "configs"                    % "0.4.4"
-)
-
-lazy val testDependencies = Seq(
-  hmrc                   %% "service-integration-test"    % "0.12.0-play-26"    % test,
-  hmrc                   %% "stub-data-generator"         % "0.5.3"             % test,
-  "org.scalatest"        %% "scalatest"                   % "3.1.2"             % test,
-  "com.vladsch.flexmark" % "flexmark-all"                 % "0.35.10"           % test,
-  "org.scalatestplus"    %% "scalatestplus-scalacheck"    % "3.1.0.0-RC2"       % test,
-  "org.pegdown"          % "pegdown"                      % "1.6.0"             % test,
-  "com.typesafe.play"    %% "play-test"                   % PlayVersion.current % test,
-  "org.scalamock"        %% "scalamock-scalatest-support" % "3.6.0"             % test,
-  "com.miguno.akka"      %% "akka-mock-scheduler"         % "0.5.5"             % test,
-  "com.typesafe.akka"    %% "akka-testkit"                % "2.5.23"            % test
-)
+dependencyOverrides ++= AppDependencies.overrides
 
 lazy val scoverageSettings = {
   import scoverage.ScoverageKeys
@@ -100,8 +61,8 @@ lazy val microservice =
     .settings(majorVersion := 2)
     .settings(publishingSettings: _*)
     .settings(defaultSettings(): _*)
+    .settings(scalaVersion := "2.12.11")
     .settings(PlayKeys.playDefaultPort := 7005)
-    .settings(scalafmtOnCompile := true)
     .settings(wartRemoverSettings)
     // disable some wart remover checks in tests - (Any, Null, PublicInference) seems to struggle with
     // scalamock, (Equals) seems to struggle with stub generator AutoGen and (NonUnitStatements) is
@@ -121,7 +82,7 @@ lazy val microservice =
           (baseDirectory.value ** "Lock.scala").get ++
           Seq(sourceManaged.value / "main" / "sbt-buildinfo" / "BuildInfo.scala"))
     .settings(
-      libraryDependencies ++= dependencies ++ testDependencies
+      libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test
     )
     .settings(
       retrieveManaged := true,
@@ -133,10 +94,3 @@ lazy val microservice =
       "emueller-bintray" at "https://dl.bintray.com/emueller/maven" // for play json schema validator
     ))
     .settings(scalacOptions ++= Seq("-Xcheckinit", "-feature"))
-
-lazy val compileAll = taskKey[Unit]("Compiles sources in all configurations.")
-
-compileAll := {
-  val a = (compile in Test).value
-  ()
-}
