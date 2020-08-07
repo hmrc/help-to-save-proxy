@@ -128,7 +128,7 @@ class NSIConnectorImpl @Inject()(
       })
   }
 
-  private def logCreateAccount(payload: NSIPayload)(implicit hc: HeaderCarrier, ec: ExecutionContext): Unit = {
+  private def logCreateAccount(payload: NSIPayload)(implicit hc: HeaderCarrier): Unit = {
     val nino = payload.nino
     val correlationId = getCorrelationId
 

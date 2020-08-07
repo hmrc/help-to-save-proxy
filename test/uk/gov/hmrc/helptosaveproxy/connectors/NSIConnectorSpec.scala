@@ -67,6 +67,7 @@ class NSIConnectorSpec
   val nsiAuthHeaderKey = appConfig.nsiAuthHeaderKey
   val nsiBasicAuth = appConfig.nsiBasicAuth
   val authHeaders = Map(nsiAuthHeaderKey → nsiBasicAuth)
+  val noHeaders = Map[String, Seq[String]]()
 
   "the updateEmail method" must {
 
@@ -74,7 +75,7 @@ class NSIConnectorSpec
 
     "return a Right when the status is OK" in {
 
-      mockPut(nsiCreateAccountUrl, validNSIPayload, authHeaders)(Some(HttpResponse(Status.OK)))
+      mockPut(nsiCreateAccountUrl, validNSIPayload, authHeaders)(Some(HttpResponse(Status.OK, "")))
       Await.result(doRequest.value, 3.seconds) shouldBe Right(())
     }
 
@@ -83,7 +84,7 @@ class NSIConnectorSpec
         forAll { status: Int ⇒
           whenever(status =!= Status.OK && status > 0) {
             inSequence {
-              mockPut(nsiCreateAccountUrl, validNSIPayload, authHeaders)(Some(HttpResponse(status)))
+              mockPut(nsiCreateAccountUrl, validNSIPayload, authHeaders)(Some(HttpResponse(status, "")))
               // WARNING: do not change the message in the following check - this needs to stay in line with the configuration in alert-config
               mockPagerDutyAlert("Received unexpected http status in response to update email")
             }
@@ -112,12 +113,12 @@ class NSIConnectorSpec
 
     "Return a SubmissionSuccess when the status is Created" in {
       mockPost(nsiCreateAccountUrl, validNSIPayload, authHeaders)(
-        Some(HttpResponse(Status.CREATED, Some(Json.parse("""{"accountNumber" : "1234567890"}""")))))
+        Some(HttpResponse(Status.CREATED, Json.parse("""{"accountNumber" : "1234567890"}"""), noHeaders)))
       Await.result(doRequest.value, 3.seconds) shouldBe Right(SubmissionSuccess(Some(AccountNumber("1234567890"))))
     }
 
     "Return a SubmissionSuccess when the status is CONFLICT" in {
-      mockPost(nsiCreateAccountUrl, validNSIPayload, authHeaders)(Some(HttpResponse(Status.CONFLICT)))
+      mockPost(nsiCreateAccountUrl, validNSIPayload, authHeaders)(Some(HttpResponse(Status.CONFLICT, "")))
       Await.result(doRequest.value, 3.seconds) shouldBe Right(SubmissionSuccess(None))
     }
 
@@ -126,7 +127,7 @@ class NSIConnectorSpec
         val submissionFailure = SubmissionFailure(Some("id"), "message", "detail")
         inSequence {
           mockPost(nsiCreateAccountUrl, validNSIPayload, authHeaders)(
-            Some(HttpResponse(Status.BAD_REQUEST, Some(JsObject(Seq("error" → submissionFailure.toJson))))))
+            Some(HttpResponse(Status.BAD_REQUEST, JsObject(Seq("error" → submissionFailure.toJson)), noHeaders)))
           // WARNING: do not change the message in the following check - this needs to stay in line with the configuration in alert-config
           mockPagerDutyAlert("Received unexpected http status in response to create account")
         }
@@ -136,7 +137,7 @@ class NSIConnectorSpec
       "the status is BAD_REQUEST but fails to parse json in the response body" in {
         inSequence {
           mockPost(nsiCreateAccountUrl, validNSIPayload, authHeaders)(
-            Some(HttpResponse(Status.BAD_REQUEST, Some(JsString("no json in the response")))))
+            Some(HttpResponse(Status.BAD_REQUEST, JsString("no json in the response"), noHeaders)))
           // WARNING: do not change the message in the following check - this needs to stay in line with the configuration in alert-config
           mockPagerDutyAlert("Received unexpected http status in response to create account")
         }
@@ -146,7 +147,7 @@ class NSIConnectorSpec
       "the status is INTERNAL_SERVER_ERROR" in {
         inSequence {
           mockPost(nsiCreateAccountUrl, validNSIPayload, authHeaders)(
-            Some(HttpResponse(Status.INTERNAL_SERVER_ERROR, Some(JsString("500 Internal Server Error")))))
+            Some(HttpResponse(Status.INTERNAL_SERVER_ERROR, JsString("500 Internal Server Error"), noHeaders)))
           // WARNING: do not change the message in the following check - this needs to stay in line with the configuration in alert-config
           mockPagerDutyAlert("Received unexpected http status in response to create account")
         }
@@ -156,7 +157,7 @@ class NSIConnectorSpec
       "the status is SERVICE_UNAVAILABLE" in {
         inSequence {
           mockPost(nsiCreateAccountUrl, validNSIPayload, authHeaders)(
-            Some(HttpResponse(Status.SERVICE_UNAVAILABLE, Some(JsString("502 Bad Gateway")))))
+            Some(HttpResponse(Status.SERVICE_UNAVAILABLE, JsString("502 Bad Gateway"), noHeaders)))
           // WARNING: do not change the message in the following check - this needs to stay in line with the configuration in alert-config
           mockPagerDutyAlert("Received unexpected http status in response to create account")
         }
@@ -165,7 +166,7 @@ class NSIConnectorSpec
 
       "the status is anything else" in {
         inSequence {
-          mockPost(nsiCreateAccountUrl, validNSIPayload, authHeaders)(Some(HttpResponse(Status.BAD_GATEWAY)))
+          mockPost(nsiCreateAccountUrl, validNSIPayload, authHeaders)(Some(HttpResponse(Status.BAD_GATEWAY, "")))
           // WARNING: do not change the message in the following check - this needs to stay in line with the configuration in alert-config
           mockPagerDutyAlert("Received unexpected http status in response to create account")
 
@@ -190,14 +191,14 @@ class NSIConnectorSpec
       def doRequest = nsiConnector.healthCheck(validNSIPayload)
 
       "Return a Right when the status is OK" in {
-        mockPut(nsiCreateAccountUrl, validNSIPayload, authHeaders)(Some(HttpResponse(Status.OK)))
+        mockPut(nsiCreateAccountUrl, validNSIPayload, authHeaders)(Some(HttpResponse(Status.OK, "")))
         Await.result(doRequest.value, 3.seconds) shouldBe Right(())
       }
 
       "Return a Left when the status is not OK" in {
         forAll { status: Int ⇒
           whenever(status > 0 && status =!= Status.OK) {
-            mockPut(nsiCreateAccountUrl, validNSIPayload, authHeaders)(Some(HttpResponse(status)))
+            mockPut(nsiCreateAccountUrl, validNSIPayload, authHeaders)(Some(HttpResponse(status, "")))
             Await.result(doRequest.value, 3.seconds).isLeft shouldBe true
           }
         }
@@ -230,7 +231,7 @@ class NSIConnectorSpec
 
     "handle the successful response and return it" in {
       val responseBody = s"""{"version":$version,"correlationId":"$correlationId"}"""
-      val httpResponse = HttpResponse(Status.OK, responseString = Some(responseBody))
+      val httpResponse = HttpResponse(Status.OK, responseBody)
 
       mockGet(url, queryParamsSeq, authHeaders)(Some(httpResponse))
 
@@ -240,7 +241,7 @@ class NSIConnectorSpec
     "handle unexpected errors" in {
       forAll { status: Int ⇒
         whenever(status > 0 && status =!= Status.OK && status =!= Status.BAD_REQUEST) {
-          mockGet(url, queryParamsSeq, authHeaders)(Some(HttpResponse(status)))
+          mockGet(url, queryParamsSeq, authHeaders)(Some(HttpResponse(status, "")))
           Await.result(doRequest.value, 3.seconds).isLeft shouldBe true
         }
       }

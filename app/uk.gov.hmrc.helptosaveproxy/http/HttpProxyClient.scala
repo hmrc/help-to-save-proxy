@@ -17,7 +17,6 @@
 package uk.gov.hmrc.helptosaveproxy.http
 
 import akka.actor.ActorSystem
-import javax.inject.Inject
 import play.api.Configuration
 import play.api.http.HttpVerbs
 import play.api.libs.json.{Json, Writes}

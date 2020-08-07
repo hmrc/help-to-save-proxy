@@ -32,7 +32,7 @@ import uk.gov.hmrc.helptosaveproxy.services.JSONSchemaValidationService
 import uk.gov.hmrc.helptosaveproxy.util.JsErrorOps._
 import uk.gov.hmrc.helptosaveproxy.util.Toggles.FEATURE
 import uk.gov.hmrc.helptosaveproxy.util.{LogMessageTransformer, Logging, NINO}
-import uk.gov.hmrc.play.bootstrap.controller.BackendController
+import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -51,8 +51,6 @@ class HelpToSaveController @Inject()(
     FEATURE("create-account-json-validation", appConfig.runModeConfiguration, logger, Some(nino))
 
   def createAccount(): Action[AnyContent] = authorised { implicit request ⇒
-    val correlationId = request.headers.get(correlationIdHeaderName)
-
     processRequest[SubmissionSuccess] {
       nsiConnector.createAccount(_).leftMap[Error](NSIError)
     } { (submissionSuccess, nSIUserInfo) ⇒
