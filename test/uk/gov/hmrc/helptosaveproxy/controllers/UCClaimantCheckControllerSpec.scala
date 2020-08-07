@@ -24,7 +24,6 @@ import play.api.libs.json.Json
 import play.api.mvc.{Result ⇒ PlayResult}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.helptosaveproxy.util.AuthSupport
 import uk.gov.hmrc.helptosaveproxy.connectors.DWPConnector
 import uk.gov.hmrc.helptosaveproxy.testutil.UCClaimantTestSupport
@@ -41,6 +40,7 @@ class UCClaimantCheckControllerSpec extends AuthSupport with UCClaimantTestSuppo
   val nino = "WP010123A"
   val transactionId = UUID.randomUUID()
   val threshold = 650.0
+  val noHeaders = Map[String, Seq[String]]()
 
   def doUCClaimantCheck(controller: UCClaimantCheckController, encodedNino: String): Future[PlayResult] =
     controller.ucClaimantCheck(encodedNino, transactionId, threshold)(FakeRequest())
@@ -55,7 +55,7 @@ class UCClaimantCheckControllerSpec extends AuthSupport with UCClaimantTestSuppo
   "ucClaimantCheck" must {
 
     "return a 200 status with the expected json when given a NINO starting with WP01" in {
-      val ucDetails = HttpResponse(200, Some(Json.toJson(eUCDetails)))
+      val ucDetails = HttpResponse(200, Json.toJson(eUCDetails), noHeaders)
 
       inSequence {
         mockAuthResultWithSuccess()

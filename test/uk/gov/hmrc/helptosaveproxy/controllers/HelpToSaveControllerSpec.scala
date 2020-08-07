@@ -20,10 +20,9 @@ import java.util.UUID
 
 import cats.data.EitherT
 import cats.instances.future._
-import cats.syntax.either._
 import play.api.http.Status
 import play.api.libs.json.{JsValue, Json}
-import play.api.mvc.{Action, ActionBuilder, AnyContent, Request}
+import play.api.mvc.{Action, AnyContent}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.auth.core.retrieve.Credentials
@@ -46,6 +45,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
   val ggCreds = Credentials("id", "GovernmentGateway")
   val ggRetrievals: Option[Credentials] = Some(ggCreds)
+  val noHeaders = Map[String, Seq[String]]()
 
   def mockJSONSchemaValidationService(expectedInfo: NSIPayload)(result: Either[String, Unit]) =
     (mockJsonSchema
@@ -154,7 +154,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
     "handle successful response" in {
 
       val responseBody = s"""{"version":$version,"correlationId":"$correlationId"}"""
-      val httpResponse = HttpResponse(Status.OK, responseString = Some(responseBody))
+      val httpResponse = HttpResponse(Status.OK, responseBody, noHeaders)
 
       inSequence {
         mockAuthResultWithSuccess()

@@ -19,12 +19,10 @@ package uk.gov.hmrc.helptosaveproxy.services
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
-import cats.syntax.either._
 import com.eclipsesource.schema.{SchemaType, SchemaValidator}
 import com.google.inject.{ImplementedBy, Inject, Singleton}
 import play.api.Configuration
 import play.api.libs.json._
-import uk.gov.hmrc.helptosaveproxy.util.JsErrorOps._
 
 import scala.util.{Failure, Success, Try}
 

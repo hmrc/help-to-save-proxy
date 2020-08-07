@@ -86,7 +86,7 @@ class DWPConnectorImpl @Inject()(
                 nino,
                 None
               )
-              Right(HttpResponse(200, Some(response.json))) // scalastyle:ignore magic.number
+              Right(HttpResponse(200, response.json, Map[String, Seq[String]]())) // scalastyle:ignore magic.number
             case other ⇒
               pagerDutyAlerting.alert("Received unexpected http status in response to uc claimant check")
               metrics.dwpClaimantErrorCounter.inc()

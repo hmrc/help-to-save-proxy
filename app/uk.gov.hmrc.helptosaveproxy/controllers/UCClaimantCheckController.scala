@@ -24,15 +24,15 @@ import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.helptosaveproxy.auth.Auth
 import uk.gov.hmrc.helptosaveproxy.connectors.DWPConnector
-import uk.gov.hmrc.helptosaveproxy.util.{LogMessageTransformer, Logging}
-import uk.gov.hmrc.play.bootstrap.controller.BackendController
+import uk.gov.hmrc.helptosaveproxy.util.Logging
+import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import scala.concurrent.ExecutionContext
 
 class UCClaimantCheckController @Inject()(
   dwpConnector: DWPConnector,
   override val authConnector: AuthConnector,
-  cc: ControllerComponents)(implicit transformer: LogMessageTransformer, ec: ExecutionContext)
+  cc: ControllerComponents)(implicit ec: ExecutionContext)
     extends BackendController(cc) with Auth with Logging {
 
   def ucClaimantCheck(nino: String, transactionId: UUID, threshold: Double): Action[AnyContent] = authorised {

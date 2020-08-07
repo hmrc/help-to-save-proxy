@@ -24,7 +24,6 @@ import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import scala.concurrent.{ExecutionContext, Future}
 import org.scalatest.matchers.should.Matchers
 
-
 trait HttpSupport { this: MockFactory with Matchers ⇒
 
   val mockProxyClient: HttpProxyClient

@@ -16,8 +16,6 @@
 
 package uk.gov.hmrc.helptosaveproxy.health
 
-import java.util.UUID
-
 import akka.actor.{Actor, ActorRef, Props}
 import akka.pattern.{ask, pipe}
 import akka.testkit.TestProbe
@@ -34,8 +32,8 @@ import uk.gov.hmrc.helptosaveproxy.health.HealthTestSpec.ProxyActor
 import uk.gov.hmrc.helptosaveproxy.health.HealthTestSpec.ProxyActor.Created
 import uk.gov.hmrc.helptosaveproxy.health.HealthTestSpec.TestNSIConnector.{GetTestResult, GetTestResultResponse}
 import uk.gov.hmrc.helptosaveproxy.models.SubmissionResult.{SubmissionFailure, SubmissionSuccess}
-import uk.gov.hmrc.helptosaveproxy.models.{NSIPayload, SubmissionResult}
-import uk.gov.hmrc.helptosaveproxy.util.{NINO, PagerDutyAlerting, Result}
+import uk.gov.hmrc.helptosaveproxy.models.NSIPayload
+import uk.gov.hmrc.helptosaveproxy.util.{PagerDutyAlerting, Result}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 
 import scala.concurrent.duration._

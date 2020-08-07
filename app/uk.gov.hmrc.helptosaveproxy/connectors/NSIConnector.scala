@@ -128,7 +128,7 @@ class NSIConnectorImpl @Inject()(
       })
   }
 
-  private def logCreateAccount(payload: NSIPayload)(implicit hc: HeaderCarrier, ec: ExecutionContext): Unit = {
+  private def logCreateAccount(payload: NSIPayload)(implicit hc: HeaderCarrier): Unit = {
     val nino = payload.nino
     val correlationId = getCorrelationId
 
@@ -227,7 +227,7 @@ class NSIConnectorImpl @Inject()(
         .recover {
           case e ⇒
             val time = timeContext.stop()
-            pagerDutyAlerting.alert("Failed to make call to create account")
+            pagerDutyAlerting.alert("Failed to make call to query account")
             metrics.nsiAccountQueryErrorCounter.inc()
             Left(s"Encountered error while trying to query account: ${e.getMessage} $time")
         })

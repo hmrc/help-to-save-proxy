@@ -57,9 +57,10 @@ class DWPConnectorSpec
 
   val transactionId = UUID.randomUUID()
   val threshold = 650.0
+  val noHeaders = Map[String, Seq[String]]()
 
   def build200Response(uCDetails: UCDetails): HttpResponse =
-    HttpResponse(200, Some(Json.toJson(uCDetails))) // scalastyle:ignore magic.number
+    HttpResponse(200, Json.toJson(uCDetails), noHeaders) // scalastyle:ignore magic.number
 
   def resultValue(result: EitherT[Future, String, HttpResponse]): Either[String, HttpResponse] =
     Await.result(result.value, 3.seconds)
@@ -98,7 +99,7 @@ class DWPConnectorSpec
     }
 
     "return a Left when the ucClaimant call comes back with a status other than 200" in {
-      val ucDetails = HttpResponse(500, Some(Json.toJson(nonUCClaimantDetails))) // scalastyle:ignore magic.number
+      val ucDetails = HttpResponse(500, Json.toJson(nonUCClaimantDetails), noHeaders) // scalastyle:ignore magic.number
       val dwpUrl = "http://localhost:7002/hmrc/WP030123A"
       inSequence {
         mockGet(dwpUrl, queryParams)(Some(ucDetails))
