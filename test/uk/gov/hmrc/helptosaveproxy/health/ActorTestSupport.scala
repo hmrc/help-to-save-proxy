@@ -49,8 +49,8 @@ class ActorTestSupport(name: String)
     * be sure that the actor has scheduled the messages.
     */
   def awaitActorReady(ref: ActorRef): Unit = {
-    val msg = ref.ask(Identify(""))(6.seconds).mapTo[ActorIdentity]
-    Await.result(msg, 4.seconds).ref.contains(ref) shouldBe true
+    val msg = ref.ask(Identify(""))(4.seconds).mapTo[ActorIdentity]
+    Await.result(msg, 3.seconds).ref.contains(ref) shouldBe true
   }
 
 }
