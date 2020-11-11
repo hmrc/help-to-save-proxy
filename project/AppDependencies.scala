@@ -8,10 +8,9 @@ object AppDependencies {
 
   val compile = Seq(
     ws,
-    hmrc                %% "auth-client"                % "3.2.0-play-26",
     hmrc                %% "domain"                     % "5.10.0-play-26",
     hmrc                %% "mongo-lock"                 % "6.23.0-play-26",
-    hmrc                %% "bootstrap-backend-play-26"  % "2.25.0",
+    hmrc                %% "bootstrap-backend-play-26"  % "3.0.0",
     hmrc                %% "simple-reactivemongo"       % "7.30.0-play-26",
     "com.eclipsesource" %% "play-json-schema-validator" % "0.9.4",
     "org.typelevel"     %% "cats-core"                  % "2.0.0",

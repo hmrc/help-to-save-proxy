@@ -75,7 +75,7 @@ class DWPConnectorImpl @Inject()(
 
     EitherT(
       proxyClient
-        .get(s"${appConfig.dwpBaseUrl}/hmrc/$nino", queryParams)(hc.copy(authorization = None, token = None), ec)
+        .get(s"${appConfig.dwpBaseUrl}/hmrc/$nino", queryParams)(hc.copy(authorization = None), ec)
         .map[Either[String, HttpResponse]] { response ⇒
           val time = timeContext.stop()
           response.status match {
