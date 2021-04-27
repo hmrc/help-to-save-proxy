@@ -89,8 +89,7 @@ lazy val microservice =
       evictionWarningOptions in update := EvictionWarningOptions.default.withWarnScalaVersionEviction(false)
     )
     .settings(resolvers ++= Seq(
-      Resolver.bintrayRepo("hmrc", "releases"),
-      Resolver.jcenterRepo,
       "emueller-bintray" at "https://dl.bintray.com/emueller/maven" // for play json schema validator
     ))
     .settings(scalacOptions ++= Seq("-Xcheckinit", "-feature"))
+    .settings(scalacOptions += "-P:silencer:pathFilters=routes")
