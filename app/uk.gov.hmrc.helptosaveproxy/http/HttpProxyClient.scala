@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.helptosaveproxy.http
 
-import uk.gov.hmrc.http.StringContextOps
 import akka.actor.ActorSystem
 import play.api.Configuration
 import play.api.http.HttpVerbs
@@ -27,6 +26,8 @@ import uk.gov.hmrc.http.{HeaderCarrier, HttpReads, HttpResponse}
 import uk.gov.hmrc.play.audit.http.HttpAuditing
 import uk.gov.hmrc.play.bootstrap.http.DefaultHttpClient
 import uk.gov.hmrc.play.http.ws.{WSProxy, WSProxyConfiguration}
+
+import java.net.URL
 import scala.concurrent.{ExecutionContext, Future}
 
 class HttpProxyClient(
@@ -72,7 +73,7 @@ class HttpProxyClient(
     withTracing(PUT, url) {
       val httpResponse = doPut(url, body)(w, ec)
       if (needsAuditing) {
-        executeHooks("PUT", url"$url", headers.toSeq, Option(HookData.FromString(Json.stringify(w.writes(body)))), httpResponse)
+        executeHooks(PUT, new URL(url), headers.toSeq, Option(HookData.FromString(Json.stringify(w.writes(body)))), httpResponse)
       }
       mapErrors(PUT, url, httpResponse).map(response ⇒ rawHttpReads.read(PUT, url, response))
     }
