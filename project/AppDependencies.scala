@@ -20,9 +20,9 @@ object AppDependencies {
   )
 
   val test = Seq(
-    hmrc                   %% "service-integration-test"    % "0.13.0-play-26"    % "test",
+    hmrc                   %% "service-integration-test"    % "1.1.0-play-26"    % "test",
     hmrc                   %% "stub-data-generator"         % "0.5.3"             % "test",
-    "org.scalatest"        %% "scalatest"                   % "3.2.0"             % "test",
+    "org.scalatest"        %% "scalatest"                   % "3.2.8"             % "test",
     "com.vladsch.flexmark" % "flexmark-all"                 % "0.35.10"           % "test",
     "org.scalatestplus"    %% "scalatestplus-scalacheck"    % "3.1.0.0-RC2"       % "test",
     "org.pegdown"          % "pegdown"                      % "1.6.0"             % "test",

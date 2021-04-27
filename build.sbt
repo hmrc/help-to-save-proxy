@@ -93,3 +93,5 @@ lazy val microservice =
     ))
     .settings(scalacOptions ++= Seq("-Xcheckinit", "-feature"))
     .settings(scalacOptions += "-P:silencer:pathFilters=routes")
+    .settings(classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.ScalaLibrary)
+    .settings(classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat)
