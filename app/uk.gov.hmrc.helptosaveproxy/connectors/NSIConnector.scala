@@ -80,7 +80,7 @@ class NSIConnectorImpl @Inject()(
   private val correlationIdHeaderName: String = appConfig.getString("microservice.correlationIdHeaderName")
 
   private def getCorrelationId(implicit hc: HeaderCarrier) =
-    hc.headers.find(p ⇒ p._1 === correlationIdHeaderName).map(_._2)
+    hc.headers(Seq(correlationIdHeaderName)).find(p ⇒ p._1 === correlationIdHeaderName).map(_._2)
 
   override def createAccount(payload: NSIPayload)(
     implicit hc: HeaderCarrier,

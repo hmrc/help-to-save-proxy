@@ -27,6 +27,7 @@ import uk.gov.hmrc.play.audit.http.HttpAuditing
 import uk.gov.hmrc.play.bootstrap.http.DefaultHttpClient
 import uk.gov.hmrc.play.http.ws.{WSProxy, WSProxyConfiguration}
 
+import java.net.URL
 import scala.concurrent.{ExecutionContext, Future}
 
 class HttpProxyClient(
@@ -53,7 +54,7 @@ class HttpProxyClient(
     headers: Map[String, String] = Map.empty[String, String])(
     implicit hc: HeaderCarrier,
     ec: ExecutionContext): Future[HttpResponse] =
-    GET(url, queryParams)(rawHttpReads, hc.withExtraHeaders(headers.toSeq: _*), ec)
+    GET(url, queryParams, headers.toSeq)(rawHttpReads, hc, ec)
 
   def post[A](url: String, body: A, headers: Map[String, String] = Map.empty[String, String])(
     implicit w: Writes[A],
@@ -70,9 +71,9 @@ class HttpProxyClient(
     hc: HeaderCarrier,
     ec: ExecutionContext): Future[HttpResponse] =
     withTracing(PUT, url) {
-      val httpResponse = doPut(url, body)(w, hc.withExtraHeaders(headers.toSeq: _*), ec)
+      val httpResponse = doPut(url, body, headers.toSeq)(w, ec)
       if (needsAuditing) {
-        executeHooks(url, PUT, Option(HookData.FromString(Json.stringify(w.writes(body)))), httpResponse)
+        executeHooks(PUT, new URL(url), headers.toSeq, Option(HookData.FromString(Json.stringify(w.writes(body)))), httpResponse)
       }
       mapErrors(PUT, url, httpResponse).map(response ⇒ rawHttpReads.read(PUT, url, response))
     }
