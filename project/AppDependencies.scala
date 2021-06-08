@@ -10,7 +10,7 @@ object AppDependencies {
     ws,
     hmrc                %% "domain"                     % "5.11.0-play-26",
     hmrc                %% "mongo-lock"                 % "7.0.0-play-26",
-    hmrc                %% "bootstrap-backend-play-26"  % "4.3.0",
+    hmrc                %% "bootstrap-backend-play-26"  % "5.3.0",
     hmrc                %% "simple-reactivemongo"       % "8.0.0-play-26",
     "com.eclipsesource" %% "play-json-schema-validator" % "0.9.4",
     "org.typelevel"     %% "cats-core"                  % "2.0.0",

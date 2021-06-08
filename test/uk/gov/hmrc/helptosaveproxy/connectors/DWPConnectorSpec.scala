@@ -77,7 +77,7 @@ class DWPConnectorSpec
       mockGet(dwpUrl, queryParams)(Some(ucDetails))
 
       val result = connector.ucClaimantCheck("WP010123A", transactionId, threshold)
-      resultValue(result).right.value.body shouldBe ucDetails.body
+      resultValue(result).value.body shouldBe ucDetails.body
     }
 
     "return a Right with HttpResponse(200, Some(Y, N)) when given a NINO of a UC Claimant that is not within the threshold" in {
@@ -86,7 +86,7 @@ class DWPConnectorSpec
       mockGet(dwpUrl, queryParams)(Some(ucDetails))
 
       val result = connector.ucClaimantCheck("WP020123A", transactionId, threshold)
-      resultValue(result).right.value.body shouldBe ucDetails.body
+      resultValue(result).value.body shouldBe ucDetails.body
     }
 
     "return a Right with HttpResponse(200, Some(N)) when given a NINO of a non UC Claimant" in {
@@ -95,7 +95,7 @@ class DWPConnectorSpec
       mockGet(dwpUrl, queryParams)(Some(ucDetails))
 
       val result = connector.ucClaimantCheck("WP030123A", transactionId, threshold)
-      resultValue(result).right.value.body shouldBe ucDetails.body
+      resultValue(result).value.body shouldBe ucDetails.body
     }
 
     "return a Left when the ucClaimant call comes back with a status other than 200" in {
