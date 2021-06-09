@@ -85,9 +85,6 @@ lazy val microservice =
       retrieveManaged := true,
       update / evictionWarningOptions := EvictionWarningOptions.default.withWarnScalaVersionEviction(false)
     )
-    .settings(resolvers ++= Seq(
-      "emueller-bintray" at "https://dl.bintray.com/emueller/maven" // for play json schema validator
-    ))
     .settings(resolvers += "third-party-maven-releases" at "https://artefacts.tax.service.gov.uk/artifactory/third-party-maven-releases/")
     .settings(scalacOptions ++= Seq("-Xcheckinit", "-feature"))
     .settings(scalacOptions += "-P:silencer:pathFilters=routes")
