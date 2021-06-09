@@ -88,5 +88,6 @@ lazy val microservice =
     .settings(resolvers += "third-party-maven-releases" at "https://artefacts.tax.service.gov.uk/artifactory/third-party-maven-releases/")
     .settings(scalacOptions ++= Seq("-Xcheckinit", "-feature"))
     .settings(scalacOptions += "-P:silencer:pathFilters=routes")
+    .settings(Global / lintUnusedKeysOnLoad := false)
     .settings(classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.ScalaLibrary)
     .settings(classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat)
