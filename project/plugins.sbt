@@ -12,10 +12,10 @@ addSbtPlugin("uk.gov.hmrc" % "sbt-bobby" % "3.4.0")
 
 addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.6.23")
 
-addSbtPlugin("org.scoverage" %% "sbt-scoverage" % "1.6.1")
+addSbtPlugin("org.scoverage" %% "sbt-scoverage" % "1.8.1")
 
 addSbtPlugin("org.scalastyle" %% "scalastyle-sbt-plugin" % "1.0.0")
 
 addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.4.2")
 
-addSbtPlugin("org.wartremover" % "sbt-wartremover" % "2.4.12")
+addSbtPlugin("org.wartremover" % "sbt-wartremover" % "2.4.13")

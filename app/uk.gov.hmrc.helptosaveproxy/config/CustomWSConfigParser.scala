@@ -35,6 +35,7 @@ class CustomWSConfigParser @Inject()(configuration: Configuration, env: Environm
 
   logger.info("Starting CustomWSConfigParser")
 
+  @SuppressWarnings(Array("org.wartremover.warts.PlatformDefault"))
   override def parse(): WSClientConfig = {
     logger.info("Parsing WSClientConfig")
 
@@ -138,6 +139,7 @@ class CustomWSConfigParser @Inject()(configuration: Configuration, env: Environm
     }
   }
 
+  @SuppressWarnings(Array("org.wartremover.warts.PlatformDefault"))
   private def createKeyStoreConfig(ks: KeyStoreConfig, data: String): KeyStoreConfig = {
     logger.info("Creating key store config")
     val (ksFilePath, _) = createTempFileForData(data)
