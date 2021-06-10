@@ -91,3 +91,4 @@ lazy val microservice =
     .settings(Global / lintUnusedKeysOnLoad := false)
     .settings(classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.ScalaLibrary)
     .settings(classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat)
+    .settings(Compile / doc / sources := Seq.empty)
