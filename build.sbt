@@ -53,6 +53,7 @@ lazy val microservice =
       play.sbt.PlayScala,
       SbtDistributablesPlugin) ++ plugins: _*)
     .settings(addCompilerPlugin("org.psywerx.hairyfotr" %% "linter" % "0.1.17"))
+    .settings(Compile / doc / sources := Seq.empty)
     .settings(playSettings ++ scoverageSettings: _*)
     .settings(scalaSettings: _*)
     .settings(majorVersion := 2)
