@@ -85,6 +85,7 @@ object NSIPayload {
 
     override def writes(o: NSIPayload): JsValue = writes.writes(o)
 
+    @SuppressWarnings(Array("org.wartremover.warts.PlatformDefault"))
     override def reads(json: JsValue): JsResult[NSIPayload] = reads.reads(json).map { u ⇒
       val c = u.contactDetails
       NSIPayload(

@@ -2,11 +2,11 @@ import play.core.PlayVersion
 import sbt.Keys._
 import sbt._
 import uk.gov.hmrc.DefaultBuildSettings._
-import uk.gov.hmrc.SbtAutoBuildPlugin
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin._
 import uk.gov.hmrc.versioning.SbtGitVersioning
-import wartremover.{Wart, Warts, wartremoverErrors, wartremoverExcluded}
+import wartremover.{Wart, Warts}
+import wartremover.WartRemover.autoImport.{wartremoverErrors, wartremoverExcluded}
 
 val appName = "help-to-save-proxy"
 
@@ -20,10 +20,10 @@ lazy val scoverageSettings = {
   Seq(
     // Semicolon-separated list of regexs matching classes to exclude
     ScoverageKeys.coverageExcludedPackages := "<empty>;.*Reverse.*;.*config.*;.*(AuthService|BuildInfo|Routes|JsErrorOps|LoggingPagerDutyAlerting|Logging|DWPConnectionHealthCheck|HTSAuditor|OptionalAhcHttpCacheProvider).*",
-    ScoverageKeys.coverageMinimum := 90,
+    ScoverageKeys.coverageMinimumStmtTotal := 90,
     ScoverageKeys.coverageFailOnMinimum := true,
     ScoverageKeys.coverageHighlighting := true,
-    parallelExecution in Test := false
+    Test / parallelExecution := false
   )
 }
 
@@ -44,30 +44,27 @@ lazy val wartRemoverSettings = {
     Wart.Null
   )
 
-  wartremoverErrors in (Compile, compile) ++= Warts.allBut(excludedWarts: _*)
+  Compile / compile / wartremoverErrors ++= Warts.allBut(excludedWarts: _*)
 }
 
 lazy val microservice =
   Project(appName, file("."))
     .enablePlugins(Seq(
       play.sbt.PlayScala,
-      SbtAutoBuildPlugin,
-      SbtGitVersioning,
-      SbtDistributablesPlugin,
-      SbtArtifactory) ++ plugins: _*)
+      SbtDistributablesPlugin) ++ plugins: _*)
     .settings(addCompilerPlugin("org.psywerx.hairyfotr" %% "linter" % "0.1.17"))
     .settings(playSettings ++ scoverageSettings: _*)
     .settings(scalaSettings: _*)
     .settings(majorVersion := 2)
     .settings(publishingSettings: _*)
     .settings(defaultSettings(): _*)
-    .settings(scalaVersion := "2.12.11")
+    .settings(scalaVersion := "2.12.13")
     .settings(PlayKeys.playDefaultPort := 7005)
     .settings(wartRemoverSettings)
     // disable some wart remover checks in tests - (Any, Null, PublicInference) seems to struggle with
     // scalamock, (Equals) seems to struggle with stub generator AutoGen and (NonUnitStatements) is
     // imcompatible with a lot of WordSpec
-    .settings(wartremoverErrors in (Test, compile) --= Seq(
+    .settings(Test / compile / wartremoverErrors --= Seq(
       Wart.Any,
       Wart.Equals,
       Wart.Null,
@@ -75,7 +72,7 @@ lazy val microservice =
       Wart.PublicInference))
     .settings(
       wartremoverExcluded ++=
-        routes.in(Compile).value ++
+          (Compile / routes).value ++
           (baseDirectory.value ** "*.sc").get ++
           (baseDirectory.value ** "HealthCheck.scala").get ++
           (baseDirectory.value ** "HealthCheckRunner.scala").get ++
@@ -86,12 +83,11 @@ lazy val microservice =
     )
     .settings(
       retrieveManaged := true,
-      evictionWarningOptions in update := EvictionWarningOptions.default.withWarnScalaVersionEviction(false)
+      update / evictionWarningOptions := EvictionWarningOptions.default.withWarnScalaVersionEviction(false)
     )
-    .settings(resolvers ++= Seq(
-      "emueller-bintray" at "https://dl.bintray.com/emueller/maven" // for play json schema validator
-    ))
+    .settings(resolvers += "third-party-maven-releases" at "https://artefacts.tax.service.gov.uk/artifactory/third-party-maven-releases/")
     .settings(scalacOptions ++= Seq("-Xcheckinit", "-feature"))
     .settings(scalacOptions += "-P:silencer:pathFilters=routes")
+    .settings(Global / lintUnusedKeysOnLoad := false)
     .settings(classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.ScalaLibrary)
     .settings(classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat)

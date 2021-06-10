@@ -30,6 +30,7 @@ object TestData {
 
   object UserData {
 
+    @SuppressWarnings(Array("org.wartremover.warts.PlatformDefault"))
     implicit def providerLocalDate(s: String): GenProvider[LocalDate] =
       instance({
         s.toLowerCase match {
