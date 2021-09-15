@@ -105,7 +105,7 @@ class Lock[State](
       }
     }
 
-    schedulerTask = Some(scheduler.schedule(Duration.Zero, lock.holdLockFor, self, AcquireLock))
+    schedulerTask = Some(scheduler.scheduleAtFixedRate(Duration.Zero, lock.holdLockFor, self, AcquireLock))
   }
 
 }
