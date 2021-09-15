@@ -8,12 +8,12 @@ object AppDependencies {
 
   val compile = Seq(
     ws,
-    hmrc                %% "domain"                     % "5.11.0-play-26",
+    hmrc                %% "domain"                     % "6.2.0-play-28",
     hmrc                %% "mongo-lock"                 % "7.0.0-play-26",
-    hmrc                %% "bootstrap-backend-play-26"  % "5.3.0",
+    hmrc                %% "bootstrap-backend-play-28"  % "5.10.0",
     hmrc                %% "simple-reactivemongo"       % "8.0.0-play-26",
     "com.eclipsesource" %% "play-json-schema-validator" % "0.9.4",
-    "org.typelevel"     %% "cats-core"                  % "2.0.0",
+    "org.typelevel"     %% "cats-core"                  % "2.5.0",
     "com.github.kxbmap" %% "configs"                    % "0.6.0",
     compilerPlugin("com.github.ghik" % "silencer-plugin" % "1.7.1" cross CrossVersion.full),
     "com.github.ghik" % "silencer-lib" % "1.7.1" % Provided cross CrossVersion.full
