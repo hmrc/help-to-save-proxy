@@ -52,7 +52,7 @@ trait TestSupport extends UnitSpec with MockFactory with BeforeAndAfterAll with 
                                       | "play.api.libs.ws.ahc.AhcWSModule",
                                       | "play.api.mvc.LegacyCookiesModule" ]
           """.stripMargin)
-        ) ++ additionalConfig)
+        ) withFallback(additionalConfig))
       .build()
 
   lazy val fakeApplication: Application = buildFakeApplication(additionalConfig)
