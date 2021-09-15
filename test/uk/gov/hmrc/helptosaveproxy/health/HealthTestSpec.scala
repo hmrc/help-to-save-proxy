@@ -158,6 +158,7 @@ class HealthTestSpec extends ActorTestSupport("HealthTestSpec") {
 
         "record the number of failures as 0 in the metrics" in {
           metricsListener.expectMsg(0)
+          SharedMetricRegistries.clear()
         }
 
         "create a child runner with the next set of props when " +
@@ -167,11 +168,13 @@ class HealthTestSpec extends ActorTestSupport("HealthTestSpec") {
             time.advance(timeBetweenTests)
             mockTest(runnerName1, Right(()))
             metricsListener.expectMsg(0)
+            SharedMetricRegistries.clear()
           }
 
           time.advance(timeBetweenTests)
           mockTest(runnerName2, Right(()))
           metricsListener.expectMsg(0)
+          SharedMetricRegistries.clear()
         }
 
         "create a child runner with the first set of props when " +
@@ -181,11 +184,13 @@ class HealthTestSpec extends ActorTestSupport("HealthTestSpec") {
             time.advance(timeBetweenTests)
             mockTest(runnerName2, Right(()))
             metricsListener.expectMsg(0)
+            SharedMetricRegistries.clear()
           }
 
           time.advance(timeBetweenTests)
           mockTest(runnerName1, Right(()))
           metricsListener.expectMsg(0)
+          SharedMetricRegistries.clear()
         }
 
         "fall back to the minimum time between tests if the configured time between tests falls " +
@@ -202,7 +207,7 @@ class HealthTestSpec extends ActorTestSupport("HealthTestSpec") {
           mockTest(runnerName1, Left(""))
 
           metricsListener.expectMsg(1)
-
+          SharedMetricRegistries.clear()
         }
 
       }
@@ -213,6 +218,7 @@ class HealthTestSpec extends ActorTestSupport("HealthTestSpec") {
           time.advance(timeBetweenTests)
           mockTest(runnerName1, Left(""))
           metricsListener.expectMsg(1)
+          SharedMetricRegistries.clear()
         }
 
         "record the number of failures as 1 and alert pager duty if the " +
@@ -225,6 +231,7 @@ class HealthTestSpec extends ActorTestSupport("HealthTestSpec") {
 
           pagerDutyListener.expectMsg(PagerDutyAlert)
           metricsListener.expectMsg(1)
+          SharedMetricRegistries.clear()
         }
       }
 
@@ -246,6 +253,7 @@ class HealthTestSpec extends ActorTestSupport("HealthTestSpec") {
 
           runnerListener.expectTerminated(created.ref)
           metricsListener.expectMsg(1)
+          SharedMetricRegistries.clear()
         }
 
       }
@@ -259,6 +267,7 @@ class HealthTestSpec extends ActorTestSupport("HealthTestSpec") {
           time.advance(timeBetweenTests)
           mockTest(runnerName1, Right(()))
           metricsListener.expectMsg(0)
+          SharedMetricRegistries.clear()
         }
 
       }
@@ -270,6 +279,7 @@ class HealthTestSpec extends ActorTestSupport("HealthTestSpec") {
             time.advance(timeBetweenTests)
             mockTest(runnerName1, Left(""))
             metricsListener.expectMsg(i)
+            SharedMetricRegistries.clear()
           }
 
           time.advance(timeBetweenTests)
@@ -309,6 +319,7 @@ class HealthTestSpec extends ActorTestSupport("HealthTestSpec") {
           time.advance(timeBetweenTests)
           mockTest(runnerName1, Right(()))
           metricsListener.expectMsg(0)
+          SharedMetricRegistries.clear()
         }
 
       }

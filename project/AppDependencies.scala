@@ -19,21 +19,25 @@ object AppDependencies {
     "com.github.ghik" % "silencer-lib" % "1.7.1" % Provided cross CrossVersion.full
   )
 
+  val mockito = "org.scalatestplus" %% "mockito-3-4" % "3.2.9.0" % "test"
+
+  val wireMock = "com.github.tomakehurst" % "wiremock-standalone" % "2.27.1" % "test"
+
   val test = Seq(
     hmrc                   %% "service-integration-test"    % "1.1.0-play-26"    % "test",
     hmrc                   %% "stub-data-generator"         % "0.5.3"             % "test",
     "org.scalatest"        %% "scalatest"                   % "3.2.8"             % "test",
-    "com.vladsch.flexmark" % "flexmark-all"                 % "0.35.10"           % "test",
+    "com.vladsch.flexmark" % "flexmark-all"                 % "0.35.10"             % "test",
     "org.scalatestplus"    %% "scalatestplus-scalacheck"    % "3.1.0.0-RC2"       % "test",
     "org.pegdown"          % "pegdown"                      % "1.6.0"             % "test",
     "com.typesafe.play"    %% "play-test"                   % PlayVersion.current % "test",
     "org.scalamock"        %% "scalamock-scalatest-support" % "3.6.0"             % "test",
     "com.miguno.akka"      %% "akka-mock-scheduler"         % "0.5.5"             % "test",
-    "com.typesafe.akka"    %% "akka-testkit"                % "2.5.23"            % "test"
+    "com.typesafe.akka"    %% "akka-testkit"                % "2.6.14"            % "test"
   )
 
-  val akkaVersion = "2.5.23"
-  val akkaHttpVersion = "10.0.15"
+  val akkaVersion = "2.6.14"
+  val akkaHttpVersion = "10.2.6"
 
   val overrides = Seq(
     "com.typesafe.akka" %% "akka-stream"    % akkaVersion,
