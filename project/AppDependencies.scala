@@ -14,20 +14,16 @@ object AppDependencies {
     hmrc                %% "simple-reactivemongo"       % "8.0.0-play-26",
     "com.eclipsesource" %% "play-json-schema-validator" % "0.9.4",
     "org.typelevel"     %% "cats-core"                  % "2.5.0",
-    "com.github.kxbmap" %% "configs"                    % "0.6.0",
+    "com.github.kxbmap" %% "configs"                     % "0.6.0",
     compilerPlugin("com.github.ghik" % "silencer-plugin" % "1.7.1" cross CrossVersion.full),
     "com.github.ghik" % "silencer-lib" % "1.7.1" % Provided cross CrossVersion.full
   )
 
-  val mockito = "org.scalatestplus" %% "mockito-3-4" % "3.2.9.0" % "test"
-
-  val wireMock = "com.github.tomakehurst" % "wiremock-standalone" % "2.27.1" % "test"
-
   val test = Seq(
-    hmrc                   %% "service-integration-test"    % "1.1.0-play-26"    % "test",
+    hmrc                   %% "service-integration-test"    % "1.1.0-play-26"     % "test",
     hmrc                   %% "stub-data-generator"         % "0.5.3"             % "test",
     "org.scalatest"        %% "scalatest"                   % "3.2.8"             % "test",
-    "com.vladsch.flexmark" % "flexmark-all"                 % "0.35.10"             % "test",
+    "com.vladsch.flexmark" % "flexmark-all"                   % "0.35.10"           % "test",
     "org.scalatestplus"    %% "scalatestplus-scalacheck"    % "3.1.0.0-RC2"       % "test",
     "org.pegdown"          % "pegdown"                      % "1.6.0"             % "test",
     "com.typesafe.play"    %% "play-test"                   % PlayVersion.current % "test",
