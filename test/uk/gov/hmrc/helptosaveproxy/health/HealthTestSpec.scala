@@ -25,6 +25,8 @@ import com.codahale.metrics._
 import com.kenshoo.play.metrics.Metrics
 import com.miguno.akka.testing.VirtualTime
 import com.typesafe.config.ConfigFactory
+import org.junit.Before
+import org.scalatest.BeforeAndAfter
 import uk.gov.hmrc.helptosaveproxy.connectors.NSIConnector
 import uk.gov.hmrc.helptosaveproxy.health.HealthCheck.PerformHealthCheck
 import uk.gov.hmrc.helptosaveproxy.health.HealthTestSpec.PagerDutyMessage.PagerDutyAlert
@@ -39,7 +41,7 @@ import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 
-class HealthTestSpec extends ActorTestSupport("HealthTestSpec") {
+class HealthTestSpec extends ActorTestSupport("HealthTestSpec") with BeforeAndAfter {
 
   val testName = "test"
 
@@ -64,7 +66,6 @@ class HealthTestSpec extends ActorTestSupport("HealthTestSpec") {
   val metricsListener: TestProbe = TestProbe()
 
   val metrics: Metrics = new Metrics {
-
     override def defaultRegistry: MetricRegistry = new MetricRegistry {
       override def histogram(name: String): Histogram = new Histogram(new UniformReservoir()) {
 
@@ -76,6 +77,10 @@ class HealthTestSpec extends ActorTestSupport("HealthTestSpec") {
     }
 
     override def toJson: String = sys.error("Not used")
+  }
+
+  before {
+    SharedMetricRegistries.clear
   }
 
   val mockPagerDutyAlerting: PagerDutyAlerting = mock[PagerDutyAlerting]
@@ -158,7 +163,6 @@ class HealthTestSpec extends ActorTestSupport("HealthTestSpec") {
 
         "record the number of failures as 0 in the metrics" in {
           metricsListener.expectMsg(0)
-          SharedMetricRegistries.clear()
         }
 
         "create a child runner with the next set of props when " +
@@ -168,13 +172,12 @@ class HealthTestSpec extends ActorTestSupport("HealthTestSpec") {
             time.advance(timeBetweenTests)
             mockTest(runnerName1, Right(()))
             metricsListener.expectMsg(0)
-            SharedMetricRegistries.clear()
           }
 
           time.advance(timeBetweenTests)
           mockTest(runnerName2, Right(()))
           metricsListener.expectMsg(0)
-          SharedMetricRegistries.clear()
+
         }
 
         "create a child runner with the first set of props when " +
@@ -184,13 +187,11 @@ class HealthTestSpec extends ActorTestSupport("HealthTestSpec") {
             time.advance(timeBetweenTests)
             mockTest(runnerName2, Right(()))
             metricsListener.expectMsg(0)
-            SharedMetricRegistries.clear()
           }
 
           time.advance(timeBetweenTests)
           mockTest(runnerName1, Right(()))
           metricsListener.expectMsg(0)
-          SharedMetricRegistries.clear()
         }
 
         "fall back to the minimum time between tests if the configured time between tests falls " +
@@ -207,7 +208,6 @@ class HealthTestSpec extends ActorTestSupport("HealthTestSpec") {
           mockTest(runnerName1, Left(""))
 
           metricsListener.expectMsg(1)
-          SharedMetricRegistries.clear()
         }
 
       }
@@ -218,7 +218,6 @@ class HealthTestSpec extends ActorTestSupport("HealthTestSpec") {
           time.advance(timeBetweenTests)
           mockTest(runnerName1, Left(""))
           metricsListener.expectMsg(1)
-          SharedMetricRegistries.clear()
         }
 
         "record the number of failures as 1 and alert pager duty if the " +
@@ -231,7 +230,6 @@ class HealthTestSpec extends ActorTestSupport("HealthTestSpec") {
 
           pagerDutyListener.expectMsg(PagerDutyAlert)
           metricsListener.expectMsg(1)
-          SharedMetricRegistries.clear()
         }
       }
 
@@ -253,7 +251,6 @@ class HealthTestSpec extends ActorTestSupport("HealthTestSpec") {
 
           runnerListener.expectTerminated(created.ref)
           metricsListener.expectMsg(1)
-          SharedMetricRegistries.clear()
         }
 
       }
@@ -267,7 +264,6 @@ class HealthTestSpec extends ActorTestSupport("HealthTestSpec") {
           time.advance(timeBetweenTests)
           mockTest(runnerName1, Right(()))
           metricsListener.expectMsg(0)
-          SharedMetricRegistries.clear()
         }
 
       }
@@ -279,7 +275,6 @@ class HealthTestSpec extends ActorTestSupport("HealthTestSpec") {
             time.advance(timeBetweenTests)
             mockTest(runnerName1, Left(""))
             metricsListener.expectMsg(i)
-            SharedMetricRegistries.clear()
           }
 
           time.advance(timeBetweenTests)
@@ -319,7 +314,6 @@ class HealthTestSpec extends ActorTestSupport("HealthTestSpec") {
           time.advance(timeBetweenTests)
           mockTest(runnerName1, Right(()))
           metricsListener.expectMsg(0)
-          SharedMetricRegistries.clear()
         }
 
       }

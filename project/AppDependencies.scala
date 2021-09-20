@@ -18,7 +18,6 @@ object AppDependencies {
   )
 
   val test = Seq(
-    "uk.gov.hmrc"          %% "service-integration-test"    % "1.1.0-play-28"     % "test",
     "uk.gov.hmrc"          %% "stub-data-generator"         % "0.5.3"             % "test",
     "org.scalatest"        %% "scalatest"                   % "3.2.8"             % "test",
     "com.vladsch.flexmark"  %  "flexmark-all"                 % "0.35.10"           % "test",
@@ -30,15 +29,5 @@ object AppDependencies {
     "com.typesafe.akka"    %% "akka-testkit"                % "2.6.14"            % "test"
   )
 
-  val akkaVersion = "2.6.14"
-  val akkaHttpVersion = "10.2.6"
-
-  val overrides = Seq(
-    "com.typesafe.akka" %% "akka-stream"    % akkaVersion,
-    "com.typesafe.akka" %% "akka-protobuf"  % akkaVersion,
-    "com.typesafe.akka" %% "akka-slf4j"     % akkaVersion,
-    "com.typesafe.akka" %% "akka-actor"     % akkaVersion,
-    "com.typesafe.akka" %% "akka-http-core" % akkaHttpVersion
-  )
 
 }
