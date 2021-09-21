@@ -226,7 +226,7 @@ class HealthCheck(
   override def preStart(): Unit = {
     super.preStart()
     log.info(s"$loggingPrefix Starting scheduler to poll every $timeBetweenChecks")
-    performTestTask = Some(scheduler.schedule(timeBetweenChecks, timeBetweenChecks, self, PerformHealthCheck))
+    performTestTask = Some(scheduler.scheduleAtFixedRate(timeBetweenChecks, timeBetweenChecks, self, PerformHealthCheck))
   }
 
   override def postStop(): Unit = {

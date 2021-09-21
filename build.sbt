@@ -13,8 +13,6 @@ val appName = "help-to-save-proxy"
 lazy val plugins: Seq[Plugins] = Seq.empty
 lazy val playSettings: Seq[Setting[_]] = Seq.empty
 
-dependencyOverrides ++= AppDependencies.overrides
-
 lazy val scoverageSettings = {
   import scoverage.ScoverageKeys
   Seq(
