@@ -155,9 +155,11 @@ class NSIConnectorImpl @Inject()(
           val time = stopTime(timeContext)
 
           response.status match {
-            case Status.OK ⇒ Right(())
+            case Status.OK ⇒
+              logger.info(s"Update email returned 200 OK from NS&I $time", nino, correlationId)
+              Right(())
             case other =>
-              logger.warn(s"createAccount/update returned $other and response: ${maskNino(response.body)} from NS&I $time")
+              logger.warn(s"Update email returned status: $other and response: ${maskNino(response.body)} from NS&I.")
               metrics.nsiUpdateEmailErrorCounter.inc()
               pagerDutyAlerting.alert("Received unexpected http status in response to update email")
               Left(s"Received unexpected status $other from NS&I while trying to update email $time. Body was ${maskNino(response.body)}")
@@ -188,8 +190,7 @@ class NSIConnectorImpl @Inject()(
           response.status match {
             case Status.OK ⇒ Right(())
             case other ⇒
-              logger.warn(s"Received unexpected status $other from NS&I while trying to do health-check. Body was ${maskNino(
-                response.body)}")
+              logger.warn(s"Health check returned status: $other and response: ${maskNino(response.body)} from NS&I.")
               Left(s"Received unexpected status $other from NS&I while trying to do health-check. Body was ${maskNino(
                 response.body)}")
           }
@@ -213,12 +214,11 @@ class NSIConnectorImpl @Inject()(
         .map[Either[String, HttpResponse]] { response ⇒
           val time = timeContext.stop()
           response.status match {
-            case Status.OK ⇒ Right(response)
-            case Status.BAD_REQUEST ⇒
-              logger.warn(s"queryAccount resource: $resource, response: ${maskNino(response.body)} and returned status: ${Status.BAD_REQUEST}.")
+            case Status.OK ⇒
+              logger.info(s"queryAccount resource: $resource, response: ${response.body}")
               Right(response)
             case other ⇒
-              logger.warn(s"queryAccount resource: $resource, response: ${maskNino(response.body)} and returned status: ${other}.")
+              logger.warn(s"Query account returned status: ${Status.BAD_REQUEST} and response: ${maskNino(response.body)} from NS&I.")
               Left(s"Received unexpected status $other from NS&I while trying to query account. Body was ${maskNino(response.body)} $time")
           }
         }
