@@ -217,6 +217,9 @@ class NSIConnectorImpl @Inject()(
             case Status.OK ⇒
               logger.info(s"queryAccount resource: $resource, response: ${response.body}")
               Right(response)
+            case Status.BAD_REQUEST ⇒
+              logger.warn(s"queryAccount resource: $resource, response: ${response.body}")
+              Right(response)
             case other ⇒
               logger.warn(s"Query account returned status: $other and response: ${maskNino(response.body)} from NS&I.")
               Left(s"Received unexpected status $other from NS&I while trying to query account. Body was ${maskNino(response.body)} $time")
