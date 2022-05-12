@@ -156,13 +156,15 @@ class NSIConnectorImpl @Inject()(
 
           response.status match {
             case Status.OK ⇒
-              logger.info(s"Update email returned 200 OK from NS&I $time", nino, correlationId)
+              logger.info(s"createAccount/update returned 200 OK from NS&I $time", nino, correlationId)
               Right(())
-            case other =>
-              logger.warn(s"Update email returned status: $other and response: ${maskNino(response.body)} from NS&I.")
+
+            case other ⇒
               metrics.nsiUpdateEmailErrorCounter.inc()
               pagerDutyAlerting.alert("Received unexpected http status in response to update email")
-              Left(s"Received unexpected status $other from NS&I while trying to update email $time. Body was ${maskNino(response.body)}")
+              Left(
+                s"Received unexpected status $other from NS&I while trying to update email $time. Body was ${maskNino(
+                  response.body)}")
           }
         }
         .recover {
@@ -170,6 +172,7 @@ class NSIConnectorImpl @Inject()(
             val time = timeContext.stop()
             pagerDutyAlerting.alert("Failed to make call to update email")
             metrics.nsiUpdateEmailErrorCounter.inc()
+
             Left(s"Encountered error while trying to update email: ${e.getMessage} $time")
         })
   }
@@ -190,7 +193,6 @@ class NSIConnectorImpl @Inject()(
           response.status match {
             case Status.OK ⇒ Right(())
             case other ⇒
-              logger.warn(s"Health check returned status: $other and response: ${maskNino(response.body)} from NS&I.")
               Left(s"Received unexpected status $other from NS&I while trying to do health-check. Body was ${maskNino(
                 response.body)}")
           }
@@ -214,12 +216,12 @@ class NSIConnectorImpl @Inject()(
         .map[Either[String, HttpResponse]] { response ⇒
           val time = timeContext.stop()
           response.status match {
-            case Status.OK ⇒
-              logger.info(s"queryAccount resource: $resource, response: ${response.body}")
+            case Status.OK | Status.BAD_REQUEST ⇒
+              logger.debug(s"queryAccount resource: $resource, response: ${response.body}")
               Right(response)
             case other ⇒
-              logger.warn(s"Query account returned status: $other and response: ${maskNino(response.body)} from NS&I.")
-              Left(s"Received unexpected status $other from NS&I while trying to query account. Body was ${maskNino(response.body)} $time")
+              Left(s"Received unexpected status $other from NS&I while trying to query account. Body was ${maskNino(
+                response.body)} $time")
           }
         }
         .recover {
@@ -278,5 +280,4 @@ class NSIConnectorImpl @Inject()(
     logger.warn(s"response body from NS&I=${maskNino(response.body)}")
     SubmissionFailure("Server error", "")
   }
-
 }
