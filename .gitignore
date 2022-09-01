@@ -19,3 +19,5 @@ dist
 *.iws
 **/*.sc
 /.bsp
+project/.bloop
+.bloop/

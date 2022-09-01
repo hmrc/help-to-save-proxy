@@ -17,13 +17,11 @@
 package uk.gov.hmrc.helptosaveproxy.health
 
 import java.time.LocalDate
-
 import akka.actor.{Actor, ActorRef, ActorSystem, PoisonPill, Props}
 import com.google.inject.{Inject, Singleton}
 import configs.syntax._
 import play.api.Configuration
 import play.api.inject.ApplicationLifecycle
-import play.modules.reactivemongo.ReactiveMongoComponent
 import uk.gov.hmrc.helptosaveproxy.connectors.NSIConnector
 import uk.gov.hmrc.helptosaveproxy.health.NSIConnectionHealthCheck.NSIConnectionHealthCheckRunner
 import uk.gov.hmrc.helptosaveproxy.health.NSIConnectionHealthCheck.NSIConnectionHealthCheckRunner.Payload
@@ -33,7 +31,7 @@ import uk.gov.hmrc.helptosaveproxy.models.NSIPayload.ContactDetails
 import uk.gov.hmrc.helptosaveproxy.util.lock.Lock
 import uk.gov.hmrc.helptosaveproxy.util.{Email, Logging, PagerDutyAlerting}
 import uk.gov.hmrc.http.HeaderCarrier
-
+import uk.gov.hmrc.mongo.lock.MongoLockRepository
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.util.control.NonFatal
@@ -45,8 +43,8 @@ class NSIConnectionHealthCheck @Inject()(
   configuration: Configuration,
   metrics: Metrics,
   nSIConnector: NSIConnector,
-  mongo: ReactiveMongoComponent,
   lifecycle: ApplicationLifecycle,
+  mongoLockRepository: MongoLockRepository,
   pagerDutyAlerting: PagerDutyAlerting)
     extends Logging {
 
@@ -75,7 +73,6 @@ class NSIConnectionHealthCheck @Inject()(
   lazy val lockedHealthCheck: ActorRef =
     system.actorOf(
       Lock.props[Option[ActorRef]](
-        mongo.mongoConnector.db,
         s"health-check-$name",
         lockDuration,
         system.scheduler,
@@ -85,6 +82,7 @@ class NSIConnectionHealthCheck @Inject()(
           ref ! PoisonPill
           None
         },
+        mongoLockRepository,
         lifecycle
       ),
       s"health-check-$name-lock"

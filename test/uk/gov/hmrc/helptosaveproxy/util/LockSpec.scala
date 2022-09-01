@@ -17,14 +17,16 @@
 package uk.gov.hmrc.helptosaveproxy.util
 
 import akka.actor.{ActorRef, Props}
+import com.google.inject.Inject
 import com.miguno.akka.testing.VirtualTime
 import uk.gov.hmrc.helptosaveproxy.health.ActorTestSupport
-import uk.gov.hmrc.helptosaveproxy.util.lock.{Lock, LockProvider}
+import uk.gov.hmrc.helptosaveproxy.util.lock.Lock
+import uk.gov.hmrc.mongo.lock.{LockRepository, MongoLockRepository, TimePeriodLockService}
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 
-class LockSpec extends ActorTestSupport("LockSpec") {
+class LockSpec @Inject()(mongoLockRepository: MongoLockRepository) extends ActorTestSupport("LockSpec") {
 
   import uk.gov.hmrc.helptosaveproxy.util.LockSpec._
 
@@ -34,15 +36,13 @@ class LockSpec extends ActorTestSupport("LockSpec") {
 
   val time: VirtualTime = new VirtualTime
 
-  trait TestableExclusiveTimePeriodLock extends LockProvider {
-
+  trait TestableTimePeriodLockService extends TimePeriodLockService {
+    override val lockRepository: LockRepository = mongoLockRepository
     override val lockId: String = testLockID
-
-    override val holdLockFor = lockDuration
-
+    override val ttl: Duration = lockDuration
   }
 
-  val internalLock = mock[TestableExclusiveTimePeriodLock]
+  val internalLock = mock[TestableTimePeriodLockService]
 
   def sendToSelf[A](a: A): A = {
     self ! a
@@ -68,15 +68,10 @@ class LockSpec extends ActorTestSupport("LockSpec") {
 
   lazy val lock = newLock(time)
 
-  def mockTryToAcquireOrRenewLock(result: Either[String, Option[Unit]]): Unit =
+  def mockwithRenewedLock(result: Either[String, Option[Unit]]): Unit =
     (internalLock
-      .tryToAcquireOrRenewLock(_: Future[Unit])(_: ExecutionContext))
+      .withRenewedLock(_: Future[Unit])(_: ExecutionContext))
       .expects(*, *)
-      .returning(result.fold(e ⇒ Future.failed(new Exception(e)), Future.successful))
-
-  def mockReleaseLock(result: Either[String, Unit]) =
-    (internalLock.releaseLock: () ⇒ Future[Unit])
-      .expects()
       .returning(result.fold(e ⇒ Future.failed(new Exception(e)), Future.successful))
 
   "The Lock" must {
@@ -100,8 +95,7 @@ class LockSpec extends ActorTestSupport("LockSpec") {
     "register an application lifecycle stop hook when starting which when triggered will release the lock if " +
       "acquired when triggered and change state if successful" in {
       val (_, time, hook) = startNewLock(inSequence {
-        mockTryToAcquireOrRenewLock(Right(Some(())))
-        mockReleaseLock(Right(()))
+        mockwithRenewedLock(Right(Some(())))
       })
 
       // expect the lock to be acquired
@@ -117,8 +111,7 @@ class LockSpec extends ActorTestSupport("LockSpec") {
     "register an application lifecycle stop hook when starting which when triggered will release the lock if " +
       "acquired when triggered and not change state if not successful" in {
       val (_, time, hook) = startNewLock(inSequence {
-        mockTryToAcquireOrRenewLock(Right(Some(())))
-        mockReleaseLock(Left(""))
+        mockwithRenewedLock(Right(Some(())))
       })
 
       // expect the lock to be acquired
@@ -143,7 +136,7 @@ class LockSpec extends ActorTestSupport("LockSpec") {
 
     "try to acquire the lock when started and change the state if " +
       "it is successful" in {
-      mockTryToAcquireOrRenewLock(Right(Some(())))
+      mockwithRenewedLock(Right(Some(())))
 
       // even though the message is scheduled without delay we still
       // need to make the clock tick in order to get the scheduled task
@@ -161,14 +154,14 @@ class LockSpec extends ActorTestSupport("LockSpec") {
 
     "try to renew the lock when the lock expires amd change the state if " +
       "it is unsuccessful" in {
-      mockTryToAcquireOrRenewLock(Right(None))
+      mockwithRenewedLock(Right(None))
 
       time.advance(1)
       expectMsg(State(0))
     }
 
     "not change the state if there is an error while trying to acquire the lock" in {
-      mockTryToAcquireOrRenewLock(Left(""))
+      mockwithRenewedLock(Left(""))
 
       time.advance(lockDuration.toMillis)
       expectNoMessage()

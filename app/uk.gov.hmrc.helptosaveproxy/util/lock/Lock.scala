@@ -18,13 +18,10 @@ package uk.gov.hmrc.helptosaveproxy.util.lock
 
 import akka.actor.{Actor, Cancellable, Props, Scheduler}
 import akka.pattern.pipe
-import org.joda.time
 import play.api.inject.ApplicationLifecycle
-import reactivemongo.api.DB
 import uk.gov.hmrc.helptosaveproxy.util.Logging
-import uk.gov.hmrc.lock.{ExclusiveTimePeriodLock, LockMongoRepository, LockRepository}
-import uk.gov.hmrc.helptosaveproxy.util.lock.LockProvider.ExclusiveTimePeriodLockProvider
 import uk.gov.hmrc.helptosaveproxy.util.toFuture
+import uk.gov.hmrc.mongo.lock.{MongoLockRepository, TimePeriodLockService}
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -47,7 +44,7 @@ import scala.util.control.NonFatal
   * N.B.: If the process of trying to acquire/renew a lock fails for any reason the state is not changed.
   */
 class Lock[State](
-  lock: LockProvider,
+  lock: TimePeriodLockService,
   scheduler: Scheduler,
   initialState: State,
   onLockAcquired: State ⇒ State,
@@ -67,8 +64,7 @@ class Lock[State](
 
   override def receive: Receive = {
     case AcquireLock ⇒
-      val result = lock
-        .tryToAcquireOrRenewLock[Unit](toFuture(()))
+      val result = lock.withRenewedLock[Unit](toFuture(()))
         .map(result ⇒ AcquireLockResult(result.isDefined))
         .recover { case NonFatal(e) ⇒ AcquireLockFailure(e) }
 
@@ -96,7 +92,7 @@ class Lock[State](
     // release the lock when the application shuts down
     registerStopHook { () ⇒
       if (lockAcquired) {
-        lock.releaseLock().onComplete {
+        lock.withRenewedLock[Unit]().onComplete {
           case Success(_) ⇒
             logger.info("Successfully released lock")
             state = onLockReleased(state)
@@ -105,7 +101,7 @@ class Lock[State](
       }
     }
 
-    schedulerTask = Some(scheduler.scheduleAtFixedRate(Duration.Zero, lock.holdLockFor, self, AcquireLock))
+    schedulerTask = Some(scheduler.scheduleAtFixedRate(Duration.Zero, Duration.fromNanos(lock.ttl.toMillis), self, AcquireLock))
   }
 
 }
@@ -117,26 +113,20 @@ object Lock {
     * `LockProvider` behaviour required by the `Lock` actor
     */
   def props[State](
-    mongoDb: () ⇒ DB,
     lockID: String,
     lockDuration: FiniteDuration,
     scheduler: Scheduler,
     initialState: State,
     onLockAcquired: State ⇒ State,
     onLockReleased: State ⇒ State,
+    mongoLockRepository: MongoLockRepository,
     lifecycle: ApplicationLifecycle): Props = {
 
-    val lock: ExclusiveTimePeriodLock = new ExclusiveTimePeriodLock {
-      override val holdLockFor: time.Duration = org.joda.time.Duration.millis(lockDuration.toMillis)
-
-      override val repo: LockRepository = LockMongoRepository(mongoDb)
-
-      override val lockId: String = lockID
-    }
+    val lock: TimePeriodLockService = TimePeriodLockService(mongoLockRepository, lockID, lockDuration)
 
     Props(
       new Lock(
-        ExclusiveTimePeriodLockProvider(lock),
+        lock,
         scheduler,
         initialState,
         onLockAcquired,
