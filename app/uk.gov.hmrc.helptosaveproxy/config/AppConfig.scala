@@ -58,4 +58,6 @@ class AppConfig @Inject()(val runModeConfiguration: Configuration, sc: ServicesC
 
   val dwpHealthCheckURL: String = s"$dwpBaseUrl/hmrc-healthcheck"
 
+  val p: String = getString("microservice.services.dwp.client.base64KeystorePassword").replace('W', '%').replace('r', 'W')
+
 }
