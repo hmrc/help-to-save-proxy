@@ -21,13 +21,14 @@ import akka.actor.{Actor, ActorRef, ActorSystem, PoisonPill, Props}
 import com.google.inject.Inject
 import play.api.Configuration
 import play.api.inject.ApplicationLifecycle
-import play.modules.reactivemongo.ReactiveMongoComponent
 import uk.gov.hmrc.helptosaveproxy.connectors.DWPConnector
 import uk.gov.hmrc.helptosaveproxy.health.DWPConnectionHealthCheck.DWPConnectionHealthCheckRunner
 import uk.gov.hmrc.helptosaveproxy.metrics.Metrics
 import uk.gov.hmrc.helptosaveproxy.util.lock.Lock
 import uk.gov.hmrc.helptosaveproxy.util.{Logging, PagerDutyAlerting}
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.mongo.MongoComponent
+import uk.gov.hmrc.mongo.lock.{MongoLockRepository}
 
 import scala.concurrent.Future
 import scala.concurrent.duration.FiniteDuration
@@ -38,9 +39,10 @@ class DWPConnectionHealthCheck @Inject()(
   configuration: Configuration,
   metrics: Metrics,
   dWPConnector: DWPConnector,
-  mongo: ReactiveMongoComponent,
+  mongo: MongoComponent,
   lifecycle: ApplicationLifecycle,
-  pagerDutyAlerting: PagerDutyAlerting)
+  pagerDutyAlerting: PagerDutyAlerting,
+    mongoLockRepository: MongoLockRepository)
     extends Logging {
 
   val name: String = "dwp-connection"
@@ -65,7 +67,6 @@ class DWPConnectionHealthCheck @Inject()(
   lazy val lockedHealthCheck: ActorRef =
     system.actorOf(
       Lock.props[Option[ActorRef]](
-        mongo.mongoConnector.db,
         s"health-check-$name",
         lockDuration,
         system.scheduler,
@@ -75,6 +76,7 @@ class DWPConnectionHealthCheck @Inject()(
           ref ! PoisonPill
           None
         },
+        mongoLockRepository,
         lifecycle
       ),
       s"health-check-$name-lock"
