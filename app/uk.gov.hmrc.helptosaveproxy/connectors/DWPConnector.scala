@@ -55,7 +55,7 @@ class DWPConnectorImpl @Inject()(
   system: ActorSystem)(implicit transformer: LogMessageTransformer, appConfig: AppConfig)
     extends DWPConnector with Logging {
 
-  var first = true
+  var first: Boolean = true
 
   val proxyClient: HttpProxyClient = new HttpProxyClient(
     httpAuditing,
