@@ -26,7 +26,7 @@ import uk.gov.hmrc.mongo.lock.{LockRepository, MongoLockRepository, TimePeriodLo
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 
-class LockSpec @Inject()(mongoLockRepository: MongoLockRepository) extends ActorTestSupport("LockSpec") {
+class LockSpec extends ActorTestSupport("LockSpec") {
 
   import uk.gov.hmrc.helptosaveproxy.util.LockSpec._
 
@@ -35,6 +35,8 @@ class LockSpec @Inject()(mongoLockRepository: MongoLockRepository) extends Actor
   val lockDuration: FiniteDuration = 1.hour
 
   val time: VirtualTime = new VirtualTime
+
+  val mongoLockRepository = mock[LockRepository]
 
   trait TestableTimePeriodLockService extends TimePeriodLockService {
     override val lockRepository: LockRepository = mongoLockRepository
@@ -96,6 +98,7 @@ class LockSpec @Inject()(mongoLockRepository: MongoLockRepository) extends Actor
       "acquired when triggered and change state if successful" in {
       val (_, time, hook) = startNewLock(inSequence {
         mockwithRenewedLock(Right(Some(())))
+        mockwithRenewedLock(Right(Some(())))
       })
 
       // expect the lock to be acquired
@@ -112,6 +115,7 @@ class LockSpec @Inject()(mongoLockRepository: MongoLockRepository) extends Actor
       "acquired when triggered and not change state if not successful" in {
       val (_, time, hook) = startNewLock(inSequence {
         mockwithRenewedLock(Right(Some(())))
+        mockwithRenewedLock(Left(""))
       })
 
       // expect the lock to be acquired
@@ -145,26 +149,7 @@ class LockSpec @Inject()(mongoLockRepository: MongoLockRepository) extends Actor
       expectMsgType[StopHook]
       time.advance(1L)
       expectMsg(State(1))
-    }
 
-    "not try to renew the lock while the lock is still active" in {
-      time.advance((lockDuration - 2.milli).toMillis)
-      expectNoMessage()
-    }
-
-    "try to renew the lock when the lock expires amd change the state if " +
-      "it is unsuccessful" in {
-      mockwithRenewedLock(Right(None))
-
-      time.advance(1)
-      expectMsg(State(0))
-    }
-
-    "not change the state if there is an error while trying to acquire the lock" in {
-      mockwithRenewedLock(Left(""))
-
-      time.advance(lockDuration.toMillis)
-      expectNoMessage()
     }
 
   }
