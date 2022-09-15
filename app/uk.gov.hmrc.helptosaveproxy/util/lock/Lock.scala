@@ -96,7 +96,8 @@ class Lock[State](
           case Success(_) ⇒
             logger.info("Successfully released lock")
             state = onLockReleased(state)
-          case Failure(e) ⇒ logger.warn(s"Could not release lock: ${e.getMessage}")
+          case Failure(e) ⇒
+            logger.warn(s"Could not release lock: ${e.getMessage}")
         }
       }
     }
