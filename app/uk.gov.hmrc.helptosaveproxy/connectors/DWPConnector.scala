@@ -75,7 +75,7 @@ class DWPConnectorImpl @Inject()(
 
     EitherT(
       proxyClient
-        .get(s"${appConfig.dwpBaseUrl}/hmrc/$nino", queryParams)(hc.copy(authorization = None), ec)
+        .get(s"${appConfig.dwpCheckURL}/$nino", queryParams)(hc.copy(authorization = None), ec)
         .map[Either[String, HttpResponse]] { response ⇒
           val time = timeContext.stop()
           response.status match {
@@ -109,8 +109,8 @@ class DWPConnectorImpl @Inject()(
   def healthCheck()(implicit hc: HeaderCarrier, ec: ExecutionContext): EitherT[Future, String, Unit] =
     EitherT(proxyClient.get(appConfig.dwpHealthCheckURL).map[Either[String, Unit]] { response ⇒
       response.status match {
-        case Status.OK ⇒ Right(())
-        case other ⇒ Left(s"Received status $other from DWP health check. Response body was '${response.body}'")
+        case Status.OK | Status.NO_CONTENT ⇒ Right(())
+        case other ⇒ Left(s"Received status $other from DWP health/connectivity check. Response body was '${response.body}'")
       }
     })
 
