@@ -71,7 +71,7 @@ class NSIConnectionHealthCheckRunnerSpec extends ActorTestSupport("NSIConnection
 
       "call the NSIConnector to do the test and reply back with a negative result " +
         "if the NSIConnector returns a failure" in {
-        def test(mockActions: ⇒ Unit): Unit = {
+        def test(mockActions: => Unit): Unit = {
           mockActions
 
           val runner = newRunner(Payload2)

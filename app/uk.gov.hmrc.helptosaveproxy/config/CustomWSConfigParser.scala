@@ -42,23 +42,23 @@ class CustomWSConfigParser @Inject()(configuration: Configuration, env: Environm
     val internalParser = new WSConfigParser(configuration.underlying, env.classLoader)
     val config = internalParser.parse()
 
-    val keyStores = config.ssl.keyManagerConfig.keyStoreConfigs.filter(_.data.forall(_.nonEmpty)).map { ks ⇒
+    val keyStores = config.ssl.keyManagerConfig.keyStoreConfigs.filter(_.data.forall(_.nonEmpty)).map { ks =>
       (ks.storeType.toUpperCase, ks.filePath, ks.data) match {
-        case (_, None, Some(data)) ⇒
+        case (_, None, Some(data)) =>
           createKeyStoreConfig(ks, data)
 
-        case other ⇒
+        case other =>
           logger.info(s"Adding ${other._1} type keystore")
           ks
       }
     }
 
-    val trustStores = config.ssl.trustManagerConfig.trustStoreConfigs.filter(_.data.forall(_.nonEmpty)).map { ts ⇒
+    val trustStores = config.ssl.trustManagerConfig.trustStoreConfigs.filter(_.data.forall(_.nonEmpty)).map { ts =>
       (ts.filePath, ts.data) match {
-        case (None, Some(data)) ⇒
+        case (None, Some(data)) =>
           createTrustStoreConfig(ts, data)
 
-        case _ ⇒
+        case _ =>
           logger.info(s"Adding ${ts.storeType} type truststore from ${ts.filePath}")
           ts
       }
@@ -82,10 +82,10 @@ class CustomWSConfigParser @Inject()(configuration: Configuration, env: Environm
     val keyStore = initKeystore()
 
     generateCertificates(fileBytes).foreach {
-      case c: X509Certificate ⇒
+      case c: X509Certificate =>
         val alias = c.getSubjectX500Principal.getName
         keyStore.setCertificateEntry(alias, c)
-      case other ⇒
+      case other =>
         logger.warn(s"Expected X509Certificate but got ${other.getType}")
 
     }
@@ -133,7 +133,7 @@ class CustomWSConfigParser @Inject()(configuration: Configuration, env: Environm
       val bytes = base64Decode(data.trim)
       os.write(bytes)
       os.flush()
-      file.getAbsolutePath → bytes
+      file.getAbsolutePath -> bytes
     } finally {
       os.close()
     }

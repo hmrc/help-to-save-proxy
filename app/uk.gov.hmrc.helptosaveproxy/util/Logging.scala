@@ -41,7 +41,7 @@ object Logging {
       implicit transformer: LogMessageTransformer): Unit =
       logger.warn(transformer.transform(message, nino, correlationId))
 
-    def warn(message: String, e: ⇒ Throwable, nino: NINO, correlationId: Option[String])(
+    def warn(message: String, e: => Throwable, nino: NINO, correlationId: Option[String])(
       implicit transformer: LogMessageTransformer): Unit =
       logger.warn(transformer.transform(message, nino, correlationId), e)
 
@@ -49,7 +49,7 @@ object Logging {
       implicit transformer: LogMessageTransformer): Unit =
       logger.error(transformer.transform(message, nino, correlationId))
 
-    def error(message: String, e: ⇒ Throwable, nino: NINO, correlationId: Option[String])(
+    def error(message: String, e: => Throwable, nino: NINO, correlationId: Option[String])(
       implicit transformer: LogMessageTransformer): Unit =
       logger.error(transformer.transform(message, nino, correlationId), e)
 
@@ -65,16 +65,16 @@ trait LogMessageTransformer {
 @Singleton
 class LogMessageTransformerImpl @Inject()(configuration: Configuration) extends LogMessageTransformer {
 
-  private val ninoPrefix: NINO ⇒ String =
-    if (configuration.underlying.getBoolean("nino-logging.enabled")) { nino ⇒
+  private val ninoPrefix: NINO => String =
+    if (configuration.underlying.getBoolean("nino-logging.enabled")) { nino =>
       s"For NINO [$nino], "
-    } else { _ ⇒
+    } else { _ =>
       ""
     }
 
-  private val correlationIdPrefix: Option[String] ⇒ String = {
-    case Some(id) ⇒ s"for CorrelationId $id, "
-    case None ⇒ ""
+  private val correlationIdPrefix: Option[String] => String = {
+    case Some(id) => s"for CorrelationId $id, "
+    case None => ""
   }
 
   def transform(message: String, nino: NINO, correlationId: Option[String]): String =
