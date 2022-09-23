@@ -76,9 +76,9 @@ class AsyncHttpClientProvider @Inject()(
     val cacheProvider = new OptionalAhcHttpCacheProvider(environment, configuration, applicationLifecycle)
     val client = new DefaultAsyncHttpClient(asyncHttpClientConfig)
     cacheProvider.get match {
-      case Some(ahcHttpCache) ⇒
+      case Some(ahcHttpCache) =>
         new CachingAsyncHttpClient(client, ahcHttpCache)
-      case None ⇒
+      case None =>
         client
     }
   }
@@ -106,7 +106,7 @@ class AsyncHttpClientProvider @Inject()(
   }
 
   // Always close the AsyncHttpClient afterwards.
-  applicationLifecycle.addStopHook(() ⇒ Future.successful(get.close()))
+  applicationLifecycle.addStopHook(() => Future.successful(get.close()))
 }
 
 /**
@@ -124,7 +124,7 @@ class OptionalAhcHttpCacheProvider @Inject()(
     extends Provider[Option[AhcHttpCache]] {
 
   lazy val get: Option[AhcHttpCache] = {
-    optionalCache.map { cache ⇒
+    optionalCache.map { cache =>
       new AhcHttpCache(cache, cacheConfig.heuristicsEnabled)
     }
   }
@@ -142,23 +142,23 @@ class OptionalAhcHttpCacheProvider @Inject()(
       val cacheManager: CacheManager = {
         val cachingProvider =
           cacheConfig.cachingProviderName match {
-            case name if name.nonEmpty ⇒
+            case name if name.nonEmpty =>
               Caching.getCachingProvider(name, environment.classLoader)
-            case _ ⇒
+            case _ =>
               Caching.getCachingProvider(environment.classLoader)
           }
         val cacheManagerURI =
           cacheConfig.cacheManagerURI match {
-            case uriString if uriString.nonEmpty ⇒ new URI(uriString)
+            case uriString if uriString.nonEmpty => new URI(uriString)
             // null means use #getDefaultURI
-            case _ ⇒ null
+            case _ => null
           }
         cachingProvider.getCacheManager(cacheManagerURI, environment.classLoader)
       }
 
-      Option(cacheManager).map { cm ⇒
+      Option(cacheManager).map { cm =>
         val jcache = getOrCreateCache(cm)
-        applicationLifecycle.addStopHook(() ⇒ Future.successful(jcache.close()))
+        applicationLifecycle.addStopHook(() => Future.successful(jcache.close()))
         new JCacheAdapter(jcache)
       }
     } else {
@@ -218,13 +218,13 @@ class OptionalAhcHttpCacheProvider @Inject()(
     // Treat cacheManagerResource as a resource on the classpath and convert it to an URI string.
     def fromConfiguration(configuration: Configuration): AhcHttpCacheConfiguration = {
       val cacheManagerURI = configuration.get[Option[String]]("play.ws.cache.cacheManagerURI") match {
-        case Some(uriString) ⇒
+        case Some(uriString) =>
           Logger(AhcHttpCacheParser.getClass)
             .warn(
               "play.ws.cache.cacheManagerURI is deprecated, use play.ws.cache.cacheManagerResource with a path on the classpath instead."
             )
           uriString
-        case None ⇒
+        case None =>
           configuration
             .get[Option[String]]("play.ws.cache.cacheManagerResource")
             .filter(_.nonEmpty)

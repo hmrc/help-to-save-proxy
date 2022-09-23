@@ -51,7 +51,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
     (mockJsonSchema
       .validate(_: JsValue))
       .expects(Json.toJson(expectedInfo))
-      .returning(result.map(_ ⇒ Json.toJson(expectedInfo)))
+      .returning(result.map(_ => Json.toJson(expectedInfo)))
 
   def mockCreateAccount(expectedInfo: NSIPayload)(result: Either[SubmissionFailure, SubmissionSuccess]): Unit =
     (mockNSIConnector
@@ -78,11 +78,11 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
     def doCreateAccountRequest(userInfo: NSIPayload) =
       controller.createAccount()(
-        FakeRequest().withJsonBody(Json.toJson(userInfo)).withHeaders("X-Correlation-Id" → correlationId))
+        FakeRequest().withJsonBody(Json.toJson(userInfo)).withHeaders("X-Correlation-Id" -> correlationId))
 
     behave like commonBehaviour(
       controller.createAccount,
-      () ⇒ mockCreateAccount(validNSIPayload)(Left(SubmissionFailure("", ""))),
+      () => mockCreateAccount(validNSIPayload)(Left(SubmissionFailure("", ""))),
       validNSIPayload)
 
     "return a Created status when valid json is given for an eligible new user" in {
@@ -116,7 +116,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
     val updatePayload = validNSIPayload.copy(version = None, systemId = None)
 
-    behave like commonBehaviour(controller.updateEmail, () ⇒ mockUpdateEmail(updatePayload)(Left("")), updatePayload)
+    behave like commonBehaviour(controller.updateEmail, () => mockUpdateEmail(updatePayload)(Left("")), updatePayload)
 
     "return an OK status when a user successfully updates their email address" in {
       inSequence {
@@ -141,10 +141,10 @@ class HelpToSaveControllerSpec extends AuthSupport {
     val resource = "account"
 
     val queryParameters = Map(
-      "nino" → Seq(nino),
-      "version" → Seq(version),
-      "systemId" → Seq(systemId),
-      "correlationId" → Seq(correlationId.toString)
+      "nino" -> Seq(nino),
+      "version" -> Seq(version),
+      "systemId" -> Seq(systemId),
+      "correlationId" -> Seq(correlationId.toString)
     )
 
     val queryString = s"nino=$nino&version=$version&systemId=$systemId&correlationId=$correlationId"
@@ -176,7 +176,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
     }
   }
 
-  def commonBehaviour(doCall: () ⇒ Action[AnyContent], mockNSIFailure: () ⇒ Unit, nsiPayload: NSIPayload): Unit = {
+  def commonBehaviour(doCall: () => Action[AnyContent], mockNSIFailure: () => Unit, nsiPayload: NSIPayload): Unit = {
 
     "return an InternalServerError status when the call to NSI returns an error" in {
       inSequence {

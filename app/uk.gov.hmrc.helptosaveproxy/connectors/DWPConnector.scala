@@ -76,10 +76,10 @@ class DWPConnectorImpl @Inject()(
     EitherT(
       proxyClient
         .get(s"${appConfig.dwpBaseUrl}/hmrc/$nino", queryParams)(hc.copy(authorization = None), ec)
-        .map[Either[String, HttpResponse]] { response ⇒
+        .map[Either[String, HttpResponse]] { response =>
           val time = timeContext.stop()
           response.status match {
-            case Status.OK ⇒
+            case Status.OK =>
               logger.info(
                 s"ucClaimantCheck returned 200 (OK) with UCDetails: ${response.json}, transactionId: " +
                   s"$transactionId, thresholdAmount: $threshold, ${timeString(time)}",
@@ -87,7 +87,7 @@ class DWPConnectorImpl @Inject()(
                 None
               )
               Right(HttpResponse(200, response.json, Map[String, Seq[String]]())) // scalastyle:ignore magic.number
-            case other ⇒
+            case other =>
               pagerDutyAlerting.alert("Received unexpected http status in response to uc claimant check")
               metrics.dwpClaimantErrorCounter.inc()
               Left(
@@ -96,7 +96,7 @@ class DWPConnectorImpl @Inject()(
           }
         }
         .recover {
-          case e ⇒
+          case e =>
             val time = timeContext.stop()
             pagerDutyAlerting.alert("Failed to make call to uc claimant check")
             metrics.dwpClaimantErrorCounter.inc()
@@ -107,10 +107,10 @@ class DWPConnectorImpl @Inject()(
   }
 
   def healthCheck()(implicit hc: HeaderCarrier, ec: ExecutionContext): EitherT[Future, String, Unit] =
-    EitherT(proxyClient.get(appConfig.dwpHealthCheckURL).map[Either[String, Unit]] { response ⇒
+    EitherT(proxyClient.get(appConfig.dwpHealthCheckURL).map[Either[String, Unit]] { response =>
       response.status match {
-        case Status.OK ⇒ Right(())
-        case other ⇒ Left(s"Received status $other from DWP health check. Response body was '${response.body}'")
+        case Status.OK => Right(())
+        case other => Left(s"Received status $other from DWP health check. Response body was '${response.body}'")
       }
     })
 

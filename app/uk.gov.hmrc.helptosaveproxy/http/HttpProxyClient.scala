@@ -75,7 +75,7 @@ class HttpProxyClient(
       if (needsAuditing) {
         executeHooks(PUT, new URL(url), headers.toSeq, Option(HookData.FromString(Json.stringify(w.writes(body)))), httpResponse)
       }
-      mapErrors(PUT, url, httpResponse).map(response ⇒ rawHttpReads.read(PUT, url, response))
+      mapErrors(PUT, url, httpResponse).map(response => rawHttpReads.read(PUT, url, response))
     }
 
 }

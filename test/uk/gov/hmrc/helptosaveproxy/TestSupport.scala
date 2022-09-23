@@ -36,7 +36,7 @@ import uk.gov.hmrc.http.{Authorization, SessionId}
 
 import scala.concurrent.ExecutionContext
 
-trait TestSupport extends UnitSpec with MockFactory with BeforeAndAfterAll with ScalaFutures { this: Suite ⇒
+trait TestSupport extends UnitSpec with MockFactory with BeforeAndAfterAll with ScalaFutures { this: Suite =>
 
   lazy val additionalConfig = Configuration()
 

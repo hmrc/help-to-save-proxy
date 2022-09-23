@@ -54,7 +54,7 @@ class DWPConnectionHealthCheckSpec extends ActorTestSupport("DWPConnectionHealth
 
       "call the DWPConnector to do the test and reply back with a negative result " +
         "if the DWPConnector returns a failure" in {
-        def test(mockActions: ⇒ Unit): Unit = {
+        def test(mockActions: => Unit): Unit = {
           mockActions
 
           val runner = newRunner()

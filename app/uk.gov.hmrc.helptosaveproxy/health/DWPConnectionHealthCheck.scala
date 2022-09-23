@@ -57,7 +57,7 @@ class DWPConnectionHealthCheck @Inject()(
       configuration.underlying,
       system.scheduler,
       metrics.metrics,
-      () ⇒ pagerDutyAlerting.alert("DWP health check has failed"),
+      () => pagerDutyAlerting.alert("DWP health check has failed"),
       DWPConnectionHealthCheckRunner.props(dWPConnector, metrics)
     )
   )
@@ -72,7 +72,7 @@ class DWPConnectionHealthCheck @Inject()(
         system.scheduler,
         None,
         _.fold(Some(newHealthCheck()))(Some(_)),
-        _.flatMap { ref ⇒
+        _.flatMap { ref =>
           ref ! PoisonPill
           None
         },
@@ -107,14 +107,14 @@ object DWPConnectionHealthCheck {
       dwpConnector
         .healthCheck()
         .value
-        .map { result ⇒
+        .map { result =>
           val time = timer.stop()
           result.fold[HealthCheckResult](
-            e ⇒ HealthCheckResult.Failure(e, time),
-            _ ⇒ HealthCheckResult.Success("DWP health check returned 200 OK", time))
+            e => HealthCheckResult.Failure(e, time),
+            _ => HealthCheckResult.Success("DWP health check returned 200 OK", time))
         }
         .recover {
-          case NonFatal(e) ⇒
+          case NonFatal(e) =>
             val time = timer.stop()
             HealthCheckResult.Failure(e.getMessage, time)
         }

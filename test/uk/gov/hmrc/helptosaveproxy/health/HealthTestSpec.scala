@@ -45,7 +45,7 @@ class HealthTestSpec extends ActorTestSupport("HealthTestSpec") with BeforeAndAf
 
   val testName = "test"
 
-  val (runnerName1, runnerName2) = "runner1" → "runner2"
+  val (runnerName1, runnerName2) = "runner1" -> "runner2"
 
   val minimumTimeBetweenTests: FiniteDuration = 1.minute
 
@@ -106,12 +106,12 @@ class HealthTestSpec extends ActorTestSupport("HealthTestSpec") with BeforeAndAf
         ),
         time.scheduler,
         metrics,
-        () ⇒ pagerDutyListener.ref ! PagerDutyAlert,
+        () => pagerDutyListener.ref ! PagerDutyAlert,
         Props(new ProxyActor(runnerListener.ref, runnerName1)),
         Props(new ProxyActor(runnerListener.ref, runnerName2))
       ))
 
-    ref → time
+    ref -> time
   }
 
   val (healthCheck: ActorRef, time: VirtualTime) = newHealthCheck()
@@ -125,7 +125,7 @@ class HealthTestSpec extends ActorTestSupport("HealthTestSpec") with BeforeAndAf
 
     runnerListener.expectMsg(PerformHealthCheck)
     runnerListener.reply(
-      result.fold[HealthCheckResult](e ⇒ HealthCheckResult.Failure(e, 0L), _ ⇒ HealthCheckResult.Success("", 0L))
+      result.fold[HealthCheckResult](e => HealthCheckResult.Failure(e, 0L), _ => HealthCheckResult.Success("", 0L))
     )
 
     runnerListener.expectTerminated(created.ref)
@@ -168,7 +168,7 @@ class HealthTestSpec extends ActorTestSupport("HealthTestSpec") with BeforeAndAf
         "create a child runner with the next set of props when " +
           "the configured number of successful tests between updates have " +
           "been performed" in {
-          (2 until numberOfTestsBetweenUpdates).foreach { _ ⇒
+          (2 until numberOfTestsBetweenUpdates).foreach { _ =>
             time.advance(timeBetweenTests)
             mockTest(runnerName1, Right(()))
             metricsListener.expectMsg(0)
@@ -183,7 +183,7 @@ class HealthTestSpec extends ActorTestSupport("HealthTestSpec") with BeforeAndAf
         "create a child runner with the first set of props when " +
           "the configured number of successful tests between updates have " +
           "been performed and all the props given have been used" in {
-          (1 until numberOfTestsBetweenUpdates).foreach { _ ⇒
+          (1 until numberOfTestsBetweenUpdates).foreach { _ =>
             time.advance(timeBetweenTests)
             mockTest(runnerName2, Right(()))
             metricsListener.expectMsg(0)
@@ -271,7 +271,7 @@ class HealthTestSpec extends ActorTestSupport("HealthTestSpec") with BeforeAndAf
       "the configured number of maximum consecutive test failures has been reached" must {
 
         "record the appropriate number of failures and trigger pager duty" in {
-          (1 until maximumConsecutiveFailures).foreach { i ⇒
+          (1 until maximumConsecutiveFailures).foreach { i =>
             time.advance(timeBetweenTests)
             mockTest(runnerName1, Left(""))
             metricsListener.expectMsg(i)
@@ -292,7 +292,7 @@ class HealthTestSpec extends ActorTestSupport("HealthTestSpec") with BeforeAndAf
       "the configured number of test failures between pager duty alerts has been reached" must {
 
         "record the appropriate number of failures and trigger pager duty again" in {
-          (1 until numberOfTestsBetweenAlerts).foreach { i ⇒
+          (1 until numberOfTestsBetweenAlerts).foreach { i =>
             time.advance(timeBetweenTests)
             mockTest(runnerName1, Left(""))
             metricsListener.expectMsg(maximumConsecutiveFailures + i)
@@ -374,7 +374,7 @@ object HealthTestSpec {
     }
 
     override def receive: Receive = {
-      case PerformHealthCheck ⇒ (ref ? PerformHealthCheck) pipeTo sender()
+      case PerformHealthCheck => (ref ? PerformHealthCheck) pipeTo sender()
     }
 
   }
