@@ -36,14 +36,14 @@ class UCClaimantCheckController @Inject()(
     extends BackendController(cc) with Auth with Logging {
 
   def ucClaimantCheck(nino: String, transactionId: UUID, threshold: Double): Action[AnyContent] = authorised {
-    implicit request ⇒
+    implicit request =>
       dwpConnector
         .ucClaimantCheck(nino, transactionId, threshold)
         .fold(
-          { e ⇒
+          { e =>
             logger.warn(s"Could not perform UC Claimant check: $e")
             InternalServerError
-          }, { r ⇒
+          }, { r =>
             Ok(r.json)
           }
         )

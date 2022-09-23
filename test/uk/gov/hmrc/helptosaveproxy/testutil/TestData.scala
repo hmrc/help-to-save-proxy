@@ -34,8 +34,8 @@ object TestData {
     implicit def providerLocalDate(s: String): GenProvider[LocalDate] =
       instance({
         s.toLowerCase match {
-          case "dateofbirth" | "dob" | "birthdate" ⇒ Gen.date(LocalDate.of(1900, 1, 1), LocalDate.now())
-          case _ ⇒ Gen.date
+          case "dateofbirth" | "dob" | "birthdate" => Gen.date(LocalDate.of(1900, 1, 1), LocalDate.now())
+          case _ => Gen.date
         }
       })
 
@@ -47,7 +47,7 @@ object TestData {
       * Valid user details which will pass NSI validation checks
       */
     val (nsiValidContactDetails, validNSIPayload, validBankDetails) = {
-      val (forename, surname) = "Tyrion" → "Lannister"
+      val (forename, surname) = "Tyrion" -> "Lannister"
       val dateOfBirth = LocalDate.ofEpochDay(0L)
       val addressLine1 = "Casterly Rock"
       val addressLine2 = "The Westerlands"

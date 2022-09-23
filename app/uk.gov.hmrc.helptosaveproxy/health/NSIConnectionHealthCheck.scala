@@ -62,7 +62,7 @@ class NSIConnectionHealthCheck @Inject()(
       configuration.underlying,
       system.scheduler,
       metrics.metrics,
-      () ⇒ pagerDutyAlerting.alert("NSI health check has failed"),
+      () => pagerDutyAlerting.alert("NSI health check has failed"),
       NSIConnectionHealthCheckRunner.props(nSIConnector, metrics, Payload.Payload1, ninoLoggingEnabled),
       NSIConnectionHealthCheckRunner.props(nSIConnector, metrics, Payload.Payload2, ninoLoggingEnabled)
     )
@@ -78,7 +78,7 @@ class NSIConnectionHealthCheck @Inject()(
         system.scheduler,
         None,
         _.fold(Some(newHealthCheck()))(Some(_)),
-        _.flatMap { ref ⇒
+        _.flatMap { ref =>
           ref ! PoisonPill
           None
         },
@@ -123,14 +123,14 @@ object NSIConnectionHealthCheck {
       nsiConnector
         .healthCheck(payload.value)
         .value
-        .map { result ⇒
+        .map { result =>
           val time = timer.stop()
           result.fold[HealthCheckResult](
-            e ⇒ HealthCheckResult.Failure(e, time),
-            _ ⇒ HealthCheckResult.Success(successMessage, time))
+            e => HealthCheckResult.Failure(e, time),
+            _ => HealthCheckResult.Success(successMessage, time))
         }
         .recover {
-          case NonFatal(e) ⇒
+          case NonFatal(e) =>
             val time = timer.stop()
             HealthCheckResult.Failure(e.getMessage, time)
         }

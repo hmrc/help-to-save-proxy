@@ -22,14 +22,14 @@ import uk.gov.hmrc.helptosaveproxy.health.HealthCheck.PerformHealthCheck
 
 import scala.concurrent.Future
 
-trait HealthCheckRunner { this: Actor ⇒
+trait HealthCheckRunner { this: Actor =>
 
   import context.dispatcher
 
   def performTest(): Future[HealthCheckResult]
 
   override def receive: Receive = {
-    case PerformHealthCheck ⇒ performTest() pipeTo sender
+    case PerformHealthCheck => performTest() pipeTo sender
   }
 
 }

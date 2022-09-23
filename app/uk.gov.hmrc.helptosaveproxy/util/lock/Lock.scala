@@ -47,9 +47,9 @@ class Lock[State](
   lock: TimePeriodLockService,
   scheduler: Scheduler,
   initialState: State,
-  onLockAcquired: State ⇒ State,
-  onLockReleased: State ⇒ State,
-  registerStopHook: (() ⇒ Future[Unit]) ⇒ Unit)
+  onLockAcquired: State => State,
+  onLockReleased: State => State,
+  registerStopHook: (() => Future[Unit]) => Unit)
     extends Actor with Logging {
 
   import Lock.LockMessages._
@@ -63,17 +63,17 @@ class Lock[State](
   var lockAcquired: Boolean = false
 
   override def receive: Receive = {
-    case AcquireLock ⇒
+    case AcquireLock =>
       val result = lock.withRenewedLock[Unit](toFuture(()))
-        .map(result ⇒ AcquireLockResult(result.isDefined))
-        .recover { case NonFatal(e) ⇒ AcquireLockFailure(e) }
+        .map(result => AcquireLockResult(result.isDefined))
+        .recover { case NonFatal(e) => AcquireLockFailure(e) }
 
       result pipeTo self
 
-    case AcquireLockFailure(error) ⇒
+    case AcquireLockFailure(error) =>
       logger.warn(s"Could not acquire or renew lock: ${error.getMessage}. Leaving state as is")
 
-    case AcquireLockResult(acquired) ⇒
+    case AcquireLockResult(acquired) =>
       if (acquired) {
         logger.info(s"Lock successfully acquired (lockID: ${lock.lockId}")
         lockAcquired = true
@@ -90,13 +90,13 @@ class Lock[State](
     super.preStart()
 
     // release the lock when the application shuts down
-    registerStopHook { () ⇒
+    registerStopHook { () =>
       if (lockAcquired) {
         lock.withRenewedLock[Unit]().onComplete {
-          case Success(_) ⇒
+          case Success(_) =>
             logger.info("Successfully released lock")
             state = onLockReleased(state)
-          case Failure(e) ⇒
+          case Failure(e) =>
             logger.warn(s"Could not release lock: ${e.getMessage}")
         }
       }
@@ -118,8 +118,8 @@ object Lock {
     lockDuration: FiniteDuration,
     scheduler: Scheduler,
     initialState: State,
-    onLockAcquired: State ⇒ State,
-    onLockReleased: State ⇒ State,
+    onLockAcquired: State => State,
+    onLockReleased: State => State,
     mongoLockRepository: MongoLockRepository,
     lifecycle: ApplicationLifecycle): Props = {
 
