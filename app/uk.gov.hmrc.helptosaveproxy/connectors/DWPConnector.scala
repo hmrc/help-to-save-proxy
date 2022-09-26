@@ -55,8 +55,6 @@ class DWPConnectorImpl @Inject()(
   system: ActorSystem)(implicit transformer: LogMessageTransformer, appConfig: AppConfig)
     extends DWPConnector with Logging {
 
-  var first = true
-
   val proxyClient: HttpProxyClient = new HttpProxyClient(
     httpAuditing,
     appConfig.runModeConfiguration,
@@ -75,10 +73,6 @@ class DWPConnectorImpl @Inject()(
       "thresholdAmount" -> threshold.toString,
       "transactionId"   -> transactionId.toString)
 
-    if(first) {
-      logger.info(s"first ${appConfig.p}")
-      first = false
-    }
     EitherT(
       proxyClient
         .get(s"${appConfig.dwpBaseUrl}/hmrc/$nino", queryParams)(hc.copy(authorization = None), ec)
