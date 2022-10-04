@@ -21,7 +21,7 @@ import play.api.Configuration
 import play.api.http.HttpVerbs
 import play.api.libs.json.{Json, Writes}
 import play.api.libs.ws.{WSClient, WSProxyServer}
-import uk.gov.hmrc.http.hooks.HookData
+import uk.gov.hmrc.http.hooks.{Data, HookData, RequestData, ResponseData}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpReads, HttpResponse}
 import uk.gov.hmrc.play.audit.http.HttpAuditing
 import uk.gov.hmrc.play.bootstrap.http.DefaultHttpClient
@@ -73,7 +73,7 @@ class HttpProxyClient(
     withTracing(PUT, url) {
       val httpResponse = doPut(url, body, headers.toSeq)(w, ec)
       if (needsAuditing) {
-        executeHooks(PUT, new URL(url), headers.toSeq, Option(HookData.FromString(Json.stringify(w.writes(body)))), httpResponse)
+        executeHooks(PUT, new URL(url), RequestData(headers.toSeq, Option(Data(HookData.FromString(Json.stringify(w.writes(body))), isTruncated = false, isRedacted = false))), httpResponse.map(ResponseData.fromHttpResponse))
       }
       mapErrors(PUT, url, httpResponse).map(response => rawHttpReads.read(PUT, url, response))
     }
