@@ -19,7 +19,7 @@ package uk.gov.hmrc.helptosaveproxy.controllers
 import java.util.UUID
 import cats.data.EitherT
 import cats.instances.future._
-import org.scalamock.handlers.{CallHandler, CallHandler1, CallHandler3}
+import org.scalamock.handlers.{CallHandler1, CallHandler3}
 import play.api.http.Status
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.{Action, AnyContent}

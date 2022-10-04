@@ -25,14 +25,12 @@ import play.api.Configuration
 import play.api.http.Status
 import play.api.libs.json.{JsObject, JsString, Json}
 import play.api.libs.ws.WSClient
-import play.api.mvc.Result
 import uk.gov.hmrc.helptosaveproxy.TestSupport
 import uk.gov.hmrc.helptosaveproxy.http.HttpProxyClient
 import uk.gov.hmrc.helptosaveproxy.models.AccountNumber
 import uk.gov.hmrc.helptosaveproxy.models.SubmissionResult.{SubmissionFailure, SubmissionSuccess}
 import uk.gov.hmrc.helptosaveproxy.testutil.MockPagerDuty
 import uk.gov.hmrc.helptosaveproxy.testutil.TestData.UserData.validNSIPayload
-import uk.gov.hmrc.helptosaveproxy.util.Result
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.play.audit.http.HttpAuditing
 
