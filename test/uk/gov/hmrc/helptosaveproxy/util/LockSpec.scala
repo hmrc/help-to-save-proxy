@@ -17,11 +17,10 @@
 package uk.gov.hmrc.helptosaveproxy.util
 
 import akka.actor.{ActorRef, Props}
-import com.google.inject.Inject
 import com.miguno.akka.testing.VirtualTime
 import uk.gov.hmrc.helptosaveproxy.health.ActorTestSupport
 import uk.gov.hmrc.helptosaveproxy.util.lock.Lock
-import uk.gov.hmrc.mongo.lock.{LockRepository, MongoLockRepository, TimePeriodLockService}
+import uk.gov.hmrc.mongo.lock.{LockRepository, TimePeriodLockService}
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
@@ -36,7 +35,7 @@ class LockSpec extends ActorTestSupport("LockSpec") {
 
   val time: VirtualTime = new VirtualTime
 
-  val mongoLockRepository = mock[LockRepository]
+  val mongoLockRepository: LockRepository = mock[LockRepository]
 
   trait TestableTimePeriodLockService extends TimePeriodLockService {
     override val lockRepository: LockRepository = mongoLockRepository
@@ -44,7 +43,7 @@ class LockSpec extends ActorTestSupport("LockSpec") {
     override val ttl: Duration = lockDuration
   }
 
-  val internalLock = mock[TestableTimePeriodLockService]
+  val internalLock : TestableTimePeriodLockService = mock[TestableTimePeriodLockService]
 
   def sendToSelf[A](a: A): A = {
     self ! a
@@ -68,7 +67,7 @@ class LockSpec extends ActorTestSupport("LockSpec") {
         )
       ))
 
-  lazy val lock = newLock(time)
+  lazy val lock : ActorRef = newLock(time)
 
   def mockwithRenewedLock(result: Either[String, Option[Unit]]): Unit =
     (internalLock

@@ -38,7 +38,7 @@ import scala.concurrent.ExecutionContext
 
 trait TestSupport extends UnitSpec with MockFactory with BeforeAndAfterAll with ScalaFutures { this: Suite =>
 
-  lazy val additionalConfig = Configuration()
+  lazy val additionalConfig: Configuration = Configuration()
 
   lazy implicit val configuration: Configuration = fakeApplication.injector.instanceOf[Configuration]
 
@@ -64,17 +64,17 @@ trait TestSupport extends UnitSpec with MockFactory with BeforeAndAfterAll with 
   implicit val headerCarrier: HeaderCarrier =
     HeaderCarrier(sessionId = Some(SessionId(UUID.randomUUID().toString)), authorization = Some(Authorization("auth")))
 
-  override def beforeAll() {
+  override def beforeAll {
     Play.start(fakeApplication)
     super.beforeAll()
   }
 
-  override def afterAll() {
+  override def afterAll {
     Play.stop(fakeApplication)
     super.afterAll()
   }
 
-  val mockMetrics = new Metrics(stub[PlayMetrics]) {
+  val mockMetrics: Metrics = new Metrics(stub[PlayMetrics]) {
     override def timer(name: String): Timer = new Timer()
 
     override def counter(name: String): Counter = new Counter()

@@ -28,7 +28,7 @@ import uk.gov.hmrc.helptosaveproxy.util.lock.Lock
 import uk.gov.hmrc.helptosaveproxy.util.{Logging, PagerDutyAlerting}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.mongo.MongoComponent
-import uk.gov.hmrc.mongo.lock.{MongoLockRepository}
+import uk.gov.hmrc.mongo.lock.MongoLockRepository
 
 import scala.concurrent.Future
 import scala.concurrent.duration.FiniteDuration

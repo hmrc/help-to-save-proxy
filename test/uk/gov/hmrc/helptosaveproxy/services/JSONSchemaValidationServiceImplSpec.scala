@@ -16,9 +16,10 @@
 
 package uk.gov.hmrc.helptosaveproxy.services
 
+import play.api.Configuration
+
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-
 import play.api.libs.json._
 import uk.gov.hmrc.helptosaveproxy.TestSupport
 import uk.gov.hmrc.helptosaveproxy.models.BankDetails
@@ -26,7 +27,7 @@ import uk.gov.hmrc.helptosaveproxy.testutil.TestData.UserData.validNSIPayload
 
 class JSONSchemaValidationServiceImplSpec extends TestSupport {
 
-  val fakeConfiguration = fakeApplication.configuration
+  val fakeConfiguration: Configuration = fakeApplication.configuration
   val service = new JSONSchemaValidationServiceImpl(fakeConfiguration)
 
   val validNSIPayloadJSON: JsValue = Json.toJson(validNSIPayload)

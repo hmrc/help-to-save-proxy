@@ -33,14 +33,14 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class UCClaimantCheckControllerSpec extends AuthSupport with UCClaimantTestSupport {
 
-  val mockDWPConnector = mock[DWPConnector]
+  val mockDWPConnector: DWPConnector = mock[DWPConnector]
 
   val controller = new UCClaimantCheckController(mockDWPConnector, mockAuthConnector, mockCc)
 
   val nino = "WP010123A"
-  val transactionId = UUID.randomUUID()
+  val transactionId: UUID = UUID.randomUUID()
   val threshold = 650.0
-  val noHeaders = Map[String, Seq[String]]()
+  val noHeaders : Map[String, Seq[String]] = Map[String, Seq[String]]()
 
   def doUCClaimantCheck(controller: UCClaimantCheckController, encodedNino: String): Future[PlayResult] =
     controller.ucClaimantCheck(encodedNino, transactionId, threshold)(FakeRequest())

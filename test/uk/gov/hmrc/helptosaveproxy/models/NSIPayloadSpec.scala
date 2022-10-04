@@ -26,7 +26,7 @@ import org.scalatest.wordspec.AnyWordSpec
 
 class NSIPayloadSpec extends AnyWordSpec with Matchers { // scalastyle:off magic.number
 
-  val email = validNSIPayload.contactDetails.email
+  val email : Option[String] = validNSIPayload.contactDetails.email
 
   "The NSIUSerInfo" must {
 

@@ -25,7 +25,6 @@ import com.codahale.metrics._
 import com.kenshoo.play.metrics.Metrics
 import com.miguno.akka.testing.VirtualTime
 import com.typesafe.config.ConfigFactory
-import org.junit.Before
 import org.scalatest.BeforeAndAfter
 import uk.gov.hmrc.helptosaveproxy.connectors.NSIConnector
 import uk.gov.hmrc.helptosaveproxy.health.HealthCheck.PerformHealthCheck
@@ -80,7 +79,7 @@ class HealthTestSpec extends ActorTestSupport("HealthTestSpec") with BeforeAndAf
   }
 
   before {
-    SharedMetricRegistries.clear
+    SharedMetricRegistries.clear()
   }
 
   val mockPagerDutyAlerting: PagerDutyAlerting = mock[PagerDutyAlerting]

@@ -17,7 +17,6 @@
 package uk.gov.hmrc.helptosaveproxy.connectors
 
 import java.util.UUID
-
 import cats.instances.int._
 import cats.syntax.eq._
 import org.scalamock.scalatest.MockFactory
@@ -26,12 +25,14 @@ import play.api.Configuration
 import play.api.http.Status
 import play.api.libs.json.{JsObject, JsString, Json}
 import play.api.libs.ws.WSClient
+import play.api.mvc.Result
 import uk.gov.hmrc.helptosaveproxy.TestSupport
 import uk.gov.hmrc.helptosaveproxy.http.HttpProxyClient
 import uk.gov.hmrc.helptosaveproxy.models.AccountNumber
 import uk.gov.hmrc.helptosaveproxy.models.SubmissionResult.{SubmissionFailure, SubmissionSuccess}
 import uk.gov.hmrc.helptosaveproxy.testutil.MockPagerDuty
 import uk.gov.hmrc.helptosaveproxy.testutil.TestData.UserData.validNSIPayload
+import uk.gov.hmrc.helptosaveproxy.util.Result
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.play.audit.http.HttpAuditing
 
@@ -42,7 +43,7 @@ import scala.util.Random
 class NSIConnectorSpec
     extends TestSupport with HttpSupport with MockFactory with ScalaCheckDrivenPropertyChecks with MockPagerDuty {
 
-  override lazy val additionalConfig = Configuration(
+  override lazy val additionalConfig: Configuration = Configuration(
     "feature-toggles.log-account-creation-json.enabled" -> Random.nextBoolean())
 
   private val mockAuditor = mock[HttpAuditing]
@@ -56,18 +57,18 @@ class NSIConnectorSpec
         "microservice.services.nsi.proxy",
         fakeApplication.actorSystem)
 
-  override val mockProxyClient = mock[MockedHttpProxyClient]
+  override val mockProxyClient : MockedHttpProxyClient = mock[MockedHttpProxyClient]
 
   lazy val nsiConnector: NSIConnectorImpl =
     new NSIConnectorImpl(mockAuditor, mockMetrics, mockPagerDuty, mockWsClient, fakeApplication.actorSystem) {
-      override val proxyClient = mockProxyClient
+      override val proxyClient : MockedHttpProxyClient = mockProxyClient
     }
 
-  val nsiCreateAccountUrl = appConfig.nsiCreateAccountUrl
-  val nsiAuthHeaderKey = appConfig.nsiAuthHeaderKey
-  val nsiBasicAuth = appConfig.nsiBasicAuth
-  val authHeaders = Map(nsiAuthHeaderKey -> nsiBasicAuth)
-  val noHeaders = Map[String, Seq[String]]()
+  val nsiCreateAccountUrl : String = appConfig.nsiCreateAccountUrl
+  val nsiAuthHeaderKey : String = appConfig.nsiAuthHeaderKey
+  val nsiBasicAuth : String = appConfig.nsiBasicAuth
+  val authHeaders : Map[String, String]= Map(nsiAuthHeaderKey -> nsiBasicAuth)
+  val noHeaders: Map[String, Seq[String]] = Map[String, Seq[String]]()
 
   "the updateEmail method" must {
 

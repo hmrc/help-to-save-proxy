@@ -53,7 +53,7 @@ class AuthSpec extends AuthSupport {
     }
 
     "handle various auth related exceptions and throw an error" in {
-      def mockAuthWith(error: String) = mockAuthResultWithFail()(fromString(error))
+      def mockAuthWith(error: String): Unit = mockAuthResultWithFail()(fromString(error))
 
       val exceptions = List(
         "InsufficientConfidenceLevel" -> Status.FORBIDDEN,

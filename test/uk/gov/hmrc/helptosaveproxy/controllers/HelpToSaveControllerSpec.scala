@@ -17,16 +17,16 @@
 package uk.gov.hmrc.helptosaveproxy.controllers
 
 import java.util.UUID
-
 import cats.data.EitherT
 import cats.instances.future._
+import org.scalamock.handlers.{CallHandler, CallHandler1, CallHandler3}
 import play.api.http.Status
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.{Action, AnyContent}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.auth.core.retrieve.Credentials
-import uk.gov.hmrc.helptosaveproxy.util.AuthSupport
+import uk.gov.hmrc.helptosaveproxy.util.{AuthSupport, Result}
 import uk.gov.hmrc.helptosaveproxy.connectors.NSIConnector
 import uk.gov.hmrc.helptosaveproxy.models.{AccountNumber, NSIPayload}
 import uk.gov.hmrc.helptosaveproxy.models.SubmissionResult.{SubmissionFailure, SubmissionSuccess}
@@ -38,16 +38,16 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class HelpToSaveControllerSpec extends AuthSupport {
 
-  val mockNSIConnector = mock[NSIConnector]
-  val mockJsonSchema = mock[JSONSchemaValidationService]
+  val mockNSIConnector: NSIConnector = mock[NSIConnector]
+  val mockJsonSchema: JSONSchemaValidationService = mock[JSONSchemaValidationService]
 
   val controller = new HelpToSaveController(mockNSIConnector, mockJsonSchema, mockAuthConnector, mockCc)
 
-  val ggCreds = Credentials("id", "GovernmentGateway")
+  val ggCreds: Credentials = Credentials("id", "GovernmentGateway")
   val ggRetrievals: Option[Credentials] = Some(ggCreds)
-  val noHeaders = Map[String, Seq[String]]()
+  val noHeaders : Map[String, Seq[String]] = Map[String, Seq[String]]()
 
-  def mockJSONSchemaValidationService(expectedInfo: NSIPayload)(result: Either[String, Unit]) =
+  def mockJSONSchemaValidationService(expectedInfo: NSIPayload)(result: Either[String, Unit]): CallHandler1[JsValue, Either[String, JsValue]] =
     (mockJsonSchema
       .validate(_: JsValue))
       .expects(Json.toJson(expectedInfo))
@@ -59,7 +59,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
       .expects(expectedInfo, *, *)
       .returning(EitherT.fromEither[Future](result))
 
-  def mockUpdateEmail(expectedInfo: NSIPayload)(result: Either[String, Unit]) =
+  def mockUpdateEmail(expectedInfo: NSIPayload)(result: Either[String, Unit]): CallHandler3[NSIPayload,HeaderCarrier, ExecutionContext, Result[Unit]] =
     (mockNSIConnector
       .updateEmail(_: NSIPayload)(_: HeaderCarrier, _: ExecutionContext))
       .expects(expectedInfo, *, *)

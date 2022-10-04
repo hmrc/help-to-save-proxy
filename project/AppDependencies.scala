@@ -4,7 +4,7 @@ import sbt._
 
 object AppDependencies {
 
-  val compile = Seq(
+  val compile : Seq[ModuleID] = Seq(
     ws,
     "uk.gov.hmrc"       %% "domain"                     % "8.1.0-play-28",
     "uk.gov.hmrc"       %% "bootstrap-backend-play-28"  % "7.3.0",
@@ -16,7 +16,7 @@ object AppDependencies {
     "com.github.ghik" % "silencer-lib" % "1.7.11" % Provided cross CrossVersion.full
   )
 
-  val test = Seq(
+  val test : Seq[ModuleID] = Seq(
     "uk.gov.hmrc"          %% "stub-data-generator"         % "0.5.3"             % "test",
     "org.scalatest"        %% "scalatest"                   % "3.2.13"             % "test",
     "com.vladsch.flexmark" %  "flexmark-all"                % "0.62.2"           % "test",
