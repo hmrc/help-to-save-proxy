@@ -18,7 +18,7 @@ package uk.gov.hmrc.helptosaveproxy
 
 import org.scalacheck.Gen
 
-import scala.reflect.{ClassTag, _}
+import scala.reflect._
 
 package object testutil {
 

@@ -18,7 +18,7 @@ package uk.gov.hmrc.helptosaveproxy.auth
 
 import play.api.mvc.{Action, AnyContent, Request, Result}
 import uk.gov.hmrc.auth.core.AuthProvider.{GovernmentGateway, PrivilegedApplication}
-import uk.gov.hmrc.auth.core.{AuthProviders, _}
+import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.helptosaveproxy.util.Logging
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
