@@ -56,7 +56,7 @@ class AppConfig @Inject()(val runModeConfiguration: Configuration, sc: ServicesC
 
   val dwpBaseUrl: String = sc.baseUrl("dwp")
 
-  val newDwpUrl: String = sc.baseUrl("/eligibilityCheck/v1/hmrc/helpToSave/")
+  val newDwpUrl: String = sc.baseUrl("/eligibilityCheck/v1/hmrc/helpToSave")
 
   val dwpHealthCheckURL: String = s"$dwpBaseUrl/hmrc-healthcheck"
 

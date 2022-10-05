@@ -83,7 +83,7 @@ class DWPConnectorImpl @Inject()(
 
     val dwpUrl = isNewDwpEndpoint match {
     case true => s"${appConfig.newDwpUrl}/$nino"
-    case _ => s"${appConfig.newDwpUrl}/$nino"
+    case _ => s"${appConfig.dwpBaseUrl}/$nino"
     }
 
     EitherT(
@@ -118,39 +118,6 @@ class DWPConnectorImpl @Inject()(
                 s"transactionId: $transactionId, thresholdAmount: $threshold, ${timeString(time)}")
         })
   }
-
-//    EitherT(
-//      proxyClient
-//        .get(s"${appConfig.dwpBaseUrl}/hmrc/$nino", queryParams)(hc.copy(authorization = None), ec)
-//        .map[Either[String, HttpResponse]] { response =>
-//          val time = timeContext.stop()
-//          response.status match {
-//            case Status.OK =>
-//              logger.info(
-//                s"ucClaimantCheck returned 200 (OK) with UCDetails: ${response.json}, transactionId: " +
-//                  s"$transactionId, thresholdAmount: $threshold, ${timeString(time)}",
-//                nino,
-//                None
-//              )
-//              Right(HttpResponse(200, response.json, Map[String, Seq[String]]())) // scalastyle:ignore magic.number
-//            case other =>
-//              pagerDutyAlerting.alert("Received unexpected http status in response to uc claimant check")
-//              metrics.dwpClaimantErrorCounter.inc()
-//              Left(
-//                s"ucClaimantCheck returned a status other than 200, with response body: ${response.body}, " +
-//                  s"status: $other, transactionId: $transactionId, thresholdAmount: $threshold, ${timeString(time)}")
-//          }
-//        }
-//        .recover {
-//          case e =>
-//            val time = timeContext.stop()
-//            pagerDutyAlerting.alert("Failed to make call to uc claimant check")
-//            metrics.dwpClaimantErrorCounter.inc()
-//            Left(
-//              s"Encountered error while trying to make ucClaimantCheck call, with message: ${e.getMessage}, " +
-//                s"transactionId: $transactionId, thresholdAmount: $threshold, ${timeString(time)}")
-//        })
-//  }
 
   def healthCheck()(implicit hc: HeaderCarrier, ec: ExecutionContext): EitherT[Future, String, Unit] =
     EitherT(proxyClient.get(appConfig.dwpHealthCheckURL).map[Either[String, Unit]] { response =>
