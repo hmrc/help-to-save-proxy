@@ -17,19 +17,21 @@
 package uk.gov.hmrc.helptosaveproxy.connectors
 
 import java.util.UUID
-
 import akka.actor.ActorSystem
 import cats.data.EitherT
 import com.codahale.metrics.Timer
 import com.google.inject.ImplementedBy
+
 import javax.inject.{Inject, Singleton}
 import play.api.http.Status
+import play.api.libs.json.Json
 import play.api.libs.ws.WSClient
 import uk.gov.hmrc.helptosaveproxy.config.AppConfig
 import uk.gov.hmrc.helptosaveproxy.http.HttpProxyClient
 import uk.gov.hmrc.helptosaveproxy.metrics.Metrics
 import uk.gov.hmrc.helptosaveproxy.metrics.Metrics._
 import uk.gov.hmrc.helptosaveproxy.util.Logging._
+import uk.gov.hmrc.helptosaveproxy.util.Toggles.FEATURE
 import uk.gov.hmrc.helptosaveproxy.util.{LogMessageTransformer, Logging, PagerDutyAlerting}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.play.audit.http.HttpAuditing
@@ -68,18 +70,25 @@ class DWPConnectorImpl @Inject()(
 
     val timeContext: Timer.Context = metrics.dwpClaimantCheckTimer.time()
 
-    val queryParams = Seq(
-      "systemId"        -> appConfig.systemId,
-      "thresholdAmount" -> threshold.toString)
-
 //    val queryParams = Seq(
 //      "systemId"        -> appConfig.systemId,
-//      "thresholdAmount" -> threshold.toString,
-//      "transactionId"   -> transactionId.toString)
+//      "thresholdAmount" -> threshold.toString)
+
+    val queryParams = Seq(
+      "systemId"        -> appConfig.systemId,
+      "thresholdAmount" -> threshold.toString,
+      "transactionId"   -> transactionId.toString)
+
+    val isNewDwpEndpoint = FEATURE("isNewDwpEndpoint", appConfig.runModeConfiguration, logger).enabled
+
+    val dwpUrl = isNewDwpEndpoint match {
+    case true => s"${appConfig.newDwpUrl}/$nino"
+    case _ => s"${appConfig.newDwpUrl}/$nino"
+    }
 
     EitherT(
       proxyClient
-        .get(s"${appConfig.newDwpUrl}/$nino", queryParams)(hc.copy(authorization = None), ec)
+        .get(dwpUrl,queryParams)(hc.copy(authorization = None), ec)
         .map[Either[String, HttpResponse]] { response =>
           val time = timeContext.stop()
           response.status match {
