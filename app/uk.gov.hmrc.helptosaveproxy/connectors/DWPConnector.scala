@@ -69,7 +69,7 @@ class DWPConnectorImpl @Inject()(
     val timeContext: Timer.Context = metrics.dwpClaimantCheckTimer.time()
 
     val queryParams = Seq(
-      "systemId"        -> appConfig.systemId,
+      "systemId"        -> "999",
       "thresholdAmount" -> threshold.toString,
       "transactionId"   -> transactionId.toString)
 

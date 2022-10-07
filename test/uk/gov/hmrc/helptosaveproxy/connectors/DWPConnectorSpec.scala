@@ -66,7 +66,7 @@ class DWPConnectorSpec
     Await.result(result.value, 3.seconds)
 
   val queryParams = Seq(
-    "systemId"        -> appConfig.systemId,
+    "systemId"        -> "999",
     "thresholdAmount" -> threshold.toString,
     "transactionId"   -> transactionId.toString)
 
