@@ -102,7 +102,7 @@ class Lock[State](
       }
     }
 
-    schedulerTask = Some(scheduler.scheduleAtFixedRate(Duration.Zero, Duration.fromNanos(lock.ttl.toMillis), self, AcquireLock))
+    schedulerTask = Some(scheduler.scheduleAtFixedRate(Duration.Zero, Duration.fromNanos(lock.ttl.toNanos), self, AcquireLock))
   }
 
 }
