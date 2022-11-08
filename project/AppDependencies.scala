@@ -19,7 +19,7 @@ object AppDependencies {
   val test = Seq(
     "uk.gov.hmrc"          %% "stub-data-generator"         % "0.5.3"             % "test",
     "org.scalatest"        %% "scalatest"                   % "3.2.14"            % "test",
-    "com.vladsch.flexmark" %  "flexmark-all"                % "0.64.0"            % "test",
+    "com.vladsch.flexmark" %  "flexmark-all"                % "0.62.2"            % "test",
     "org.scalatestplus"    %% "scalatestplus-scalacheck"    % "3.1.0.0-RC2"       % "test",
     "org.pegdown"          %  "pegdown"                     % "1.6.0"             % "test",
     "com.typesafe.play"    %% "play-test"                   % PlayVersion.current % "test",
