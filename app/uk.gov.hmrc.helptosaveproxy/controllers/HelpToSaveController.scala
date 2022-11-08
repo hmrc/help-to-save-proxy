@@ -78,7 +78,7 @@ class HelpToSaveController @Inject()(
         { e =>
           val message = s"Could not retrieve $resource due to : $e"
           logger.warn(message)
-          Status(500)(message)
+          InternalServerError(message)
         }, { response =>
           Option(response.body).fold[Result](Status(response.status))(body => Status(response.status)(body))
         }
