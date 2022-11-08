@@ -17,11 +17,10 @@
 package uk.gov.hmrc.helptosaveproxy.util
 
 import akka.actor.{ActorRef, Props}
-import com.google.inject.Inject
 import com.miguno.akka.testing.VirtualTime
 import uk.gov.hmrc.helptosaveproxy.health.ActorTestSupport
 import uk.gov.hmrc.helptosaveproxy.util.lock.Lock
-import uk.gov.hmrc.mongo.lock.{LockRepository, MongoLockRepository, TimePeriodLockService}
+import uk.gov.hmrc.mongo.lock.{LockRepository, TimePeriodLockService}
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}

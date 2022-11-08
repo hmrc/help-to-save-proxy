@@ -92,9 +92,12 @@ class Lock[State](
     // release the lock when the application shuts down
     registerStopHook { () =>
       if (lockAcquired) {
-        lock.withRenewedLock[Unit]().onComplete {
+        lock.withRenewedLock[Unit]((): Unit).onComplete {
           case Success(_) =>
             logger.info("Successfully released lock")
+
+
+
             state = onLockReleased(state)
           case Failure(e) =>
             logger.warn(s"Could not release lock: ${e.getMessage}")

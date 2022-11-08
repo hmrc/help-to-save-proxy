@@ -73,7 +73,9 @@ class HttpProxyClient(
     withTracing(PUT, url) {
       val httpResponse = doPut(url, body, headers.toSeq)(w, ec)
       if (needsAuditing) {
-        executeHooks(PUT, new URL(url), RequestData(headers.toSeq, Option(Data(HookData.FromString(Json.stringify(w.writes(body))), isTruncated = false, isRedacted = false))), httpResponse.map(ResponseData.fromHttpResponse))
+        executeHooks(PUT, new URL(url),
+          RequestData(headers.toSeq, Option(Data(HookData.FromString(Json.stringify(w.writes(body))), isTruncated = false, isRedacted = false))),
+          httpResponse.map(ResponseData.fromHttpResponse))
       }
       mapErrors(PUT, url, httpResponse).map(response => rawHttpReads.read(PUT, url, response))
     }
