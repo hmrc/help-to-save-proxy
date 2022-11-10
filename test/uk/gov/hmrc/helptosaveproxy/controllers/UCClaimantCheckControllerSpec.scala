@@ -21,7 +21,7 @@ import java.util.UUID
 import cats.data.EitherT
 import cats.instances.future._
 import play.api.libs.json.Json
-import play.api.mvc.{Result ⇒ PlayResult}
+import play.api.mvc.{Result => PlayResult}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.helptosaveproxy.util.AuthSupport

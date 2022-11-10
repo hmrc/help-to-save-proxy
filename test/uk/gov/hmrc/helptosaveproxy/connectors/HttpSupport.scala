@@ -24,7 +24,7 @@ import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import scala.concurrent.{ExecutionContext, Future}
 import org.scalatest.matchers.should.Matchers
 
-trait HttpSupport { this: MockFactory with Matchers ⇒
+trait HttpSupport { this: MockFactory with Matchers =>
 
   val mockProxyClient: HttpProxyClient
 
@@ -35,7 +35,7 @@ trait HttpSupport { this: MockFactory with Matchers ⇒
     (mockProxyClient
       .get(_: String, _: Seq[(String, String)], _: Map[String, String])(_: HeaderCarrier, _: ExecutionContext))
       .expects(where {
-        (u: String, q: Seq[(String, String)], hdrs: Map[String, String], h: HeaderCarrier, _: ExecutionContext) ⇒
+        (u: String, q: Seq[(String, String)], hdrs: Map[String, String], h: HeaderCarrier, _: ExecutionContext) =>
           // use matchers here to get useful error messages when the following predicates
           // are not satisfied - otherwise it is difficult to tell in the logs what went wrong
           u shouldBe url
@@ -50,7 +50,7 @@ trait HttpSupport { this: MockFactory with Matchers ⇒
     (mockProxyClient
       .put(_: String, _: A, _: Map[String, String], _: Boolean)(_: Writes[A], _: HeaderCarrier, _: ExecutionContext))
       .expects(where {
-        (u: String, a: A, hdrs: Map[String, String], n: Boolean, _: Writes[A], h: HeaderCarrier, _: ExecutionContext) ⇒
+        (u: String, a: A, hdrs: Map[String, String], n: Boolean, _: Writes[A], h: HeaderCarrier, _: ExecutionContext) =>
           u shouldBe url
           a shouldBe body
           hdrs shouldBe headers

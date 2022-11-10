@@ -43,7 +43,7 @@ class NSIConnectorSpec
     extends TestSupport with HttpSupport with MockFactory with ScalaCheckDrivenPropertyChecks with MockPagerDuty {
 
   override lazy val additionalConfig = Configuration(
-    "feature-toggles.log-account-creation-json.enabled" → Random.nextBoolean())
+    "feature-toggles.log-account-creation-json.enabled" -> Random.nextBoolean())
 
   private val mockAuditor = mock[HttpAuditing]
   private val mockWsClient = mock[WSClient]
@@ -66,7 +66,7 @@ class NSIConnectorSpec
   val nsiCreateAccountUrl = appConfig.nsiCreateAccountUrl
   val nsiAuthHeaderKey = appConfig.nsiAuthHeaderKey
   val nsiBasicAuth = appConfig.nsiBasicAuth
-  val authHeaders = Map(nsiAuthHeaderKey → nsiBasicAuth)
+  val authHeaders = Map(nsiAuthHeaderKey -> nsiBasicAuth)
   val noHeaders = Map[String, Seq[String]]()
 
   "the updateEmail method" must {
@@ -81,7 +81,7 @@ class NSIConnectorSpec
 
     "return a Left " when {
       "the status is not OK" in {
-        forAll { status: Int ⇒
+        forAll { status: Int =>
           whenever(status =!= Status.OK && status > 0) {
             inSequence {
               mockPut(nsiCreateAccountUrl, validNSIPayload, authHeaders)(Some(HttpResponse(status, "")))
@@ -127,7 +127,7 @@ class NSIConnectorSpec
         val submissionFailure = SubmissionFailure(Some("id"), "message", "detail")
         inSequence {
           mockPost(nsiCreateAccountUrl, validNSIPayload, authHeaders)(
-            Some(HttpResponse(Status.BAD_REQUEST, JsObject(Seq("error" → submissionFailure.toJson)), noHeaders)))
+            Some(HttpResponse(Status.BAD_REQUEST, JsObject(Seq("error" -> submissionFailure.toJson)), noHeaders)))
           // WARNING: do not change the message in the following check - this needs to stay in line with the configuration in alert-config
           mockPagerDutyAlert("Received unexpected http status in response to create account")
         }
@@ -172,8 +172,8 @@ class NSIConnectorSpec
 
         }
         Await.result(doRequest.value, 3.seconds) match {
-          case Right(_) ⇒ fail()
-          case Left(_) ⇒ ()
+          case Right(_) => fail()
+          case Left(_) => ()
         }
       }
 
@@ -196,7 +196,7 @@ class NSIConnectorSpec
       }
 
       "Return a Left when the status is not OK" in {
-        forAll { status: Int ⇒
+        forAll { status: Int =>
           whenever(status > 0 && status =!= Status.OK) {
             mockPut(nsiCreateAccountUrl, validNSIPayload, authHeaders)(Some(HttpResponse(status, "")))
             Await.result(doRequest.value, 3.seconds).isLeft shouldBe true
@@ -216,10 +216,10 @@ class NSIConnectorSpec
     val resource = "account"
 
     val queryParameters = Map(
-      "nino" → Seq(nino),
-      "version" → Seq(version),
-      "systemId" → Seq(systemId),
-      "correlationId" → Seq(correlationId.toString)
+      "nino" -> Seq(nino),
+      "version" -> Seq(version),
+      "systemId" -> Seq(systemId),
+      "correlationId" -> Seq(correlationId.toString)
     )
 
     val queryParamsSeq =
@@ -239,7 +239,7 @@ class NSIConnectorSpec
     }
 
     "handle unexpected errors" in {
-      forAll { status: Int ⇒
+      forAll { status: Int =>
         whenever(status > 0 && status =!= Status.OK && status =!= Status.BAD_REQUEST) {
           mockGet(url, queryParamsSeq, authHeaders)(Some(HttpResponse(status, "")))
           Await.result(doRequest.value, 3.seconds).isLeft shouldBe true

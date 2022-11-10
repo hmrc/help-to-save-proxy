@@ -39,7 +39,7 @@ class AuthSpec extends AuthSupport {
 
   val retrieve: Retrieval[Option[Credentials]] = credentials
 
-  private def callAuth = auth.authorised { _ ⇒
+  private def callAuth = auth.authorised { _ =>
     Future.successful(Ok("authSuccess"))
   }
 
@@ -56,21 +56,21 @@ class AuthSpec extends AuthSupport {
       def mockAuthWith(error: String) = mockAuthResultWithFail()(fromString(error))
 
       val exceptions = List(
-        "InsufficientConfidenceLevel" → Status.FORBIDDEN,
-        "InsufficientEnrolments" → Status.FORBIDDEN,
-        "UnsupportedAffinityGroup" → Status.FORBIDDEN,
-        "UnsupportedCredentialRole" → Status.FORBIDDEN,
-        "UnsupportedAuthProvider" → Status.FORBIDDEN,
-        "BearerTokenExpired" → Status.UNAUTHORIZED,
-        "MissingBearerToken" → Status.UNAUTHORIZED,
-        "InvalidBearerToken" → Status.UNAUTHORIZED,
-        "SessionRecordNotFound" → Status.UNAUTHORIZED,
-        "IncorrectCredentialStrength" → Status.FORBIDDEN,
-        "unknown-blah" → Status.INTERNAL_SERVER_ERROR
+        "InsufficientConfidenceLevel" -> Status.FORBIDDEN,
+        "InsufficientEnrolments" -> Status.FORBIDDEN,
+        "UnsupportedAffinityGroup" -> Status.FORBIDDEN,
+        "UnsupportedCredentialRole" -> Status.FORBIDDEN,
+        "UnsupportedAuthProvider" -> Status.FORBIDDEN,
+        "BearerTokenExpired" -> Status.UNAUTHORIZED,
+        "MissingBearerToken" -> Status.UNAUTHORIZED,
+        "InvalidBearerToken" -> Status.UNAUTHORIZED,
+        "SessionRecordNotFound" -> Status.UNAUTHORIZED,
+        "IncorrectCredentialStrength" -> Status.FORBIDDEN,
+        "unknown-blah" -> Status.INTERNAL_SERVER_ERROR
       )
 
       exceptions.foreach {
-        case (error, expectedStatus) ⇒
+        case (error, expectedStatus) =>
           mockAuthWith(error)
           val result = callAuth(FakeRequest())
           status(result) shouldBe expectedStatus

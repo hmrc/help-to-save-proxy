@@ -57,30 +57,30 @@ class JSONSchemaValidationServiceImpl @Inject()(conf: Configuration) extends JSO
 
   private def extractDateOfBirth(userInfo: JsValue): Either[String, LocalDate] =
     (userInfo \ "dateOfBirth").toEither.fold[Either[String, LocalDate]](
-      _ ⇒ Left("No date of birth found"), {
-        case JsString(s) ⇒
+      _ => Left("No date of birth found"), {
+        case JsString(s) =>
           Try(LocalDate.parse(s, dateFormatter)) match {
-            case Failure(e) ⇒ Left(s"Could not parse date of birth: ${e.getMessage}")
-            case Success(value) ⇒ Right(value)
+            case Failure(e) => Left(s"Could not parse date of birth: ${e.getMessage}")
+            case Success(value) => Right(value)
           }
 
-        case _ ⇒ Left("Date of birth was not a string")
+        case _ => Left("Date of birth was not a string")
       }
     )
 
   private def validateAgainstSchema(userInfo: JsValue): Either[String, JsValue] =
     jsonValidator.validate(validationSchema, userInfo) match {
-      case e: JsError ⇒
+      case e: JsError =>
         Left(s"The following fields were either invalid or missing: [${e.errors.map(_._1.toJsonString).mkString(",")}]")
-      case JsSuccess(u, _) ⇒ Right(u)
+      case JsSuccess(u, _) => Right(u)
     }
 
   def validate(payload: JsValue): Either[String, JsValue] =
     for {
-      u ← validateAgainstSchema(payload)
-      d ← extractDateOfBirth(payload)
-      _ ← futureDate(d)
-      _ ← before1800(d)
+      u <- validateAgainstSchema(payload)
+      d <- extractDateOfBirth(payload)
+      _ <- futureDate(d)
+      _ <- before1800(d)
     } yield u
 
 }

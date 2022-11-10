@@ -34,7 +34,7 @@ class JSONSchemaValidationServiceImplSpec extends TestSupport {
   implicit class JsValueOps(val jsValue: JsValue) {
 
     def replace[A <: JsValue](field: String, newValue: A): JsValue =
-      jsValue.as[JsObject] ++ Json.obj(field → newValue)
+      jsValue.as[JsObject] ++ Json.obj(field -> newValue)
 
     def replaceInner[A <: JsValue](field: String, innerField: String, newValue: A): JsValue = {
       val inner = (jsValue \ field).getOrElse(sys.error(s"Could not find field $field"))

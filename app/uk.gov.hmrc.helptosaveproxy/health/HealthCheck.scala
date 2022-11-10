@@ -62,7 +62,7 @@ class HealthCheck(
   config: Config,
   scheduler: Scheduler,
   metrics: Metrics,
-  pagerDutyAlert: () ⇒ Unit,
+  pagerDutyAlert: () => Unit,
   runnerProps: NonEmptyList[Props])
     extends Actor with ActorLogging {
 
@@ -111,7 +111,7 @@ class HealthCheck(
     *                     the next health check switches
     */
   def ok(successCount: Int): Receive = performTest orElse {
-    case HealthCheckResult.Success(message, nanos) ⇒
+    case HealthCheckResult.Success(message, nanos) =>
       log.info(s"$loggingPrefix - OK ${timeString(nanos)}. Missed-beat counter is 0. $message")
       val newCount = successCount + 1
 
@@ -121,7 +121,7 @@ class HealthCheck(
 
       becomeOK(newCount % numberOfChecksBetweenUpdates)
 
-    case HealthCheckResult.Failure(message, nanos) ⇒
+    case HealthCheckResult.Failure(message, nanos) =>
       log.warning(s"$loggingPrefix - just started to fail ${timeString(nanos)}. Missed-beat counter is 1. $message")
 
       val now = ZonedDateTime.now(zone)
@@ -140,12 +140,12 @@ class HealthCheck(
     * not reached the maximum allowed yet.
     */
   def failing(downSince: ZonedDateTime, fails: Int): Receive = performTest orElse {
-    case HealthCheckResult.Success(message, nanos) ⇒
+    case HealthCheckResult.Success(message, nanos) =>
       log.info(
         s"$loggingPrefix - was failing since ${prettyString(downSince)} but now OK ${timeString(nanos)}. Missed-beat counter is 0. $message")
       becomeOK()
 
-    case HealthCheckResult.Failure(message, nanos) ⇒
+    case HealthCheckResult.Failure(message, nanos) =>
       val newFails = fails + 1
       log.warning(
         s"$loggingPrefix - still failing since ${prettyString(downSince)} ${timeString(nanos)}. Missed-beat counter is $newFails. $message")
@@ -164,12 +164,12 @@ class HealthCheck(
     * been reached
     */
   def failed(downSince: ZonedDateTime, fails: Int): Receive = performTest orElse {
-    case HealthCheckResult.Success(message, nanos) ⇒
+    case HealthCheckResult.Success(message, nanos) =>
       log.warning(
         s"$loggingPrefix - had failed since ${prettyString(downSince)} but now OK ${timeString(nanos)}. Missed-beat counter is 0. $message")
       becomeOK()
 
-    case HealthCheckResult.Failure(message, nanos) ⇒
+    case HealthCheckResult.Failure(message, nanos) =>
       val newFails = fails + 1
       log.warning(
         s"$loggingPrefix - still failing since ${prettyString(downSince)} ${timeString(nanos)}. Missed-beat counter is $newFails. $message")
@@ -181,16 +181,16 @@ class HealthCheck(
   }
 
   def performTest: Receive = {
-    case PerformHealthCheck ⇒
+    case PerformHealthCheck =>
       val runner = context.actorOf(currentRunnerProps)
       val result: Future[HealthCheckResult] =
         withTimeout(
           runner.ask(PerformHealthCheck)(healthCheckTimeout).mapTo[HealthCheckResult],
           healthCheckTimeout
         ).getOrElse(HealthCheckResult.Failure("Health check timed out", healthCheckTimeout.toNanos))
-          .recover { case NonFatal(e) ⇒ HealthCheckResult.Failure(e.getMessage, 0L) }
+          .recover { case NonFatal(e) => HealthCheckResult.Failure(e.getMessage, 0L) }
 
-      result.onComplete { _ ⇒
+      result.onComplete { _ =>
         runner ! PoisonPill
       }
       result pipeTo self
@@ -243,7 +243,7 @@ object HealthCheck {
     config: Config,
     scheduler: Scheduler,
     metrics: Metrics,
-    pagerDutyAlert: () ⇒ Unit,
+    pagerDutyAlert: () => Unit,
     runnerProps: Props,
     otherRunnerProps: Props*): Props =
     Props(
@@ -279,18 +279,18 @@ object HealthCheck {
 
     private var queue: List[A] = xs.toList
 
-    val next: () ⇒ A = xs.tail match {
-      case Nil ⇒
-        () ⇒
+    val next: () => A = xs.tail match {
+      case Nil =>
+        () =>
           xs.head
 
-      case _ ⇒
-        () ⇒
+      case _ =>
+        () =>
           queue.headOption.fold {
             // we've exhausted the list - start from the beginning
             queue = xs.tail
             xs.head
-          } { next ⇒
+          } { next =>
             queue = queue.tail
             next
           }

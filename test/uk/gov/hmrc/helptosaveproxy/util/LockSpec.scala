@@ -17,11 +17,10 @@
 package uk.gov.hmrc.helptosaveproxy.util
 
 import akka.actor.{ActorRef, Props}
-import com.google.inject.Inject
 import com.miguno.akka.testing.VirtualTime
 import uk.gov.hmrc.helptosaveproxy.health.ActorTestSupport
 import uk.gov.hmrc.helptosaveproxy.util.lock.Lock
-import uk.gov.hmrc.mongo.lock.{LockRepository, MongoLockRepository, TimePeriodLockService}
+import uk.gov.hmrc.mongo.lock.{LockRepository, TimePeriodLockService}
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
@@ -61,8 +60,8 @@ class LockSpec extends ActorTestSupport("LockSpec") {
           internalLock,
           time.scheduler,
           State(0),
-          s ⇒ sendToSelf(State(s.i + 1)),
-          s ⇒ sendToSelf(State(s.i - 1)), { f ⇒
+          s => sendToSelf(State(s.i + 1)),
+          s => sendToSelf(State(s.i - 1)), { f =>
             sendToSelf(StopHook(f)); ()
           }
         )
@@ -74,11 +73,11 @@ class LockSpec extends ActorTestSupport("LockSpec") {
     (internalLock
       .withRenewedLock(_: Future[Unit])(_: ExecutionContext))
       .expects(*, *)
-      .returning(result.fold(e ⇒ Future.failed(new Exception(e)), Future.successful))
+      .returning(result.fold(e => Future.failed(new Exception(e)), Future.successful))
 
   "The Lock" must {
 
-    def startNewLock(mockActions: ⇒ Unit): (ActorRef, VirtualTime, StopHook) = {
+    def startNewLock(mockActions: => Unit): (ActorRef, VirtualTime, StopHook) = {
       mockActions
 
       // start the actor
@@ -160,6 +159,6 @@ object LockSpec {
 
   case class State(i: Int)
 
-  case class StopHook(f: () ⇒ Future[Unit])
+  case class StopHook(f: () => Future[Unit])
 
 }
