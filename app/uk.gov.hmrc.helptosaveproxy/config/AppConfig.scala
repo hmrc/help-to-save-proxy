@@ -62,4 +62,10 @@ class AppConfig @Inject()(val runModeConfiguration: Configuration, sc: ServicesC
 
   val dwpHealthCheckURL: String = s"$dwpHealthBaseUrl/${getString("microservice.services.dwp-health.health-check")}"
 
+  val nsiKSData : String = getString("microservice.services.nsi.client.base64Keystore")
+
+  val nsiKSDPW : String = getString("microservice.services.nsi.client.base64KeystorePassword")
+
+  val nsiKSType : String = getString("microservice.services.nsi.client.base64KeystoreType")
+
 }

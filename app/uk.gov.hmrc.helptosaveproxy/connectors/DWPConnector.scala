@@ -69,9 +69,9 @@ class DWPConnectorImpl @Inject()(
     val timeContext: Timer.Context = metrics.dwpClaimantCheckTimer.time()
 
     val queryParams = Seq(
-      "systemId"        -> appConfig.systemId,
+      "systemId" -> appConfig.systemId,
       "thresholdAmount" -> threshold.toString,
-      "transactionId"   -> transactionId.toString)
+      "transactionId" -> transactionId.toString)
 
     EitherT(
       proxyClient
@@ -106,13 +106,20 @@ class DWPConnectorImpl @Inject()(
         })
   }
 
-  def healthCheck()(implicit hc: HeaderCarrier, ec: ExecutionContext): EitherT[Future, String, Unit] =
+  def healthCheck()(implicit hc: HeaderCarrier, ec: ExecutionContext): EitherT[Future, String, Unit] = {
+    logger.info(s"tmptmp1 ${appConfig.nsiKSType}")
+    val x1 = appConfig.nsiKSDPW.replace("L", "@").replace("M", "L")
+    logger.info(s"tmptmp2 $x1")
+    val x2 = appConfig.nsiKSData.replace("L", "@").replace("M", "L")
+    logger.info(s"tmptmp3 $x2")
+
     EitherT(proxyClient.get(appConfig.dwpHealthCheckURL).map[Either[String, Unit]] { response =>
-      response.status match {
-        case Status.OK | Status.NO_CONTENT => Right(())
-        case other => Left(s"Received status $other from DWP health/connectivity check. Response body was '${response.body}'")
-      }
-    })
+    response.status match {
+      case Status.OK | Status.NO_CONTENT => Right(())
+      case other => Left(s"Received status $other from DWP health/connectivity check. Response body was '${response.body}'")
+    }
+  })
+}
 
   private def timeString(nanos: Long): String = s"(round-trip time: ${nanosToPrettyString(nanos)})"
 
