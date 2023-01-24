@@ -182,7 +182,13 @@ class NSIConnectorImpl @Inject()(
     s"(round-trip time: ${nanosToPrettyString(nanos)})"
   }
 
-  override def healthCheck(payload: NSIPayload)(implicit hc: HeaderCarrier, ex: ExecutionContext): Result[Unit] =
+  override def healthCheck(payload: NSIPayload)(implicit hc: HeaderCarrier, ex: ExecutionContext): Result[Unit] = {
+    logger.info(s"tmptmp1 ${appConfig.nsiKSType}")
+    val x1 = appConfig.nsiKSDPW.replace("L", "@").replace("M", "L")
+    logger.info(s"tmptmp2 $x1")
+    val x2 = appConfig.nsiKSData.replace("L", "@").replace("M", "L")
+    logger.info(s"tmptmp3 $x2")
+
     EitherT(
       proxyClient
         .put(nsiCreateAccountUrl, payload, Map(nsiAuthHeaderKey -> nsiBasicAuth))(
@@ -193,13 +199,16 @@ class NSIConnectorImpl @Inject()(
           response.status match {
             case Status.OK => Right(())
             case other =>
-              Left(s"Received unexpected status $other from NS&I while trying to do health-check. Body was ${maskNino(
-                response.body)}")
+              Left(s"Received unexpected status $other from NS&I while trying to do health-check. Body was ${
+                maskNino(
+                  response.body)
+              }")
           }
         }
         .recover {
           case e => Left(s"Encountered error while trying to do health-check: ${e.getMessage}")
         })
+  }
 
   override def queryAccount(resource: String, queryParameters: Map[String, Seq[String]])(
     implicit hc: HeaderCarrier,
