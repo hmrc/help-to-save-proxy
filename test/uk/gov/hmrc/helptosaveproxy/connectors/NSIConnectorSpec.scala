@@ -17,7 +17,6 @@
 package uk.gov.hmrc.helptosaveproxy.connectors
 
 import java.util.UUID
-
 import cats.instances.int._
 import cats.syntax.eq._
 import org.scalamock.scalatest.MockFactory
@@ -27,6 +26,7 @@ import play.api.http.Status
 import play.api.libs.json.{JsObject, JsString, Json}
 import play.api.libs.ws.WSClient
 import uk.gov.hmrc.helptosaveproxy.TestSupport
+import uk.gov.hmrc.helptosaveproxy.config.NsiWsClient
 import uk.gov.hmrc.helptosaveproxy.http.HttpProxyClient
 import uk.gov.hmrc.helptosaveproxy.models.AccountNumber
 import uk.gov.hmrc.helptosaveproxy.models.SubmissionResult.{SubmissionFailure, SubmissionSuccess}
@@ -46,7 +46,7 @@ class NSIConnectorSpec
     "feature-toggles.log-account-creation-json.enabled" -> Random.nextBoolean())
 
   private val mockAuditor = mock[HttpAuditing]
-  private val mockWsClient = mock[WSClient]
+  private val mockWsClient = mock[NsiWsClient]
 
   class MockedHttpProxyClient
       extends HttpProxyClient(
