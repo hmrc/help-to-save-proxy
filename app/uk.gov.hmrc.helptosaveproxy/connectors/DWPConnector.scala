@@ -17,15 +17,14 @@
 package uk.gov.hmrc.helptosaveproxy.connectors
 
 import java.util.UUID
-
 import akka.actor.ActorSystem
 import cats.data.EitherT
 import com.codahale.metrics.Timer
 import com.google.inject.ImplementedBy
+
 import javax.inject.{Inject, Singleton}
 import play.api.http.Status
-import play.api.libs.ws.WSClient
-import uk.gov.hmrc.helptosaveproxy.config.AppConfig
+import uk.gov.hmrc.helptosaveproxy.config.{AppConfig, DwpWsClient}
 import uk.gov.hmrc.helptosaveproxy.http.HttpProxyClient
 import uk.gov.hmrc.helptosaveproxy.metrics.Metrics
 import uk.gov.hmrc.helptosaveproxy.metrics.Metrics._
@@ -51,7 +50,7 @@ class DWPConnectorImpl @Inject()(
   httpAuditing: HttpAuditing,
   metrics: Metrics,
   pagerDutyAlerting: PagerDutyAlerting,
-  wsClient: WSClient,
+  wsClient: DwpWsClient,
   system: ActorSystem)(implicit transformer: LogMessageTransformer, appConfig: AppConfig)
     extends DWPConnector with Logging {
 
