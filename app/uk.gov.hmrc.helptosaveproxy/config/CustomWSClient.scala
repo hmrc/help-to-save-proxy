@@ -38,7 +38,6 @@ object CustomWSClient {
     val trustManagerConfig = sslConfigParser.parseTrustManager(EnrichedConfig(configuration.underlying.getConfig(s"microservice.services.$serviceName.trustManager")))
 
     wsConfig.copy(ssl = wsConfig.ssl
-      .withTrustManagerConfig(trustManagerConfig)
       .withKeyManagerConfig(keyManagerConfig))
 
     AhcWSClientConfigFactory.forClientConfig(wsConfig).pipe(StandaloneAhcWSClient(_))
