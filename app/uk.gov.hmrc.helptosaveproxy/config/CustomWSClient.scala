@@ -35,12 +35,9 @@ object CustomWSClient {
     val defaultSSLConfigPath = "play.ws.ssl"
     val sslConfigParser = new SSLConfigParser(EnrichedConfig(configuration.underlying.getConfig(defaultSSLConfigPath)), getClass.getClassLoader)
     val keyManagerConfig = sslConfigParser.parseKeyManager(EnrichedConfig(configuration.underlying.getConfig(s"microservice.services.$serviceName.keyManager")))
-    val trustManagerConfig = sslConfigParser.parseTrustManager(EnrichedConfig(configuration.underlying.getConfig(s"microservice.services.$serviceName.trustManager")))
 
-    wsConfig.copy(ssl = wsConfig.ssl
-      .withKeyManagerConfig(keyManagerConfig))
-
-    AhcWSClientConfigFactory.forClientConfig(wsConfig).pipe(StandaloneAhcWSClient(_))
+    AhcWSClientConfigFactory.forClientConfig(wsConfig.copy(ssl = wsConfig.ssl
+      .withKeyManagerConfig(keyManagerConfig))).pipe(StandaloneAhcWSClient(_))
   }
 }
 
