@@ -51,8 +51,8 @@ trait TestSupport extends UnitSpec with MockFactory with BeforeAndAfterAll with 
                                       | play.modules.disabled = [ "uk.gov.hmrc.helptosaveproxy.config.HealthCheckModule",
                                       | "play.api.libs.ws.ahc.AhcWSModule",
                                       | "play.api.mvc.LegacyCookiesModule" ]
-                                      | microservice.services.dwp.keyManager = []
-                                      | microservice.services.nsi.keyManager = []
+                                      | microservice.services.dwp.keyManager.stores = []
+                                      | microservice.services.nsi.keyManager.stores = []
                                       |     """.stripMargin)
         ) withFallback(additionalConfig))
       .build()
