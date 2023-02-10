@@ -19,8 +19,8 @@ package uk.gov.hmrc.helptosaveproxy.config
 import java.io._
 import java.security.KeyStore
 import java.security.cert.{Certificate, CertificateFactory, X509Certificate}
-
 import com.typesafe.sslconfig.ssl.{KeyStoreConfig, TrustStoreConfig}
+
 import javax.inject.{Inject, Singleton}
 import play.api.inject.{Binding, Module}
 import play.api.libs.ws.{WSClientConfig, WSConfigParser}
@@ -35,23 +35,11 @@ class CustomWSConfigParser @Inject()(configuration: Configuration, env: Environm
 
   logger.info("Starting CustomWSConfigParser")
 
-  @SuppressWarnings(Array("org.wartremover.warts.PlatformDefault"))
   override def parse(): WSClientConfig = {
     logger.info("Parsing WSClientConfig")
 
     val internalParser = new WSConfigParser(configuration.underlying, env.classLoader)
     val config = internalParser.parse()
-
-    val keyStores = config.ssl.keyManagerConfig.keyStoreConfigs.filter(_.data.forall(_.nonEmpty)).map { ks =>
-      (ks.storeType.toUpperCase, ks.filePath, ks.data) match {
-        case (_, None, Some(data)) =>
-          createKeyStoreConfig(ks, data)
-
-        case other =>
-          logger.info(s"Adding ${other._1} type keystore")
-          ks
-      }
-    }
 
     val trustStores = config.ssl.trustManagerConfig.trustStoreConfigs.filter(_.data.forall(_.nonEmpty)).map { ts =>
       (ts.filePath, ts.data) match {
@@ -67,13 +55,26 @@ class CustomWSConfigParser @Inject()(configuration: Configuration, env: Environm
     val wsClientConfig = config.copy(
       ssl = config.ssl
         .withKeyManagerConfig(config.ssl.keyManagerConfig
-          .withKeyStoreConfigs(keyStores))
+          .withKeyStoreConfigs(enhanceKeyStoreConfig(config.ssl.keyManagerConfig.keyStoreConfigs)))
         .withTrustManagerConfig(config.ssl.trustManagerConfig
           .withTrustStoreConfigs(trustStores))
     )
 
     wsClientConfig
   }
+
+  @SuppressWarnings(Array("org.wartremover.warts.PlatformDefault"))
+  def enhanceKeyStoreConfig(config:scala.collection.immutable.Seq[KeyStoreConfig]):scala.collection.immutable.Seq[KeyStoreConfig] =
+    config.filter(_.data.forall(_.nonEmpty)).map { ks =>
+      (ks.storeType.toUpperCase, ks.filePath, ks.data) match {
+        case (_, None, Some(data)) =>
+          createKeyStoreConfig(ks, data)
+
+        case other =>
+          logger.info(s"Adding ${other._1} type keystore")
+          ks
+      }
+    }
 
   private def createTrustStoreConfig(ts: TrustStoreConfig, data: String): TrustStoreConfig = {
 
