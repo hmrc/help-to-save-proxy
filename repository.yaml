@@ -1,2 +1,21 @@
 digital-service: HTS
 repoVisibility: public_0C3F0CE3E6E6448FAD341E7BFA50FCD333E06A20CFF05FCACE61154DDBBADF71
+
+leakDetectionExemptions:
+  - ruleId: 'cert_1'
+    filePaths:
+      - '/conf/certificates/dwpClientKey.pem'
+      - '/conf/certificates/dwpServerKey.pem'
+      - '/conf/certificates/nsandiClientKey.pem'
+      - '/conf/certificates/nsandiServerKey.pem'
+    text: ' PRIVATE KEY-----'
+  - ruleId: 'filename_private_key_5'
+    filePaths:
+      - '/conf/certificates/dwpClientCertificate.pem'
+      - '/conf/certificates/dwpClientKey.pem'
+      - '/conf/certificates/dwpServerCertificate.pem'
+      - '/conf/certificates/dwpServerKey.pem'
+      - '/conf/certificates/nsandiClientCertificate.pem'
+      - '/conf/certificates/nsandiClientKey.pem'
+      - '/conf/certificates/nsandiServerCertificate.pem'
+      - '/conf/certificates/nsandiServerKey.pem'
