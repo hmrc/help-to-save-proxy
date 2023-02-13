@@ -22,11 +22,11 @@ import cats.instances.string._
 import cats.syntax.eq._
 import com.codahale.metrics.Timer
 import com.google.inject.ImplementedBy
+
 import javax.inject.{Inject, Singleton}
 import play.api.http.Status
 import play.api.libs.json.Json
-import play.api.libs.ws.WSClient
-import uk.gov.hmrc.helptosaveproxy.config.AppConfig
+import uk.gov.hmrc.helptosaveproxy.config.{AppConfig, NsiWsClient}
 import uk.gov.hmrc.helptosaveproxy.http.HttpProxyClient
 import uk.gov.hmrc.helptosaveproxy.metrics.Metrics
 import uk.gov.hmrc.helptosaveproxy.metrics.Metrics.nanosToPrettyString
@@ -63,7 +63,7 @@ class NSIConnectorImpl @Inject()(
   httpAuditing: HttpAuditing,
   metrics: Metrics,
   pagerDutyAlerting: PagerDutyAlerting,
-  wsClient: WSClient,
+  wsClient: NsiWsClient,
   system: ActorSystem)(implicit transformer: LogMessageTransformer, appConfig: AppConfig)
     extends NSIConnector with Logging {
 
