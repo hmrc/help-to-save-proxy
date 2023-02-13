@@ -21,5 +21,3 @@ dist
 /.bsp
 project/.bloop
 .bloop/
-conf/certificates/*.p12
-conf/certificates/*.p7b
