@@ -21,27 +21,24 @@ import com.google.inject.{ImplementedBy, Inject}
 import com.typesafe.sslconfig.ssl.SSLConfigParser
 import com.typesafe.sslconfig.util.EnrichedConfig
 import play.api.Configuration
-import play.api.libs.ws.{WSClient, WSConfigParser}
+import play.api.libs.ws.WSClient
 import play.api.libs.ws.ahc.{AhcWSClient, AhcWSClientConfigFactory, StandaloneAhcWSClient}
 
 import javax.inject.Singleton
 import scala.util.chaining.scalaUtilChainingOps
 
 object CustomWSClient {
-  def standaloneAhcWsClient(wsConfigParser: WSConfigParser, configuration: Configuration, serviceName: String)(implicit materializer: Materializer): StandaloneAhcWSClient = {
-    val wsConfig = wsConfigParser.parse()
+  def standaloneAhcWsClient(customWSConfigParser: CustomWSConfigParser, configuration: Configuration, serviceName: String)(implicit materializer: Materializer): StandaloneAhcWSClient = {
+    val wsConfig = customWSConfigParser.parse()
 
     // Path "play.ws.ssl" copied from play
     val defaultSSLConfigPath = "play.ws.ssl"
     val sslConfigParser = new SSLConfigParser(EnrichedConfig(configuration.underlying.getConfig(defaultSSLConfigPath)), getClass.getClassLoader)
     val keyManagerConfig = sslConfigParser.parseKeyManager(EnrichedConfig(configuration.underlying.getConfig(s"microservice.services.$serviceName.keyManager")))
-    val trustManagerConfig = sslConfigParser.parseTrustManager(EnrichedConfig(configuration.underlying.getConfig(s"microservice.services.$serviceName.trustManager")))
-
-    wsConfig.copy(ssl = wsConfig.ssl
-      .withTrustManagerConfig(trustManagerConfig)
-      .withKeyManagerConfig(keyManagerConfig))
-
-    AhcWSClientConfigFactory.forClientConfig(wsConfig).pipe(StandaloneAhcWSClient(_))
+    val enhancedKeyManagerConfig = keyManagerConfig.withKeyStoreConfigs(customWSConfigParser
+      .enhanceKeyStoreConfig( keyManagerConfig.keyStoreConfigs))
+    AhcWSClientConfigFactory.forClientConfig(wsConfig.copy(ssl = wsConfig.ssl
+      .withKeyManagerConfig(enhancedKeyManagerConfig))).pipe(StandaloneAhcWSClient(_))
   }
 }
 
@@ -49,13 +46,13 @@ object CustomWSClient {
 trait DwpWsClient extends WSClient {}
 
 @Singleton
-class DwpWsClientImpl @Inject()(parser: WSConfigParser, config: Configuration)(implicit materializer: Materializer)
+class DwpWsClientImpl @Inject()(parser: CustomWSConfigParser, config: Configuration)(implicit materializer: Materializer)
   extends AhcWSClient(CustomWSClient.standaloneAhcWsClient(parser, config, "dwp")) with DwpWsClient {}
 
 @ImplementedBy(classOf[NsiWsClientImpl])
 trait NsiWsClient extends WSClient {}
 
 @Singleton
-class NsiWsClientImpl @Inject()(parser: WSConfigParser, config: Configuration)(implicit materializer: Materializer)
+class NsiWsClientImpl @Inject()(parser: CustomWSConfigParser, config: Configuration)(implicit materializer: Materializer)
   extends AhcWSClient(CustomWSClient.standaloneAhcWsClient(parser, config, "nsi")) with NsiWsClient {}
 

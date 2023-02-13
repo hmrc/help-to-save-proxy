@@ -21,7 +21,6 @@ import cats.data.EitherT
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.EitherValues
 import play.api.libs.json.Json
-import play.api.libs.ws.WSClient
 import uk.gov.hmrc.helptosaveproxy.TestSupport
 import uk.gov.hmrc.helptosaveproxy.config.DwpWsClient
 import uk.gov.hmrc.helptosaveproxy.http.HttpProxyClient

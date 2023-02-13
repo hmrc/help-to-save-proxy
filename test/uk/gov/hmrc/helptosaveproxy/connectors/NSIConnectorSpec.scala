@@ -24,7 +24,6 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.Configuration
 import play.api.http.Status
 import play.api.libs.json.{JsObject, JsString, Json}
-import play.api.libs.ws.WSClient
 import uk.gov.hmrc.helptosaveproxy.TestSupport
 import uk.gov.hmrc.helptosaveproxy.config.NsiWsClient
 import uk.gov.hmrc.helptosaveproxy.http.HttpProxyClient
