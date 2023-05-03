@@ -83,7 +83,6 @@ lazy val microservice =
       retrieveManaged := true,
       update / evictionWarningOptions := EvictionWarningOptions.default.withWarnScalaVersionEviction(false)
     )
-    .settings(resolvers += "third-party-maven-releases" at "https://artefacts.tax.service.gov.uk/artifactory/third-party-maven-releases/")
     .settings(
       resolvers += "HMRC-open-artefacts-maven2" at "https://open.artefacts.tax.service.gov.uk/maven2"
     )
