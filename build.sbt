@@ -1,10 +1,7 @@
-import play.core.PlayVersion
 import sbt.Keys._
 import sbt._
 import uk.gov.hmrc.DefaultBuildSettings._
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin
-import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin._
-import uk.gov.hmrc.versioning.SbtGitVersioning
 import wartremover.{Wart, Warts}
 import wartremover.WartRemover.autoImport.{wartremoverErrors, wartremoverExcluded}
 
@@ -54,7 +51,6 @@ lazy val microservice =
     .settings(playSettings ++ scoverageSettings: _*)
     .settings(scalaSettings: _*)
     .settings(majorVersion := 2)
-    .settings(publishingSettings: _*)
     .settings(defaultSettings(): _*)
     .settings(scalaVersion := "2.12.16")
     .settings(PlayKeys.playDefaultPort := 7005)
@@ -83,7 +79,6 @@ lazy val microservice =
       retrieveManaged := true,
       update / evictionWarningOptions := EvictionWarningOptions.default.withWarnScalaVersionEviction(false)
     )
-    .settings(resolvers += "third-party-maven-releases" at "https://artefacts.tax.service.gov.uk/artifactory/third-party-maven-releases/")
     .settings(
       resolvers += "HMRC-open-artefacts-maven2" at "https://open.artefacts.tax.service.gov.uk/maven2"
     )
