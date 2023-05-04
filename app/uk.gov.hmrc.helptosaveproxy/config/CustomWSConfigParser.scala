@@ -19,8 +19,8 @@ package uk.gov.hmrc.helptosaveproxy.config
 import java.io._
 import java.security.KeyStore
 import java.security.cert.{Certificate, CertificateFactory, X509Certificate}
-
 import com.typesafe.sslconfig.ssl.{KeyStoreConfig, TrustStoreConfig}
+
 import javax.inject.{Inject, Singleton}
 import play.api.inject.{Binding, Module}
 import play.api.libs.ws.{WSClientConfig, WSConfigParser}
@@ -88,7 +88,6 @@ class CustomWSConfigParser @Inject()(configuration: Configuration, env: Environm
         keyStore.setCertificateEntry(alias, c)
       case other =>
         logger.warn(s"Expected X509Certificate but got ${other.getType}")
-
     }
 
     val stream = new FileOutputStream(filePath)
@@ -105,7 +104,7 @@ class CustomWSConfigParser @Inject()(configuration: Configuration, env: Environm
 
   @SuppressWarnings(Array("org.wartremover.warts.Null"))
   private def initKeystore(): KeyStore = {
-    val keystore = KeyStore.getInstance(KeyStore.getDefaultType)
+    val keystore = KeyStore.getInstance("jks")
     keystore.load(null, null) // scalastyle:ignore null
     keystore
   }
