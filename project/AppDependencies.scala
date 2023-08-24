@@ -12,8 +12,6 @@ object AppDependencies {
     "com.github.java-json-tools" %% "json-schema-validator"      % "2.2.14",
     "org.typelevel"              %% "cats-core"                  % "2.9.0",
     "com.github.kxbmap"          %% "configs"                    % "0.6.1",
-    compilerPlugin("com.github.ghik" % "silencer-plugin" % "1.7.12" cross CrossVersion.full),
-    "com.github.ghik" % "silencer-lib" % "1.7.12" % Provided cross CrossVersion.full
   )
 
   val test = Seq(

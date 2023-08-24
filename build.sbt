@@ -80,7 +80,7 @@ lazy val microservice =
       resolvers += "HMRC-open-artefacts-maven2" at "https://open.artefacts.tax.service.gov.uk/maven2"
     )
     .settings(scalacOptions ++= Seq("-Xcheckinit", "-feature"))
-    .settings(scalacOptions += "-P:silencer:pathFilters=routes")
+    .settings(scalacOptions += "-Wconf:src=routes/.*:s")
     .settings(Global / lintUnusedKeysOnLoad := false)
     .settings(classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.ScalaLibrary)
     .settings(classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat)
