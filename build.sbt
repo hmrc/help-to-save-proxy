@@ -7,9 +7,6 @@ import wartremover.WartRemover.autoImport.{wartremoverErrors, wartremoverExclude
 
 val appName = "help-to-save-proxy"
 
-lazy val plugins: Seq[Plugins] = Seq.empty
-lazy val playSettings: Seq[Setting[_]] = Seq.empty
-
 lazy val scoverageSettings = {
   import scoverage.ScoverageKeys
   Seq(
@@ -42,19 +39,16 @@ lazy val wartRemoverSettings = {
     Wart.Equals,
   )
 
-  Compile / compile / wartremoverErrors ++= Warts.allBut(excludedWarts: _*)
+  Compile / compile / wartremoverErrors ++= Warts.allBut(excludedWarts *)
 }
 
 lazy val microservice =
   Project(appName, file("."))
-    .enablePlugins((Seq(
-      play.sbt.PlayScala,
-      SbtDistributablesPlugin) ++ plugins) *)
-    .settings(playSettings)
-    .settings(playSettings ++ scoverageSettings: _*)
-    .settings(scalaSettings: _*)
+    .enablePlugins(Seq(play.sbt.PlayScala, SbtDistributablesPlugin) *)
+    .settings(scoverageSettings *)
+    .settings(scalaSettings *)
     .settings(majorVersion := 2)
-    .settings(defaultSettings(): _*)
+    .settings(defaultSettings() *)
     .settings(scalaVersion := "2.13.8")
     .settings(PlayKeys.playDefaultPort := 7005)
     .settings(wartRemoverSettings)
