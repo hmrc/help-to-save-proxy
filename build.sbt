@@ -52,15 +52,6 @@ lazy val microservice =
     .settings(scalaVersion := "2.13.8")
     .settings(PlayKeys.playDefaultPort := 7005)
     .settings(wartRemoverSettings)
-    // disable some wart remover checks in tests - (Any, Null, PublicInference) seems to struggle with
-    // scalamock, (Equals) seems to struggle with stub generator AutoGen and (NonUnitStatements) is
-    // imcompatible with a lot of WordSpec
-    .settings(Test / compile / wartremoverErrors --= Seq(
-      Wart.Any,
-      Wart.Equals,
-      Wart.Null,
-      Wart.NonUnitStatements,
-      Wart.PublicInference))
     .settings(
       wartremoverExcluded ++=
           (Compile / routes).value ++
