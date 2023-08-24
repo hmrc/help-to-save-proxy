@@ -29,7 +29,7 @@ trait HealthCheckRunner { this: Actor =>
   def performTest(): Future[HealthCheckResult]
 
   override def receive: Receive = {
-    case PerformHealthCheck => performTest() pipeTo sender
+    case PerformHealthCheck => performTest().pipeTo(sender)
   }
 
 }
