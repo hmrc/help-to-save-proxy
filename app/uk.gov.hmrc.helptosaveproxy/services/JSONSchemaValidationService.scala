@@ -16,14 +16,17 @@
 
 package uk.gov.hmrc.helptosaveproxy.services
 
+import com.github.fge.jackson.JsonLoader
+import com.github.fge.jsonschema.core.report.LogLevel
+
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-
-import com.eclipsesource.schema.{SchemaType, SchemaValidator}
+import com.github.fge.jsonschema.main._
 import com.google.inject.{ImplementedBy, Inject, Singleton}
 import play.api.Configuration
 import play.api.libs.json._
 
+import scala.jdk.CollectionConverters.IteratorHasAsScala
 import scala.util.{Failure, Success, Try}
 
 @ImplementedBy(classOf[JSONSchemaValidationServiceImpl])
@@ -36,12 +39,9 @@ trait JSONSchemaValidationService {
 @Singleton
 class JSONSchemaValidationServiceImpl @Inject()(conf: Configuration) extends JSONSchemaValidationService {
 
-  private val validationSchema: SchemaType = {
-    val schemaStr = conf.underlying.getString("schema")
-    Json.fromJson[SchemaType](Json.parse(schemaStr)).getOrElse(sys.error("Could not parse schema string"))
-  }
+  private val validationSchema = JsonLoader.fromString(conf.underlying.getString("schema"))
 
-  private lazy val jsonValidator: SchemaValidator = SchemaValidator()
+  private lazy val jsonValidator = JsonSchemaFactory.byDefault().getValidator
 
   private val dateFormatter = DateTimeFormatter.BASIC_ISO_DATE
 
@@ -68,12 +68,16 @@ class JSONSchemaValidationServiceImpl @Inject()(conf: Configuration) extends JSO
       }
     )
 
-  private def validateAgainstSchema(userInfo: JsValue): Either[String, JsValue] =
-    jsonValidator.validate(validationSchema, userInfo) match {
-      case e: JsError =>
-        Left(s"The following fields were either invalid or missing: [${e.errors.map(_._1.toJsonString).mkString(",")}]")
-      case JsSuccess(u, _) => Right(u)
+  private def validateAgainstSchema(userInfo: JsValue): Either[String, JsValue] = {
+    val node = JsonLoader.fromString(userInfo.toString)
+    val validationResult = jsonValidator.validate(validationSchema, node)
+    if (validationResult.isSuccess) Right(userInfo)
+    else {
+      val errors =
+        validationResult.iterator().asScala.filter(_.getLogLevel == LogLevel.ERROR).map(_.getMessage).mkString(",")
+      Left(s"The following fields were either invalid or missing: [$errors]")
     }
+  }
 
   def validate(payload: JsValue): Either[String, JsValue] =
     for {

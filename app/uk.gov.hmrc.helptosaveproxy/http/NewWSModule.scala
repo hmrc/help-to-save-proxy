@@ -30,7 +30,6 @@ import javax.inject.Provider
 import javax.inject.Singleton
 import akka.stream.Materializer
 import com.typesafe.sslconfig.ssl.SystemConfiguration
-import com.typesafe.sslconfig.ssl.debug.DebugConfiguration
 import play.api.libs.ws._
 import play.api.libs.ws.ahc.cache._
 import play.api.Configuration
@@ -98,10 +97,6 @@ class AsyncHttpClientProvider @Inject()(
     lazy val loggerFactory = new AhcLoggerFactory(
       org.slf4j.LoggerFactory.getILoggerFactory
     )
-    if (wsClientConfig.ssl.debug.enabled) {
-      new DebugConfiguration(loggerFactory).configure(wsClientConfig.ssl.debug)
-    }
-
     new SystemConfiguration(loggerFactory).configure(wsClientConfig.ssl)
   }
 

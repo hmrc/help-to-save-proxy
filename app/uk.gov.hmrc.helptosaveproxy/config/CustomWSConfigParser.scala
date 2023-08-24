@@ -27,7 +27,7 @@ import play.api.libs.ws.{WSClientConfig, WSConfigParser}
 import play.api.{Configuration, Environment}
 import uk.gov.hmrc.helptosaveproxy.util.{Logging, base64Decode}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 @Singleton
 class CustomWSConfigParser @Inject()(configuration: Configuration, env: Environment)

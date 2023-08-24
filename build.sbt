@@ -1,14 +1,11 @@
-import sbt.Keys._
-import sbt._
-import uk.gov.hmrc.DefaultBuildSettings._
+import sbt.Keys.*
+import sbt.*
+import uk.gov.hmrc.DefaultBuildSettings.*
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin
 import wartremover.{Wart, Warts}
 import wartremover.WartRemover.autoImport.{wartremoverErrors, wartremoverExcluded}
 
 val appName = "help-to-save-proxy"
-
-lazy val plugins: Seq[Plugins] = Seq.empty
-lazy val playSettings: Seq[Setting[_]] = Seq.empty
 
 lazy val scoverageSettings = {
   import scoverage.ScoverageKeys
@@ -36,34 +33,25 @@ lazy val wartRemoverSettings = {
     Wart.ToString,
     Wart.Var,
     Wart.NonUnitStatements,
-    Wart.Null
+    Wart.Null,
+    Wart.StringPlusAny,
+    Wart.Any,
+    Wart.Equals,
   )
 
-  Compile / compile / wartremoverErrors ++= Warts.allBut(excludedWarts: _*)
+  Compile / compile / wartremoverErrors ++= Warts.allBut(excludedWarts *)
 }
 
 lazy val microservice =
   Project(appName, file("."))
-    .enablePlugins(Seq(
-      play.sbt.PlayScala,
-      SbtDistributablesPlugin) ++ plugins: _*)
-    .settings(addCompilerPlugin("org.psywerx.hairyfotr" %% "linter" % "0.1.17"))
-    .settings(playSettings ++ scoverageSettings: _*)
-    .settings(scalaSettings: _*)
+    .enablePlugins(Seq(play.sbt.PlayScala, SbtDistributablesPlugin) *)
+    .settings(scoverageSettings *)
+    .settings(scalaSettings *)
     .settings(majorVersion := 2)
-    .settings(defaultSettings(): _*)
-    .settings(scalaVersion := "2.12.16")
+    .settings(defaultSettings() *)
+    .settings(scalaVersion := "2.13.8")
     .settings(PlayKeys.playDefaultPort := 7005)
     .settings(wartRemoverSettings)
-    // disable some wart remover checks in tests - (Any, Null, PublicInference) seems to struggle with
-    // scalamock, (Equals) seems to struggle with stub generator AutoGen and (NonUnitStatements) is
-    // imcompatible with a lot of WordSpec
-    .settings(Test / compile / wartremoverErrors --= Seq(
-      Wart.Any,
-      Wart.Equals,
-      Wart.Null,
-      Wart.NonUnitStatements,
-      Wart.PublicInference))
     .settings(
       wartremoverExcluded ++=
           (Compile / routes).value ++
@@ -83,7 +71,7 @@ lazy val microservice =
       resolvers += "HMRC-open-artefacts-maven2" at "https://open.artefacts.tax.service.gov.uk/maven2"
     )
     .settings(scalacOptions ++= Seq("-Xcheckinit", "-feature"))
-    .settings(scalacOptions += "-P:silencer:pathFilters=routes")
+    .settings(scalacOptions += "-Wconf:src=routes/.*:s")
     .settings(Global / lintUnusedKeysOnLoad := false)
     .settings(classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.ScalaLibrary)
     .settings(classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat)
