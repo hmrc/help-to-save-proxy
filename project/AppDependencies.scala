@@ -1,10 +1,10 @@
 import play.core.PlayVersion
-import play.sbt.PlayImport._
-import sbt._
+import play.sbt.PlayImport.*
+import sbt.*
 
 object AppDependencies {
 
-  val compile = Seq(
+  val compile: Seq[ModuleID] = Seq(
     ws,
     "uk.gov.hmrc"                %% "domain"                     % "8.1.0-play-28",
     "uk.gov.hmrc"                %% "bootstrap-backend-play-28"  % "7.13.0",
@@ -14,7 +14,7 @@ object AppDependencies {
     "com.github.kxbmap"          %% "configs"                    % "0.6.1",
   )
 
-  val test = Seq(
+  val test: Seq[ModuleID] = Seq(
     "uk.gov.hmrc"          %% "stub-data-generator"         % "1.1.0"             % "test",
     "org.scalatest"        %% "scalatest"                   % "3.2.15"            % "test",
     "com.vladsch.flexmark" %  "flexmark-all"                % "0.62.2"            % "test",
