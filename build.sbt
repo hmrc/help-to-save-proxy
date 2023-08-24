@@ -1,6 +1,6 @@
-import sbt.Keys._
-import sbt._
-import uk.gov.hmrc.DefaultBuildSettings._
+import sbt.Keys.*
+import sbt.*
+import uk.gov.hmrc.DefaultBuildSettings.*
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin
 import wartremover.{Wart, Warts}
 import wartremover.WartRemover.autoImport.{wartremoverErrors, wartremoverExcluded}
@@ -36,7 +36,10 @@ lazy val wartRemoverSettings = {
     Wart.ToString,
     Wart.Var,
     Wart.NonUnitStatements,
-    Wart.Null
+    Wart.Null,
+    Wart.StringPlusAny,
+    Wart.Any,
+    Wart.Equals,
   )
 
   Compile / compile / wartremoverErrors ++= Warts.allBut(excludedWarts: _*)
@@ -44,15 +47,15 @@ lazy val wartRemoverSettings = {
 
 lazy val microservice =
   Project(appName, file("."))
-    .enablePlugins(Seq(
+    .enablePlugins((Seq(
       play.sbt.PlayScala,
-      SbtDistributablesPlugin) ++ plugins: _*)
-    .settings(addCompilerPlugin("org.psywerx.hairyfotr" %% "linter" % "0.1.17"))
+      SbtDistributablesPlugin) ++ plugins) *)
+    .settings(playSettings)
     .settings(playSettings ++ scoverageSettings: _*)
     .settings(scalaSettings: _*)
     .settings(majorVersion := 2)
     .settings(defaultSettings(): _*)
-    .settings(scalaVersion := "2.12.16")
+    .settings(scalaVersion := "2.13.8")
     .settings(PlayKeys.playDefaultPort := 7005)
     .settings(wartRemoverSettings)
     // disable some wart remover checks in tests - (Any, Null, PublicInference) seems to struggle with
