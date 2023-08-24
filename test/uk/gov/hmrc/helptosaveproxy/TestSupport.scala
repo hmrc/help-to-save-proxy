@@ -66,12 +66,12 @@ trait TestSupport extends UnitSpec with MockFactory with BeforeAndAfterAll with 
   implicit val headerCarrier: HeaderCarrier =
     HeaderCarrier(sessionId = Some(SessionId(UUID.randomUUID().toString)), authorization = Some(Authorization("auth")))
 
-  override def beforeAll() {
+  override def beforeAll(): Unit = {
     Play.start(fakeApplication)
     super.beforeAll()
   }
 
-  override def afterAll() {
+  override def afterAll(): Unit = {
     Play.stop(fakeApplication)
     super.afterAll()
   }
