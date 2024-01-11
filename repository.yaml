@@ -1,6 +1,5 @@
 digital-service: HTS
 repoVisibility: public_0C3F0CE3E6E6448FAD341E7BFA50FCD333E06A20CFF05FCACE61154DDBBADF71
-
 leakDetectionExemptions:
   - ruleId: 'cert_1'
     filePaths:
@@ -19,3 +18,6 @@ leakDetectionExemptions:
       - '/conf/certificates/nsandiClientKey.pem'
       - '/conf/certificates/nsandiServerCertificate.pem'
       - '/conf/certificates/nsandiServerKey.pem'
+test-repositories:
+  - help-to-save-integration-tests
+  - help-to-save-acceptance-tests
