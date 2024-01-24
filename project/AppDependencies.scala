@@ -4,10 +4,12 @@ import sbt.*
 
 object AppDependencies {
 
+  val bootstrapVersion = "7.23.0"
+
   val compile: Seq[ModuleID] = Seq(
     ws,
     "uk.gov.hmrc"                %% "domain"                     % "8.1.0-play-28",
-    "uk.gov.hmrc"                %% "bootstrap-backend-play-28"  % "7.13.0",
+    "uk.gov.hmrc"                %% "bootstrap-backend-play-28"  % bootstrapVersion,
     "uk.gov.hmrc.mongo"          %% "hmrc-mongo-play-28"         % "0.74.0",
     "com.github.java-json-tools" %% "json-schema-validator"      % "2.2.14",
     "org.typelevel"              %% "cats-core"                  % "2.9.0",
@@ -15,6 +17,7 @@ object AppDependencies {
   )
 
   val test: Seq[ModuleID] = Seq(
+    "uk.gov.hmrc"          %% "bootstrap-test-play-28"      % bootstrapVersion    % "test",
     "uk.gov.hmrc"          %% "stub-data-generator"         % "1.1.0"             % "test",
     "org.scalatest"        %% "scalatest"                   % "3.2.15"            % "test",
     "com.vladsch.flexmark" %  "flexmark-all"                % "0.62.2"            % "test",
@@ -24,7 +27,7 @@ object AppDependencies {
     "uk.gov.hmrc.mongo"    %% "hmrc-mongo-test-play-28"     % "0.74.0"            % "test",
     "org.scalamock"        %% "scalamock"                   % "5.2.0"             % "test",
     "com.miguno.akka"      %% "akka-mock-scheduler"         % "0.5.5"             % "test",
-    "com.typesafe.akka"    %% "akka-testkit"                % "2.6.20"            % "test"
+    "com.typesafe.akka"    %% "akka-testkit"                % "2.6.21"            % "test"
   )
 
 
