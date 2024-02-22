@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.helptosaveproxy.connectors
 
-import akka.actor.ActorSystem
+import org.apache.pekko.actor.ActorSystem
 import cats.data.EitherT
 import cats.instances.string._
 import cats.syntax.eq._

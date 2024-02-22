@@ -16,8 +16,8 @@
 
 package uk.gov.hmrc.helptosaveproxy.health
 
-import akka.actor.Actor
-import akka.pattern.pipe
+import org.apache.pekko.actor.Actor
+import org.apache.pekko.pattern.pipe
 import uk.gov.hmrc.helptosaveproxy.health.HealthCheck.PerformHealthCheck
 
 import scala.concurrent.Future

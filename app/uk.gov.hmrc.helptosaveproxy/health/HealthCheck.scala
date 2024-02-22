@@ -16,21 +16,19 @@
 
 package uk.gov.hmrc.helptosaveproxy.health
 
-import java.time.format.DateTimeFormatter
-import java.time.{ZoneId, ZonedDateTime}
-
-import akka.actor.{Actor, ActorLogging, Cancellable, PoisonPill, Props, Scheduler}
-import akka.pattern.{after, ask, pipe}
 import cats.data.{NonEmptyList, OptionT}
 import cats.instances.future._
 import cats.instances.int._
 import cats.syntax.eq._
-import com.codahale.metrics.Histogram
-import com.kenshoo.play.metrics.Metrics
-import configs.syntax._
+import com.codahale.metrics.{Histogram, MetricRegistry}
 import com.typesafe.config.Config
+import configs.syntax._
+import org.apache.pekko.actor.{Actor, ActorLogging, Cancellable, PoisonPill, Props, Scheduler}
+import org.apache.pekko.pattern.{after, ask, pipe}
 import uk.gov.hmrc.helptosaveproxy.metrics.Metrics.nanosToPrettyString
 
+import java.time.format.DateTimeFormatter
+import java.time.{ZoneId, ZonedDateTime}
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.util.control.NonFatal
@@ -46,7 +44,7 @@ import scala.util.control.NonFatal
   * [[Props]] being used again and the [[Props]] are iterated through again in a cyclical fashion.
   *
   * The [[HealthCheck]] actor will handle [[HealthCheckResult]]s by keeping a record of the number of failures using
-  * the given [[Metrics]] and triggering pager duty alerts when a configured number of consecutive failures
+  * the given [[MetricRegistry]] and triggering pager duty alerts when a configured number of consecutive failures
   * has occurred.
   *
   * @param name The name of the test
@@ -61,14 +59,13 @@ class HealthCheck(
   name: String,
   config: Config,
   scheduler: Scheduler,
-  metrics: Metrics,
+  metrics: MetricRegistry,
   pagerDutyAlert: () => Unit,
   runnerProps: NonEmptyList[Props])
     extends Actor with ActorLogging {
 
-  import uk.gov.hmrc.helptosaveproxy.health.HealthCheck._
-
   import context.dispatcher
+  import uk.gov.hmrc.helptosaveproxy.health.HealthCheck._
 
   val minimumTimeBetweenChecks: FiniteDuration =
     config.get[FiniteDuration](s"health.$name.minimum-poll-period").value
@@ -92,7 +89,7 @@ class HealthCheck(
 
   val dateTimeFormatter: DateTimeFormatter = DateTimeFormatter.ISO_ZONED_DATE_TIME
 
-  val failureHistogram: Histogram = metrics.defaultRegistry.histogram(s"health.$name.number-of-failures")
+  val failureHistogram: Histogram = metrics.histogram(s"health.$name.number-of-failures")
 
   val propsQueue: NonEmptyCyclicalQueue[Props] = NonEmptyCyclicalQueue(runnerProps)
 
@@ -226,7 +223,8 @@ class HealthCheck(
   override def preStart(): Unit = {
     super.preStart()
     log.info(s"$loggingPrefix Starting scheduler to poll every $timeBetweenChecks")
-    performTestTask = Some(scheduler.scheduleAtFixedRate(timeBetweenChecks, timeBetweenChecks, self, PerformHealthCheck))
+    performTestTask = Some(
+      scheduler.scheduleAtFixedRate(timeBetweenChecks, timeBetweenChecks, self, PerformHealthCheck))
   }
 
   override def postStop(): Unit = {
@@ -242,7 +240,7 @@ object HealthCheck {
     name: String,
     config: Config,
     scheduler: Scheduler,
-    metrics: Metrics,
+    metricRegistry: MetricRegistry,
     pagerDutyAlert: () => Unit,
     runnerProps: Props,
     otherRunnerProps: Props*): Props =
@@ -251,7 +249,7 @@ object HealthCheck {
         name,
         config,
         scheduler,
-        metrics,
+        metricRegistry,
         pagerDutyAlert,
         NonEmptyList(runnerProps, otherRunnerProps.toList))
     )

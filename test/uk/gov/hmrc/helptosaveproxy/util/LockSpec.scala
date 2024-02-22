@@ -16,8 +16,8 @@
 
 package uk.gov.hmrc.helptosaveproxy.util
 
-import akka.actor.{ActorRef, Props}
-import com.miguno.akka.testing.VirtualTime
+import com.github.pjfanning.pekko.scheduler.mock.VirtualTime
+import org.apache.pekko.actor.{ActorRef, Props}
 import uk.gov.hmrc.helptosaveproxy.health.ActorTestSupport
 import uk.gov.hmrc.helptosaveproxy.util.lock.Lock
 import uk.gov.hmrc.mongo.lock.{LockRepository, TimePeriodLockService}

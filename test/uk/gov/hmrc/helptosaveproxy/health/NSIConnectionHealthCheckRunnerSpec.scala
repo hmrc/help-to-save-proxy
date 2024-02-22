@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.helptosaveproxy.health
 
-import akka.actor.{ActorRef, Props}
+import org.apache.pekko.actor.{ActorRef, Props}
 import cats.data.EitherT
 import uk.gov.hmrc.helptosaveproxy.connectors.NSIConnector
 import uk.gov.hmrc.helptosaveproxy.health.HealthCheck.PerformHealthCheck

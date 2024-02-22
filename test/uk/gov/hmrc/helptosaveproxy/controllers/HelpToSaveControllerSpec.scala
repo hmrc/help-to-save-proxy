@@ -81,7 +81,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
         FakeRequest().withJsonBody(Json.toJson(userInfo)).withHeaders("X-Correlation-Id" -> correlationId))
 
     behave like commonBehaviour(
-      controller.createAccount,
+      controller.createAccount _,
       () => mockCreateAccount(validNSIPayload)(Left(SubmissionFailure("", ""))),
       validNSIPayload)
 
@@ -116,7 +116,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
     val updatePayload = validNSIPayload.copy(version = None, systemId = None)
 
-    behave like commonBehaviour(controller.updateEmail, () => mockUpdateEmail(updatePayload)(Left("")), updatePayload)
+    behave like commonBehaviour(controller.updateEmail _, () => mockUpdateEmail(updatePayload)(Left("")), updatePayload)
 
     "return an OK status when a user successfully updates their email address" in {
       inSequence {
@@ -141,9 +141,9 @@ class HelpToSaveControllerSpec extends AuthSupport {
     val resource = "account"
 
     val queryParameters = Map(
-      "nino" -> Seq(nino),
-      "version" -> Seq(version),
-      "systemId" -> Seq(systemId),
+      "nino"          -> Seq(nino),
+      "version"       -> Seq(version),
+      "systemId"      -> Seq(systemId),
       "correlationId" -> Seq(correlationId.toString)
     )
 

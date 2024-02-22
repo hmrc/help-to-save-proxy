@@ -16,14 +16,13 @@
 
 package uk.gov.hmrc.helptosaveproxy.health
 
-import akka.actor.{Actor, ActorRef, Props}
-import akka.pattern.{ask, pipe}
-import akka.testkit.TestProbe
-import akka.util.Timeout
+import org.apache.pekko.actor.{Actor, ActorRef, Props}
+import org.apache.pekko.pattern.{ask, pipe}
+import org.apache.pekko.testkit.TestProbe
+import org.apache.pekko.util.Timeout
 import cats.data.EitherT
 import com.codahale.metrics._
-import com.kenshoo.play.metrics.Metrics
-import com.miguno.akka.testing.VirtualTime
+import com.github.pjfanning.pekko.scheduler.mock.VirtualTime
 import com.typesafe.config.ConfigFactory
 import org.scalatest.BeforeAndAfter
 import uk.gov.hmrc.helptosaveproxy.connectors.NSIConnector
@@ -64,18 +63,14 @@ class HealthTestSpec extends ActorTestSupport("HealthTestSpec") with BeforeAndAf
 
   val metricsListener: TestProbe = TestProbe()
 
-  val metrics: Metrics = new Metrics {
-    override def defaultRegistry: MetricRegistry = new MetricRegistry {
-      override def histogram(name: String): Histogram = new Histogram(new UniformReservoir()) {
+  private val metricRegistry: MetricRegistry = new MetricRegistry {
+    override def histogram(name: String): Histogram = new Histogram(new UniformReservoir()) {
 
-        override def update(value: Int): Unit = {
-          metricsListener.ref ! value
-          super.update(value)
-        }
+      override def update(value: Int): Unit = {
+        metricsListener.ref ! value
+        super.update(value)
       }
     }
-
-    override def toJson: String = sys.error("Not used")
   }
 
   before {
@@ -104,7 +99,7 @@ class HealthTestSpec extends ActorTestSupport("HealthTestSpec") with BeforeAndAf
       """.stripMargin
         ),
         time.scheduler,
-        metrics,
+        metricRegistry,
         () => pagerDutyListener.ref ! PagerDutyAlert,
         Props(new ProxyActor(runnerListener.ref, runnerName1)),
         Props(new ProxyActor(runnerListener.ref, runnerName2))
