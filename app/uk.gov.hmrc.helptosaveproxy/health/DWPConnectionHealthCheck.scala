@@ -17,7 +17,7 @@
 package uk.gov.hmrc.helptosaveproxy.health
 
 import configs.syntax._
-import akka.actor.{Actor, ActorRef, ActorSystem, PoisonPill, Props}
+import org.apache.pekko.actor.{Actor, ActorRef, ActorSystem, PoisonPill, Props}
 import com.google.inject.Inject
 import play.api.Configuration
 import play.api.inject.ApplicationLifecycle

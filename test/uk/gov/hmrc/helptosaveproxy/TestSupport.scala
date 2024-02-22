@@ -17,9 +17,7 @@
 package uk.gov.hmrc.helptosaveproxy
 
 import java.util.UUID
-
 import com.codahale.metrics._
-import com.kenshoo.play.metrics.{Metrics => PlayMetrics}
 import com.typesafe.config.ConfigFactory
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.ScalaFutures
@@ -34,6 +32,7 @@ import uk.gov.hmrc.helptosaveproxy.util.{LogMessageTransformer, UnitSpec}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.{Authorization, SessionId}
 
+import java.util
 import scala.concurrent.ExecutionContext
 
 trait TestSupport extends UnitSpec with MockFactory with BeforeAndAfterAll with ScalaFutures { this: Suite =>
@@ -54,7 +53,7 @@ trait TestSupport extends UnitSpec with MockFactory with BeforeAndAfterAll with 
                                       | microservice.services.dwp.keyManager.stores = []
                                       | microservice.services.nsi.keyManager.stores = []
                                       |     """.stripMargin)
-        ) withFallback(additionalConfig))
+        ) withFallback (additionalConfig))
       .build()
 
   lazy val fakeApplication: Application = buildFakeApplication(additionalConfig)
@@ -76,7 +75,12 @@ trait TestSupport extends UnitSpec with MockFactory with BeforeAndAfterAll with 
     super.afterAll()
   }
 
-  val mockMetrics = new Metrics(stub[PlayMetrics]) {
+  class StubMetricRegistry extends MetricRegistry {
+    override def getGauges(filter: MetricFilter): util.SortedMap[String, Gauge[_]] =
+      new util.TreeMap[String, Gauge[_]]()
+  }
+
+  val mockMetrics: Metrics = new Metrics(new StubMetricRegistry()) {
     override def timer(name: String): Timer = new Timer()
 
     override def counter(name: String): Counter = new Counter()

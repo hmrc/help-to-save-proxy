@@ -28,7 +28,7 @@ import javax.cache.{Cache => JCache}
 import javax.inject.Inject
 import javax.inject.Provider
 import javax.inject.Singleton
-import akka.stream.Materializer
+import org.apache.pekko.stream.Materializer
 import com.typesafe.sslconfig.ssl.SystemConfiguration
 import play.api.libs.ws._
 import play.api.libs.ws.ahc.cache._

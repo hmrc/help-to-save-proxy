@@ -16,8 +16,8 @@
 
 package uk.gov.hmrc.helptosaveproxy.util.lock
 
-import akka.actor.{Actor, Cancellable, Props, Scheduler}
-import akka.pattern.pipe
+import org.apache.pekko.actor.{Actor, Cancellable, Props, Scheduler}
+import org.apache.pekko.pattern.pipe
 import play.api.inject.ApplicationLifecycle
 import uk.gov.hmrc.helptosaveproxy.util.Logging
 import uk.gov.hmrc.helptosaveproxy.util.toFuture

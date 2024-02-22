@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.helptosaveproxy.config
 
-import akka.stream.Materializer
+import org.apache.pekko.stream.Materializer
 import com.google.inject.{ImplementedBy, Inject}
 import com.typesafe.sslconfig.ssl.SSLConfigParser
 import com.typesafe.sslconfig.util.EnrichedConfig
@@ -28,17 +28,27 @@ import javax.inject.Singleton
 import scala.util.chaining.scalaUtilChainingOps
 
 object CustomWSClient {
-  def standaloneAhcWsClient(customWSConfigParser: CustomWSConfigParser, configuration: Configuration, serviceName: String)(implicit materializer: Materializer): StandaloneAhcWSClient = {
+  def standaloneAhcWsClient(
+    customWSConfigParser: CustomWSConfigParser,
+    configuration: Configuration,
+    serviceName: String)(implicit materializer: Materializer): StandaloneAhcWSClient = {
     val wsConfig = customWSConfigParser.parse()
 
     // Path "play.ws.ssl" copied from play
     val defaultSSLConfigPath = "play.ws.ssl"
-    val sslConfigParser = new SSLConfigParser(EnrichedConfig(configuration.underlying.getConfig(defaultSSLConfigPath)), getClass.getClassLoader)
-    val keyManagerConfig = sslConfigParser.parseKeyManager(EnrichedConfig(configuration.underlying.getConfig(s"microservice.services.$serviceName.keyManager")))
-    val enhancedKeyManagerConfig = keyManagerConfig.withKeyStoreConfigs(customWSConfigParser
-      .enhanceKeyStoreConfig( keyManagerConfig.keyStoreConfigs))
-    AhcWSClientConfigFactory.forClientConfig(wsConfig.copy(ssl = wsConfig.ssl
-      .withKeyManagerConfig(enhancedKeyManagerConfig))).pipe(StandaloneAhcWSClient(_))
+    val sslConfigParser = new SSLConfigParser(
+      EnrichedConfig(configuration.underlying.getConfig(defaultSSLConfigPath)),
+      getClass.getClassLoader)
+    val keyManagerConfig = sslConfigParser.parseKeyManager(
+      EnrichedConfig(configuration.underlying.getConfig(s"microservice.services.$serviceName.keyManager")))
+    val enhancedKeyManagerConfig = keyManagerConfig.withKeyStoreConfigs(
+      customWSConfigParser
+        .enhanceKeyStoreConfig(keyManagerConfig.keyStoreConfigs))
+    AhcWSClientConfigFactory
+      .forClientConfig(
+        wsConfig.copy(ssl = wsConfig.ssl
+          .withKeyManagerConfig(enhancedKeyManagerConfig)))
+      .pipe(StandaloneAhcWSClient(_))
   }
 }
 
@@ -46,13 +56,14 @@ object CustomWSClient {
 trait DwpWsClient extends WSClient {}
 
 @Singleton
-class DwpWsClientImpl @Inject()(parser: CustomWSConfigParser, config: Configuration)(implicit materializer: Materializer)
-  extends AhcWSClient(CustomWSClient.standaloneAhcWsClient(parser, config, "dwp")) with DwpWsClient {}
+class DwpWsClientImpl @Inject()(parser: CustomWSConfigParser, config: Configuration)(
+  implicit materializer: Materializer)
+    extends AhcWSClient(CustomWSClient.standaloneAhcWsClient(parser, config, "dwp")) with DwpWsClient {}
 
 @ImplementedBy(classOf[NsiWsClientImpl])
 trait NsiWsClient extends WSClient {}
 
 @Singleton
-class NsiWsClientImpl @Inject()(parser: CustomWSConfigParser, config: Configuration)(implicit materializer: Materializer)
-  extends AhcWSClient(CustomWSClient.standaloneAhcWsClient(parser, config, "nsi")) with NsiWsClient {}
-
+class NsiWsClientImpl @Inject()(parser: CustomWSConfigParser, config: Configuration)(
+  implicit materializer: Materializer)
+    extends AhcWSClient(CustomWSClient.standaloneAhcWsClient(parser, config, "nsi")) with NsiWsClient {}

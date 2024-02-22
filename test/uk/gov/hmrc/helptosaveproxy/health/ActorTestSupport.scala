@@ -16,9 +16,9 @@
 
 package uk.gov.hmrc.helptosaveproxy.health
 
-import akka.actor.{ActorIdentity, ActorRef, ActorSystem, Identify}
-import akka.pattern.ask
-import akka.testkit.{ImplicitSender, TestKit}
+import org.apache.pekko.actor.{ActorIdentity, ActorRef, ActorSystem, Identify}
+import org.apache.pekko.pattern.ask
+import org.apache.pekko.testkit.{ImplicitSender, TestKit}
 import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
 import uk.gov.hmrc.helptosaveproxy.TestSupport
 

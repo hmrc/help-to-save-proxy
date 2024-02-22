@@ -17,7 +17,7 @@
 package uk.gov.hmrc.helptosaveproxy.health
 
 import java.time.LocalDate
-import akka.actor.{Actor, ActorRef, ActorSystem, PoisonPill, Props}
+import org.apache.pekko.actor.{Actor, ActorRef, ActorSystem, PoisonPill, Props}
 import com.google.inject.{Inject, Singleton}
 import configs.syntax._
 import play.api.Configuration

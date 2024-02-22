@@ -18,19 +18,19 @@ package uk.gov.hmrc.helptosaveproxy.metrics
 
 import cats.instances.long._
 import cats.syntax.eq._
-import com.codahale.metrics.{Counter, Histogram, Timer}
+import com.codahale.metrics.{Counter, Histogram, MetricRegistry, Timer}
 import com.google.inject.{Inject, Singleton}
 
 import scala.annotation.tailrec
 
 @Singleton
-class Metrics @Inject()(val metrics: com.kenshoo.play.metrics.Metrics) {
+class Metrics @Inject()(val metrics: MetricRegistry) {
 
-  def timer(name: String): Timer = metrics.defaultRegistry.timer(name)
+  def timer(name: String): Timer = metrics.timer(name)
 
-  def counter(name: String): Counter = metrics.defaultRegistry.counter(name)
+  def counter(name: String): Counter = metrics.counter(name)
 
-  def histogram(name: String): Histogram = metrics.defaultRegistry.histogram(name)
+  def histogram(name: String): Histogram = metrics.histogram(name)
 
   val nsiAccountCreationTimer: Timer = timer("proxy.nsi-account-creation-time")
 
@@ -62,10 +62,10 @@ object Metrics {
     "ns" -> 1000L,
     "μs" -> 1000L,
     "ms" -> 1000L,
-    "s" -> 60L,
-    "m" -> 60L,
-    "h" -> 24L,
-    "d" -> 7L
+    "s"  -> 60L,
+    "m"  -> 60L,
+    "h"  -> 24L,
+    "d"  -> 7L
   )
 
   /** Return the integer part and the remainder of the result of dividing th enumerator by the denominator */
