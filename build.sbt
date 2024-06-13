@@ -45,6 +45,7 @@ lazy val wartRemoverSettings = {
 lazy val microservice =
   Project(appName, file("."))
     .enablePlugins(Seq(play.sbt.PlayScala, SbtDistributablesPlugin) *)
+    .disablePlugins(JUnitXmlReportPlugin) //Required to prevent https://github.com/scalatest/scalatest/issues/1427
     .settings(onLoadMessage := "")
     .settings(scoverageSettings *)
     .settings(scalaSettings *)
