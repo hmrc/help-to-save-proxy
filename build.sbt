@@ -7,18 +7,6 @@ import wartremover.WartRemover.autoImport.{wartremoverErrors, wartremoverExclude
 
 val appName = "help-to-save-proxy"
 
-lazy val scoverageSettings = {
-  import scoverage.ScoverageKeys
-  Seq(
-    // Semicolon-separated list of regexs matching classes to exclude
-    ScoverageKeys.coverageExcludedPackages := "<empty>;.*Reverse.*;.*config.*;.*(AuthService|BuildInfo|Routes|JsErrorOps|LoggingPagerDutyAlerting|Logging|DWPConnectionHealthCheck|HTSAuditor|OptionalAhcHttpCacheProvider).*",
-    ScoverageKeys.coverageMinimumStmtTotal := 90,
-    ScoverageKeys.coverageFailOnMinimum := true,
-    ScoverageKeys.coverageHighlighting := true,
-    Test / parallelExecution := false
-  )
-}
-
 lazy val wartRemoverSettings = {
   // list of warts here: http://www.wartremover.org/doc/warts.html
   val excludedWarts = Seq(
@@ -47,7 +35,7 @@ lazy val microservice =
     .enablePlugins(Seq(play.sbt.PlayScala, SbtDistributablesPlugin) *)
     .disablePlugins(JUnitXmlReportPlugin) //Required to prevent https://github.com/scalatest/scalatest/issues/1427
     .settings(onLoadMessage := "")
-    .settings(scoverageSettings *)
+    .settings(CodeCoverageSettings.settings *)
     .settings(scalaSettings *)
     .settings(majorVersion := 2)
     .settings(defaultSettings() *)
