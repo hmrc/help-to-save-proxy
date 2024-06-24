@@ -21,3 +21,4 @@ leakDetectionExemptions:
 test-repositories:
   - help-to-save-integration-tests
   - help-to-save-acceptance-tests
+  - help-to-save-performance-tests
