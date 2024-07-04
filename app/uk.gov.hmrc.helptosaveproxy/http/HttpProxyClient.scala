@@ -26,7 +26,7 @@ import uk.gov.hmrc.http.{HeaderCarrier, HttpReads, HttpResponse}
 import uk.gov.hmrc.play.audit.http.HttpAuditing
 import uk.gov.hmrc.play.bootstrap.http.DefaultHttpClient
 import uk.gov.hmrc.play.http.ws.WSProxyConfiguration.buildWsProxyServer
-import uk.gov.hmrc.play.http.ws.{WSProxy, WSProxyConfiguration}
+import uk.gov.hmrc.play.http.ws.WSProxy
 
 import java.net.URI
 import scala.concurrent.{ExecutionContext, Future}

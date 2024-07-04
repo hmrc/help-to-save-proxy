@@ -71,7 +71,6 @@ class NSIConnectorImpl @Inject()(
     httpAuditing,
     appConfig.runModeConfiguration,
     wsClient,
-    "microservice.services.nsi.proxy",
     system)
 
   private val nsiCreateAccountUrl = appConfig.nsiCreateAccountUrl

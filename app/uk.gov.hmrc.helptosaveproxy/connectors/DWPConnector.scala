@@ -58,7 +58,6 @@ class DWPConnectorImpl @Inject()(
     httpAuditing,
     appConfig.runModeConfiguration,
     wsClient,
-    "microservice.services.dwp.proxy",
     system)
 
   def ucClaimantCheck(nino: String, transactionId: UUID, threshold: Double)(
