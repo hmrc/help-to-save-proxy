@@ -25,7 +25,8 @@ import uk.gov.hmrc.http.hooks.{Data, HookData, RequestData, ResponseData}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpReads, HttpResponse}
 import uk.gov.hmrc.play.audit.http.HttpAuditing
 import uk.gov.hmrc.play.bootstrap.http.DefaultHttpClient
-import uk.gov.hmrc.play.http.ws.{WSProxy, WSProxyConfiguration}
+import uk.gov.hmrc.play.http.ws.WSProxyConfiguration.buildWsProxyServer
+import uk.gov.hmrc.play.http.ws.WSProxy
 
 import java.net.URI
 import scala.concurrent.{ExecutionContext, Future}
@@ -34,11 +35,10 @@ class HttpProxyClient(
   httpAuditing: HttpAuditing,
   config: Configuration,
   wsClient: WSClient,
-  proxyConfigPath: String,
   actorSystem: ActorSystem)
     extends DefaultHttpClient(config, httpAuditing, wsClient, actorSystem) with WSProxy with HttpVerbs {
 
-  override lazy val wsProxyServer: Option[WSProxyServer] = WSProxyConfiguration(proxyConfigPath, config)
+  override lazy val wsProxyServer: Option[WSProxyServer] = buildWsProxyServer(config)
 
   private class RawHttpReads extends HttpReads[HttpResponse] {
     override def read(method: String, url: String, response: HttpResponse): HttpResponse = response

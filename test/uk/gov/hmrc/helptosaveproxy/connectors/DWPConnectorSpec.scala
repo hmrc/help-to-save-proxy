@@ -44,7 +44,6 @@ class DWPConnectorSpec
         mockAuditor,
         configuration,
         mockWsClient,
-        "microservice.services.dwp.proxy",
         fakeApplication.actorSystem)
 
   override val mockProxyClient = mock[MockedHttpProxyClient]

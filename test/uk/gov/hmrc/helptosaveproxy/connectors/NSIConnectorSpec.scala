@@ -52,7 +52,6 @@ class NSIConnectorSpec
         mockAuditor,
         configuration,
         mockWsClient,
-        "microservice.services.nsi.proxy",
         fakeApplication.actorSystem)
 
   override val mockProxyClient = mock[MockedHttpProxyClient]
