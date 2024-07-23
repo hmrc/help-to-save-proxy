@@ -16,32 +16,14 @@
 
 package uk.gov.hmrc.helptosaveproxy.testutil
 
-import java.time.LocalDate
-
-import org.scalacheck.Gen
 import uk.gov.hmrc.helptosaveproxy.models.NSIPayload.ContactDetails
 import uk.gov.hmrc.helptosaveproxy.models.{BankDetails, NSIPayload}
-import uk.gov.hmrc.smartstub.AutoGen.{GenProvider, instance}
-import uk.gov.hmrc.smartstub._
 
-import scala.language.implicitConversions
+import java.time.LocalDate
 
 object TestData {
 
   object UserData {
-
-    @SuppressWarnings(Array("org.wartremover.warts.PlatformDefault"))
-    implicit def providerLocalDate(s: String): GenProvider[LocalDate] =
-      instance({
-        s.toLowerCase match {
-          case "dateofbirth" | "dob" | "birthdate" => Gen.date(LocalDate.of(1900, 1, 1), LocalDate.now())
-          case _ => Gen.date
-        }
-      })
-
-    implicit val userInfoGen: Gen[NSIPayload] = AutoGen[NSIPayload]
-
-    def randomUserInfo(): NSIPayload = sample(userInfoGen)
 
     /**
       * Valid user details which will pass NSI validation checks

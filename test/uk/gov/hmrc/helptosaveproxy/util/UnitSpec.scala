@@ -49,7 +49,6 @@ trait UnitSpec extends AnyWordSpecLike with Matchers with OptionValues {
   def jsonBodyOf(result: play.api.mvc.Result)(implicit mat: Materializer): JsValue =
     Json.parse(bodyOf(result))
 
-  @SuppressWarnings(Array("org.wartremover.warts.GlobalExecutionContext"))
   def jsonBodyOf(resultF: Future[play.api.mvc.Result])(implicit mat: Materializer): Future[JsValue] =
     resultF.map(jsonBodyOf)
 
@@ -63,7 +62,6 @@ trait UnitSpec extends AnyWordSpecLike with Matchers with OptionValues {
     bodyBytes.decodeString(Charset.defaultCharset().name)
   }
 
-  @SuppressWarnings(Array("org.wartremover.warts.GlobalExecutionContext"))
   def bodyOf(resultF: Future[play.api.mvc.Result])(implicit mat: Materializer): Future[String] =
     resultF.map(bodyOf)
 }

@@ -24,7 +24,6 @@ import play.api.Configuration
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 @Singleton
-@SuppressWarnings(Array("org.wartremover.warts.PlatformDefault"))
 class AppConfig @Inject()(val runModeConfiguration: Configuration, sc: ServicesConfig) {
 
   def base64Encode(input: String): Array[Byte] = Base64.getEncoder.encode(input.getBytes)
