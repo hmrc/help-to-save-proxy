@@ -16,14 +16,13 @@
 
 package uk.gov.hmrc.helptosaveproxy.testutil
 
-import java.time.LocalDate
-
 import org.scalacheck.Gen
 import uk.gov.hmrc.helptosaveproxy.models.NSIPayload.ContactDetails
 import uk.gov.hmrc.helptosaveproxy.models.{BankDetails, NSIPayload}
 import uk.gov.hmrc.smartstub.AutoGen.{GenProvider, instance}
 import uk.gov.hmrc.smartstub._
 
+import java.time.LocalDate
 import scala.language.implicitConversions
 
 object TestData {
@@ -34,11 +33,63 @@ object TestData {
       instance({
         s.toLowerCase match {
           case "dateofbirth" | "dob" | "birthdate" => Gen.date(LocalDate.of(1900, 1, 1), LocalDate.now())
-          case _ => Gen.date
+          case _                                   => Gen.date
         }
       })
 
-    implicit val userInfoGen: Gen[NSIPayload] = AutoGen[NSIPayload]
+    val contactDetailsGen: Gen[ContactDetails] = for {
+      address1                <- Gen.alphaNumStr
+      address2                <- Gen.alphaNumStr
+      address3                <- Gen.option(Gen.alphaNumStr)
+      address4                <- Gen.option(Gen.alphaNumStr)
+      address5                <- Gen.option(Gen.alphaNumStr)
+      postcode                <- Gen.postcode
+      countryCode             <- Gen.option(Gen.alphaStr)
+      email                   <- Gen.option(Gen.alphaNumStr)
+      phoneNumber             <- Gen.option(Gen.ukPhoneNumber)
+      communicationPreference <- Gen.alphaStr
+    } yield
+      ContactDetails(
+        address1,
+        address2,
+        address3,
+        address4,
+        address5,
+        postcode,
+        countryCode,
+        email,
+        phoneNumber,
+        communicationPreference)
+
+    val bankDetailsGen: Gen[BankDetails] = for {
+      sortCode      <- Gen.numStr
+      accountNumber <- Gen.numStr
+      rollNumber    <- Gen.option(Gen.numStr)
+      accountName   <- Gen.alphaStr
+    } yield BankDetails(sortCode, accountNumber, rollNumber, accountName)
+
+    val userInfoGen: Gen[NSIPayload] =
+      for {
+        forename            <- Gen.alphaStr
+        surname             <- Gen.alphaStr
+        dateOfBirth         <- Gen.date
+        nino                <- Gen.alphaNumStr
+        contactDetails      <- contactDetailsGen
+        registrationChannel <- Gen.alphaNumStr
+        nbaDetails          <- Gen.option(bankDetailsGen)
+        version             <- Gen.option(Gen.numStr)
+        systemId            <- Gen.option(Gen.numStr)
+      } yield
+        NSIPayload(
+          forename,
+          surname,
+          dateOfBirth,
+          nino,
+          contactDetails,
+          registrationChannel,
+          nbaDetails,
+          version,
+          systemId)
 
     def randomUserInfo(): NSIPayload = sample(userInfoGen)
 
