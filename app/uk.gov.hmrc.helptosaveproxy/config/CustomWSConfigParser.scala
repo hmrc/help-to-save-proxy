@@ -63,7 +63,6 @@ class CustomWSConfigParser @Inject()(configuration: Configuration, env: Environm
     wsClientConfig
   }
 
-  @SuppressWarnings(Array("org.wartremover.warts.PlatformDefault"))
   def enhanceKeyStoreConfig(config:scala.collection.immutable.Seq[KeyStoreConfig]):scala.collection.immutable.Seq[KeyStoreConfig] =
     config.filter(_.data.forall(_.nonEmpty)).map { ks =>
       (ks.storeType.toUpperCase, ks.filePath, ks.data) match {
@@ -102,7 +101,6 @@ class CustomWSConfigParser @Inject()(configuration: Configuration, env: Environm
     }
   }
 
-  @SuppressWarnings(Array("org.wartremover.warts.Null"))
   private def initKeystore(): KeyStore = {
     val keystore = KeyStore.getInstance("jks")
     keystore.load(null, null) // scalastyle:ignore null
@@ -139,7 +137,6 @@ class CustomWSConfigParser @Inject()(configuration: Configuration, env: Environm
     }
   }
 
-  @SuppressWarnings(Array("org.wartremover.warts.PlatformDefault"))
   private def createKeyStoreConfig(ks: KeyStoreConfig, data: String): KeyStoreConfig = {
     logger.info("Creating key store config")
     val (ksFilePath, _) = createTempFileForData(data)
