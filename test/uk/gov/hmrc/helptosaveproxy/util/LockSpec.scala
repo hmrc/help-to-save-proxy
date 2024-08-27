@@ -18,6 +18,7 @@ package uk.gov.hmrc.helptosaveproxy.util
 
 import com.github.pjfanning.pekko.scheduler.mock.VirtualTime
 import org.apache.pekko.actor.{ActorRef, Props}
+import play.api.test.Helpers.{await, defaultAwaitTimeout}
 import uk.gov.hmrc.helptosaveproxy.health.ActorTestSupport
 import uk.gov.hmrc.helptosaveproxy.util.lock.Lock
 import uk.gov.hmrc.mongo.lock.{LockRepository, TimePeriodLockService}

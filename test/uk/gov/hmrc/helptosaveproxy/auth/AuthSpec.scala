@@ -19,6 +19,7 @@ package uk.gov.hmrc.helptosaveproxy.auth
 import play.api.http.Status
 import play.api.mvc.Results.Ok
 import play.api.test.FakeRequest
+import play.api.test.Helpers.{defaultAwaitTimeout, status}
 import uk.gov.hmrc.auth.core.AuthorisationException.fromString
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.credentials
 import uk.gov.hmrc.auth.core.retrieve.{Credentials, Retrieval}
@@ -26,8 +27,7 @@ import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.helptosaveproxy.util.{AuthSupport, Logging}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Future
 
 class AuthSpec extends AuthSupport {
 
@@ -48,7 +48,7 @@ class AuthSpec extends AuthSupport {
     "return after successful authentication" in {
       mockAuthResultWithSuccess()
 
-      val result = Await.result(callAuth(FakeRequest()), 5.seconds)
+      val result = callAuth(FakeRequest())
       status(result) shouldBe Status.OK
     }
 
