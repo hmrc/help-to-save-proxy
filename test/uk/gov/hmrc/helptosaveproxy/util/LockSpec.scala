@@ -18,13 +18,14 @@ package uk.gov.hmrc.helptosaveproxy.util
 
 import com.github.pjfanning.pekko.scheduler.mock.VirtualTime
 import org.apache.pekko.actor.{ActorRef, Props}
+import org.mockito.ArgumentMatchersSugar.*
 import play.api.test.Helpers.{await, defaultAwaitTimeout}
 import uk.gov.hmrc.helptosaveproxy.health.ActorTestSupport
 import uk.gov.hmrc.helptosaveproxy.util.lock.Lock
 import uk.gov.hmrc.mongo.lock.{LockRepository, TimePeriodLockService}
 
+import scala.concurrent.Future
 import scala.concurrent.duration._
-import scala.concurrent.{ExecutionContext, Future}
 
 class LockSpec extends ActorTestSupport("LockSpec") {
 
@@ -71,10 +72,9 @@ class LockSpec extends ActorTestSupport("LockSpec") {
   lazy val lock = newLock(time)
 
   def mockwithRenewedLock(result: Either[String, Option[Unit]]): Unit =
-    (internalLock
-      .withRenewedLock(_: Future[Unit])(_: ExecutionContext))
-      .expects(*, *)
-      .returning(result.fold(e => Future.failed(new Exception(e)), Future.successful))
+    internalLock
+      .withRenewedLock[Unit](*)(*)
+      .returns(result.fold(e => Future.failed(new Exception(e)), o => Future.successful(o)))
 
   "The Lock" must {
 
@@ -96,7 +96,7 @@ class LockSpec extends ActorTestSupport("LockSpec") {
 
     "register an application lifecycle stop hook when starting which when triggered will release the lock if " +
       "acquired when triggered and change state if successful" in {
-      val (_, time, hook) = startNewLock(inSequence {
+      val (_, time, hook) = startNewLock({
         mockwithRenewedLock(Right(Some(())))
         mockwithRenewedLock(Right(Some(())))
       })
@@ -113,7 +113,7 @@ class LockSpec extends ActorTestSupport("LockSpec") {
 
     "register an application lifecycle stop hook when starting which when triggered will release the lock if " +
       "acquired when triggered and not change state if not successful" in {
-      val (_, time, hook) = startNewLock(inSequence {
+      val (_, time, hook) = startNewLock({
         mockwithRenewedLock(Right(Some(())))
         mockwithRenewedLock(Left(""))
       })

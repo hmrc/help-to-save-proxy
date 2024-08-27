@@ -32,7 +32,7 @@ class ActorTestSupport(name: String)
         ConfigFactory
           .defaultApplication()
           .resolve()
-          .withValue("akka.test.single-expect-default", ConfigValueFactory.fromAnyRef("10 seconds"))
+          .withValue("org.apache.pekko.test.single-expect-default", ConfigValueFactory.fromAnyRef("5 seconds"))
       )) with ImplicitSender with TestSupport {
 
   override def afterAll(): Unit = {
@@ -48,9 +48,11 @@ class ActorTestSupport(name: String)
     * the behaviour yet. By waiting until the actor has replied an `Identify` message, we can
     * be sure that the actor has scheduled the messages.
     */
-  def awaitActorReady(ref: ActorRef): Unit = {
+  def awaitActorReady(ref: ActorRef): ActorRef = {
     val msg = ref.ask(Identify(""))(4.seconds).mapTo[ActorIdentity]
     Await.result(msg, 3.seconds).ref.contains(ref) shouldBe true
+    Thread.sleep(1000L)
+    ref
   }
 
 }

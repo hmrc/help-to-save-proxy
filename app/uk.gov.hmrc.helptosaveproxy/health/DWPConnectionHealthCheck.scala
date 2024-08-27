@@ -45,13 +45,13 @@ class DWPConnectionHealthCheck @Inject()(
     mongoLockRepository: MongoLockRepository)
     extends Logging {
 
-  val name: String = "dwp-connection"
+  private val name: String = "dwp-connection"
 
-  val enabled: Boolean = configuration.underlying.get[Boolean](s"health.$name.enabled").value
+  private val enabled: Boolean = configuration.underlying.get[Boolean](s"health.$name.enabled").value
 
-  val lockDuration: FiniteDuration = configuration.underlying.get[FiniteDuration](s"health.$name.lock-duration").value
+  private val lockDuration: FiniteDuration = configuration.underlying.get[FiniteDuration](s"health.$name.lock-duration").value
 
-  def newHealthCheck(): ActorRef = system.actorOf(
+  private def newHealthCheck(): ActorRef = system.actorOf(
     HealthCheck.props(
       name,
       configuration.underlying,
@@ -64,7 +64,7 @@ class DWPConnectionHealthCheck @Inject()(
 
   // make sure we only have one instance of the health check running across
   // multiple instances of the application in the same environment
-  lazy val lockedHealthCheck: ActorRef =
+  private lazy val lockedHealthCheck: ActorRef =
     system.actorOf(
       Lock.props[Option[ActorRef]](
         s"health-check-$name",

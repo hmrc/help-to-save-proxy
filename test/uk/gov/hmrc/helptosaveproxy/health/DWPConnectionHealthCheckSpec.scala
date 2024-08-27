@@ -16,14 +16,15 @@
 
 package uk.gov.hmrc.helptosaveproxy.health
 
-import org.apache.pekko.actor.{ActorRef, Props}
 import cats.data.EitherT
+import org.apache.pekko.actor.{ActorRef, Props}
+import org.mockito.ArgumentMatchersSugar.*
+
 import uk.gov.hmrc.helptosaveproxy.connectors.DWPConnector
 import uk.gov.hmrc.helptosaveproxy.health.DWPConnectionHealthCheck.DWPConnectionHealthCheckRunner
 import uk.gov.hmrc.helptosaveproxy.health.HealthCheck.PerformHealthCheck
-import uk.gov.hmrc.http.HeaderCarrier
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 class DWPConnectionHealthCheckSpec extends ActorTestSupport("DWPConnectionHealthCheckRunnerSpec") {
 
@@ -32,10 +33,9 @@ class DWPConnectionHealthCheckSpec extends ActorTestSupport("DWPConnectionHealth
   def newRunner(): ActorRef = system.actorOf(Props(new DWPConnectionHealthCheckRunner(dwpConnector, mockMetrics)))
 
   def mockDwpConnectorTest(result: Option[Either[String, Unit]]): Unit =
-    (dwpConnector
-      .healthCheck()(_: HeaderCarrier, _: ExecutionContext))
-      .expects(*, *)
-      .returning(
+    dwpConnector
+      .healthCheck()(*, *)
+      .returns(
         EitherT(result.fold[Future[Either[String, Unit]]](Future.failed(new Exception("")))(Future.successful))
       )
 

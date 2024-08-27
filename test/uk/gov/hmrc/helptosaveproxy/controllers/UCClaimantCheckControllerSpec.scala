@@ -16,20 +16,21 @@
 
 package uk.gov.hmrc.helptosaveproxy.controllers
 
-import java.util.UUID
-
 import cats.data.EitherT
 import cats.instances.future._
+import org.mockito.ArgumentMatchersSugar.*
+
 import play.api.libs.json.Json
 import play.api.mvc.{Result => PlayResult}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import uk.gov.hmrc.helptosaveproxy.util.AuthSupport
 import uk.gov.hmrc.helptosaveproxy.connectors.DWPConnector
 import uk.gov.hmrc.helptosaveproxy.testutil.UCClaimantTestSupport
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.helptosaveproxy.util.AuthSupport
+import uk.gov.hmrc.http.HttpResponse
 
-import scala.concurrent.{ExecutionContext, Future}
+import java.util.UUID
+import scala.concurrent.Future
 
 class UCClaimantCheckControllerSpec extends AuthSupport with UCClaimantTestSupport {
 
@@ -47,20 +48,17 @@ class UCClaimantCheckControllerSpec extends AuthSupport with UCClaimantTestSuppo
 
   def mockUCClaimantCheck(encodedNino: String, transactionId: UUID, threshold: Double)(
     result: Either[String, HttpResponse]): Unit =
-    (mockDWPConnector
-      .ucClaimantCheck(_: String, _: UUID, _: Double)(_: HeaderCarrier, _: ExecutionContext))
-      .expects(encodedNino, transactionId, threshold, *, *)
-      .returning(EitherT.fromEither[Future](result))
+    mockDWPConnector
+      .ucClaimantCheck(encodedNino, transactionId, threshold)(*, *)
+      .returns(EitherT.fromEither[Future](result))
 
   "ucClaimantCheck" must {
 
     "return a 200 status with the expected json when given a NINO starting with WP01" in {
       val ucDetails = HttpResponse(200, Json.toJson(eUCDetails), noHeaders)
 
-      inSequence {
-        mockAuthResultWithSuccess()
-        mockUCClaimantCheck(nino, transactionId, threshold)(Right(ucDetails))
-      }
+      mockAuthResultWithSuccess()
+      mockUCClaimantCheck(nino, transactionId, threshold)(Right(ucDetails))
 
       val result = doUCClaimantCheck(controller, nino)
       status(result) shouldBe 200
@@ -69,10 +67,8 @@ class UCClaimantCheckControllerSpec extends AuthSupport with UCClaimantTestSuppo
     }
 
     "return a 500 status with no payload when the ucClaimantCheck call fails" in {
-      inSequence {
-        mockAuthResultWithSuccess()
-        mockUCClaimantCheck(nino, transactionId, threshold)(Left("uc claimant check failed"))
-      }
+      mockAuthResultWithSuccess()
+      mockUCClaimantCheck(nino, transactionId, threshold)(Left("uc claimant check failed"))
 
       val result = doUCClaimantCheck(controller, nino)
       status(result) shouldBe 500
