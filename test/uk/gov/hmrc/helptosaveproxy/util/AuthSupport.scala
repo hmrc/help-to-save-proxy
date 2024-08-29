@@ -16,14 +16,14 @@
 
 package uk.gov.hmrc.helptosaveproxy.util
 
+import org.mockito.ArgumentMatchersSugar.*
+
 import uk.gov.hmrc.auth.core.AuthProvider.{GovernmentGateway, PrivilegedApplication}
-import uk.gov.hmrc.auth.core.authorise.Predicate
 import uk.gov.hmrc.auth.core.retrieve._
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthProviders}
 import uk.gov.hmrc.helptosaveproxy.TestSupport
-import uk.gov.hmrc.http._
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 trait AuthSupport extends TestSupport {
 
@@ -32,15 +32,13 @@ trait AuthSupport extends TestSupport {
   val mockAuthConnector: AuthConnector = mock[AuthConnector]
 
   def mockAuthResultWithFail()(ex: Throwable): Unit =
-    (mockAuthConnector
-      .authorise(_: Predicate, _: Retrieval[Unit])(_: HeaderCarrier, _: ExecutionContext))
-      .expects(authProviders, EmptyRetrieval, *, *)
-      .returning(Future.failed(ex))
+    mockAuthConnector
+      .authorise(authProviders, EmptyRetrieval)(*, *)
+      .returns(Future.failed(ex))
 
   def mockAuthResultWithSuccess(): Unit =
-    (mockAuthConnector
-      .authorise(_: Predicate, _: Retrieval[Unit])(_: HeaderCarrier, _: ExecutionContext))
-      .expects(authProviders, EmptyRetrieval, *, *)
-      .returning(Future.successful(()))
+    mockAuthConnector
+      .authorise(authProviders, EmptyRetrieval)(*, *)
+      .returns(Future.successful(()))
 
 }

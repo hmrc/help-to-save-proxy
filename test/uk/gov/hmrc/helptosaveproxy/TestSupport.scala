@@ -16,10 +16,9 @@
 
 package uk.gov.hmrc.helptosaveproxy
 
-import java.util.UUID
 import com.codahale.metrics._
 import com.typesafe.config.ConfigFactory
-import org.scalamock.scalatest.MockFactory
+import org.mockito.IdiomaticMockito
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{BeforeAndAfterAll, Suite}
 import play.api.inject.guice.GuiceApplicationBuilder
@@ -29,13 +28,13 @@ import uk.gov.hmrc.helptosaveproxy.config.AppConfig
 import uk.gov.hmrc.helptosaveproxy.metrics.Metrics
 import uk.gov.hmrc.helptosaveproxy.testutil.TestLogMessageTransformer
 import uk.gov.hmrc.helptosaveproxy.util.{LogMessageTransformer, UnitSpec}
-import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.http.{Authorization, SessionId}
+import uk.gov.hmrc.http.{Authorization, HeaderCarrier, SessionId}
 
 import java.util
+import java.util.UUID
 import scala.concurrent.ExecutionContext
 
-trait TestSupport extends UnitSpec with MockFactory with BeforeAndAfterAll with ScalaFutures { this: Suite =>
+trait TestSupport extends UnitSpec with IdiomaticMockito with BeforeAndAfterAll with ScalaFutures { this: Suite =>
 
   lazy val additionalConfig = Configuration()
 

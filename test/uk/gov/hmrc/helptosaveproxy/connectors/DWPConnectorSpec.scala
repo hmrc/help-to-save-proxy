@@ -16,9 +16,7 @@
 
 package uk.gov.hmrc.helptosaveproxy.connectors
 
-import java.util.UUID
 import cats.data.EitherT
-import org.scalamock.scalatest.MockFactory
 import org.scalatest.EitherValues
 import play.api.libs.json.Json
 import uk.gov.hmrc.helptosaveproxy.TestSupport
@@ -29,22 +27,19 @@ import uk.gov.hmrc.helptosaveproxy.testutil.{MockPagerDuty, UCClaimantTestSuppor
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.play.audit.http.HttpAuditing
 
+import java.util.UUID
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 class DWPConnectorSpec
-    extends TestSupport with HttpSupport with MockFactory with EitherValues with UCClaimantTestSupport
+    extends TestSupport with HttpSupport with EitherValues with UCClaimantTestSupport
     with MockPagerDuty {
 
   private val mockAuditor = mock[HttpAuditing]
   private val mockWsClient = mock[DwpWsClient]
 
   class MockedHttpProxyClient
-      extends HttpProxyClient(
-        mockAuditor,
-        configuration,
-        mockWsClient,
-        fakeApplication.actorSystem)
+      extends HttpProxyClient(mockAuditor, configuration, mockWsClient, fakeApplication.actorSystem)
 
   override val mockProxyClient = mock[MockedHttpProxyClient]
 
@@ -99,24 +94,18 @@ class DWPConnectorSpec
     "return a Left when the ucClaimant call comes back with a status other than 200" in {
       val ucDetails = HttpResponse(500, Json.toJson(nonUCClaimantDetails), noHeaders) // scalastyle:ignore magic.number
       val dwpUrl = "http://localhost:7002/hmrc/WP030123A"
-      inSequence {
-        mockGet(dwpUrl, queryParams)(Some(ucDetails))
-        mockPagerDutyAlert("Received unexpected http status in response to uc claimant check")
-      }
+      mockGet(dwpUrl, queryParams)(Some(ucDetails))
+      mockPagerDutyAlert("Received unexpected http status in response to uc claimant check")
       val result = connector.ucClaimantCheck("WP030123A", transactionId, threshold)
       resultValue(result).isLeft shouldBe true
     }
 
     "return a Left when the ucClaimant call fails" in {
       val dwpUrl = "http://localhost:7002/hmrc/WP030123A"
-      inSequence {
-        mockGet(dwpUrl, queryParams)(None)
-        mockPagerDutyAlert("Failed to make call to uc claimant check")
-      }
+      mockGet(dwpUrl, queryParams)(None)
+      mockPagerDutyAlert("Failed to make call to uc claimant check")
       val result = connector.ucClaimantCheck("WP030123A", transactionId, threshold)
       resultValue(result).isLeft shouldBe true
     }
-
   }
-
 }

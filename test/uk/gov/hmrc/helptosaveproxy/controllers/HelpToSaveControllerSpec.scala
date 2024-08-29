@@ -16,25 +16,26 @@
 
 package uk.gov.hmrc.helptosaveproxy.controllers
 
-import java.util.UUID
-
 import cats.data.EitherT
 import cats.instances.future._
+import org.mockito.ArgumentMatchersSugar.*
+
 import play.api.http.Status
-import play.api.libs.json.{JsValue, Json}
+import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.auth.core.retrieve.Credentials
-import uk.gov.hmrc.helptosaveproxy.util.AuthSupport
 import uk.gov.hmrc.helptosaveproxy.connectors.NSIConnector
-import uk.gov.hmrc.helptosaveproxy.models.{AccountNumber, NSIPayload}
 import uk.gov.hmrc.helptosaveproxy.models.SubmissionResult.{SubmissionFailure, SubmissionSuccess}
+import uk.gov.hmrc.helptosaveproxy.models.{AccountNumber, NSIPayload}
 import uk.gov.hmrc.helptosaveproxy.services.JSONSchemaValidationService
 import uk.gov.hmrc.helptosaveproxy.testutil.TestData.UserData.validNSIPayload
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.helptosaveproxy.util.AuthSupport
+import uk.gov.hmrc.http.HttpResponse
 
-import scala.concurrent.{ExecutionContext, Future}
+import java.util.UUID
+import scala.concurrent.Future
 
 class HelpToSaveControllerSpec extends AuthSupport {
 
@@ -48,29 +49,25 @@ class HelpToSaveControllerSpec extends AuthSupport {
   val noHeaders = Map[String, Seq[String]]()
 
   def mockJSONSchemaValidationService(expectedInfo: NSIPayload)(result: Either[String, Unit]) =
-    (mockJsonSchema
-      .validate(_: JsValue))
-      .expects(Json.toJson(expectedInfo))
-      .returning(result.map(_ => Json.toJson(expectedInfo)))
+    mockJsonSchema
+      .validate(Json.toJson(expectedInfo))
+      .returns(result.map(_ => Json.toJson(expectedInfo)))
 
   def mockCreateAccount(expectedInfo: NSIPayload)(result: Either[SubmissionFailure, SubmissionSuccess]): Unit =
-    (mockNSIConnector
-      .createAccount(_: NSIPayload)(_: HeaderCarrier, _: ExecutionContext))
-      .expects(expectedInfo, *, *)
-      .returning(EitherT.fromEither[Future](result))
+    mockNSIConnector
+      .createAccount(expectedInfo)(*, *)
+      .returns(EitherT.fromEither[Future](result))
 
   def mockUpdateEmail(expectedInfo: NSIPayload)(result: Either[String, Unit]) =
-    (mockNSIConnector
-      .updateEmail(_: NSIPayload)(_: HeaderCarrier, _: ExecutionContext))
-      .expects(expectedInfo, *, *)
-      .returning(EitherT.fromEither[Future](result))
+    mockNSIConnector
+      .updateEmail(expectedInfo)(*, *)
+      .returns(EitherT.fromEither[Future](result))
 
   def mockGetAccountByNino(resource: String, queryString: Map[String, Seq[String]])(
     result: Either[String, HttpResponse]): Unit =
-    (mockNSIConnector
-      .queryAccount(_: String, _: Map[String, Seq[String]])(_: HeaderCarrier, _: ExecutionContext))
-      .expects(resource, queryString, *, *)
-      .returning(EitherT.fromEither[Future](result))
+    mockNSIConnector
+      .queryAccount(resource, queryString)(*, *)
+      .returns(EitherT.fromEither[Future](result))
 
   "The createAccount method" must {
 
@@ -86,22 +83,18 @@ class HelpToSaveControllerSpec extends AuthSupport {
       validNSIPayload)
 
     "return a Created status when valid json is given for an eligible new user" in {
-      inSequence {
-        mockAuthResultWithSuccess()
-        mockJSONSchemaValidationService(validNSIPayload)(Right(()))
-        mockCreateAccount(validNSIPayload)(Right(SubmissionSuccess(Some(AccountNumber("1234567890")))))
-      }
+      mockAuthResultWithSuccess()
+      mockJSONSchemaValidationService(validNSIPayload)(Right(()))
+      mockCreateAccount(validNSIPayload)(Right(SubmissionSuccess(Some(AccountNumber("1234567890")))))
 
       val result = doCreateAccountRequest(validNSIPayload)
       status(result) shouldBe CREATED
     }
 
     "return a Conflict status when valid json is given for an existing user" in {
-      inSequence {
-        mockAuthResultWithSuccess()
-        mockJSONSchemaValidationService(validNSIPayload)(Right(()))
-        mockCreateAccount(validNSIPayload)(Right(SubmissionSuccess(None)))
-      }
+      mockAuthResultWithSuccess()
+      mockJSONSchemaValidationService(validNSIPayload)(Right(()))
+      mockCreateAccount(validNSIPayload)(Right(SubmissionSuccess(None)))
 
       val result = doCreateAccountRequest(validNSIPayload)
       status(result) shouldBe CONFLICT
@@ -119,11 +112,9 @@ class HelpToSaveControllerSpec extends AuthSupport {
     behave like commonBehaviour(controller.updateEmail _, () => mockUpdateEmail(updatePayload)(Left("")), updatePayload)
 
     "return an OK status when a user successfully updates their email address" in {
-      inSequence {
-        mockAuthResultWithSuccess()
-        mockJSONSchemaValidationService(updatePayload)(Right(()))
-        mockUpdateEmail(updatePayload)(Right(()))
-      }
+      mockAuthResultWithSuccess()
+      mockJSONSchemaValidationService(updatePayload)(Right(()))
+      mockUpdateEmail(updatePayload)(Right(()))
 
       val result = doUpdateEmailRequest(updatePayload)
       status(result) shouldBe OK
@@ -156,10 +147,8 @@ class HelpToSaveControllerSpec extends AuthSupport {
       val responseBody = s"""{"version":$version,"correlationId":"$correlationId"}"""
       val httpResponse = HttpResponse(Status.OK, responseBody, noHeaders)
 
-      inSequence {
-        mockAuthResultWithSuccess()
-        mockGetAccountByNino(resource, queryParameters)(Right(httpResponse))
-      }
+      mockAuthResultWithSuccess()
+      mockGetAccountByNino(resource, queryParameters)(Right(httpResponse))
 
       val result = doRequest()
 
@@ -168,10 +157,8 @@ class HelpToSaveControllerSpec extends AuthSupport {
     }
 
     "handle unexpected errors from NS&I" in {
-      inSequence {
-        mockAuthResultWithSuccess()
-        mockGetAccountByNino(resource, queryParameters)(Left("boom"))
-      }
+      mockAuthResultWithSuccess()
+      mockGetAccountByNino(resource, queryParameters)(Left("boom"))
       status(doRequest()) shouldBe INTERNAL_SERVER_ERROR
     }
   }
@@ -179,12 +166,10 @@ class HelpToSaveControllerSpec extends AuthSupport {
   def commonBehaviour(doCall: () => Action[AnyContent], mockNSIFailure: () => Unit, nsiPayload: NSIPayload): Unit = {
 
     "return an InternalServerError status when the call to NSI returns an error" in {
-      inSequence {
-        mockAuthResultWithSuccess()
+      mockAuthResultWithSuccess()
 
-        mockJSONSchemaValidationService(nsiPayload)(Right(()))
-        mockNSIFailure()
-      }
+      mockJSONSchemaValidationService(nsiPayload)(Right(()))
+      mockNSIFailure()
 
       val result = doCall()(FakeRequest().withJsonBody(Json.toJson(nsiPayload)))
       status(result) shouldBe INTERNAL_SERVER_ERROR
@@ -194,10 +179,8 @@ class HelpToSaveControllerSpec extends AuthSupport {
     "return a BadRequest" when {
 
       "the given user info doesn't pass the json schema validation" in {
-        inSequence {
-          mockAuthResultWithSuccess()
-          mockJSONSchemaValidationService(nsiPayload)(Left(""))
-        }
+        mockAuthResultWithSuccess()
+        mockJSONSchemaValidationService(nsiPayload)(Left(""))
 
         val result = doCall()(FakeRequest().withJsonBody(Json.toJson(nsiPayload)))
         status(result) shouldBe BAD_REQUEST
