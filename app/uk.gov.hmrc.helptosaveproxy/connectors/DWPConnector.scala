@@ -16,13 +16,10 @@
 
 package uk.gov.hmrc.helptosaveproxy.connectors
 
-import java.util.UUID
-import org.apache.pekko.actor.ActorSystem
 import cats.data.EitherT
 import com.codahale.metrics.Timer
 import com.google.inject.ImplementedBy
-
-import javax.inject.{Inject, Singleton}
+import org.apache.pekko.actor.ActorSystem
 import play.api.http.Status
 import uk.gov.hmrc.helptosaveproxy.config.{AppConfig, DwpWsClient}
 import uk.gov.hmrc.helptosaveproxy.http.HttpProxyClient
@@ -33,6 +30,8 @@ import uk.gov.hmrc.helptosaveproxy.util.{LogMessageTransformer, Logging, PagerDu
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.play.audit.http.HttpAuditing
 
+import java.util.UUID
+import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @ImplementedBy(classOf[DWPConnectorImpl])
@@ -64,6 +63,10 @@ class DWPConnectorImpl @Inject()(
     implicit hc: HeaderCarrier,
     ec: ExecutionContext): EitherT[Future, String, HttpResponse] = {
 
+    val url = s"${appConfig.dwpCheckURL}/$nino"
+
+    logger.info(s"Trying to query uc claimant status: $url")
+
     val timeContext: Timer.Context = metrics.dwpClaimantCheckTimer.time()
 
     val queryParams = Seq(
@@ -73,7 +76,7 @@ class DWPConnectorImpl @Inject()(
 
     EitherT(
       proxyClient
-        .get(s"${appConfig.dwpCheckURL}/$nino", queryParams)(hc.copy(authorization = None), ec)
+        .get(url, queryParams)(hc.copy(authorization = None), ec)
         .map[Either[String, HttpResponse]] { response =>
           val time = timeContext.stop()
           response.status match {
