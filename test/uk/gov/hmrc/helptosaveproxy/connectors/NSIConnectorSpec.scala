@@ -166,24 +166,6 @@ class NSIConnectorSpec
         Await.result(doRequest.value, 3.seconds).isLeft shouldBe true
       }
     }
-
-    "the health-check Method" must {
-      def doRequest = nsiConnector.healthCheck(validNSIPayload)
-
-      "Return a Right when the status is OK" in {
-        mockPut(nsiCreateAccountUrl, validNSIPayload, authHeaders)(Some(HttpResponse(Status.OK, "")))
-        Await.result(doRequest.value, 3.seconds) shouldBe Right(())
-      }
-
-      "Return a Left when the status is not OK" in {
-        forAll { status: Int =>
-          whenever(status > 0 && status =!= Status.OK) {
-            mockPut(nsiCreateAccountUrl, validNSIPayload, authHeaders)(Some(HttpResponse(status, "")))
-            Await.result(doRequest.value, 3.seconds).isLeft shouldBe true
-          }
-        }
-      }
-    }
   }
 
   "queryAccount" must {

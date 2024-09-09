@@ -16,23 +16,21 @@
 
 package uk.gov.hmrc.helptosaveproxy.connectors
 
-import org.apache.pekko.actor.ActorSystem
 import cats.data.EitherT
 import cats.instances.string._
 import cats.syntax.eq._
 import com.codahale.metrics.Timer
 import com.google.inject.ImplementedBy
-
-import javax.inject.{Inject, Singleton}
+import org.apache.pekko.actor.ActorSystem
 import play.api.http.Status
 import play.api.libs.json.Json
 import uk.gov.hmrc.helptosaveproxy.config.{AppConfig, NsiWsClient}
 import uk.gov.hmrc.helptosaveproxy.http.HttpProxyClient
 import uk.gov.hmrc.helptosaveproxy.metrics.Metrics
 import uk.gov.hmrc.helptosaveproxy.metrics.Metrics.nanosToPrettyString
-import uk.gov.hmrc.helptosaveproxy.models.{AccountNumber, NSIPayload}
 import uk.gov.hmrc.helptosaveproxy.models.NSIPayload.nsiPayloadFormat
 import uk.gov.hmrc.helptosaveproxy.models.SubmissionResult._
+import uk.gov.hmrc.helptosaveproxy.models.{AccountNumber, NSIPayload}
 import uk.gov.hmrc.helptosaveproxy.util.HttpResponseOps._
 import uk.gov.hmrc.helptosaveproxy.util.Logging._
 import uk.gov.hmrc.helptosaveproxy.util.Toggles._
@@ -40,6 +38,7 @@ import uk.gov.hmrc.helptosaveproxy.util.{LogMessageTransformer, Logging, NINO, P
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.play.audit.http.HttpAuditing
 
+import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @ImplementedBy(classOf[NSIConnectorImpl])
@@ -49,8 +48,6 @@ trait NSIConnector {
     ex: ExecutionContext): EitherT[Future, SubmissionFailure, SubmissionSuccess]
 
   def updateEmail(payload: NSIPayload)(implicit hc: HeaderCarrier, ex: ExecutionContext): Result[Unit]
-
-  def healthCheck(payload: NSIPayload)(implicit hc: HeaderCarrier, ex: ExecutionContext): Result[Unit]
 
   def queryAccount(resource: String, queryString: Map[String, Seq[String]])(
     implicit hc: HeaderCarrier,
@@ -180,25 +177,6 @@ class NSIConnectorImpl @Inject()(
     val nanos = timeContext.stop()
     s"(round-trip time: ${nanosToPrettyString(nanos)})"
   }
-
-  override def healthCheck(payload: NSIPayload)(implicit hc: HeaderCarrier, ex: ExecutionContext): Result[Unit] =
-    EitherT(
-      proxyClient
-        .put(nsiCreateAccountUrl, payload, Map(nsiAuthHeaderKey -> nsiBasicAuth))(
-          nsiPayloadFormat,
-          hc.copy(authorization = None),
-          ex)
-        .map[Either[String, Unit]] { response =>
-          response.status match {
-            case Status.OK => Right(())
-            case other =>
-              Left(s"Received unexpected status $other from NS&I while trying to do health-check. Body was ${maskNino(
-                response.body)}")
-          }
-        }
-        .recover {
-          case e => Left(s"Encountered error while trying to do health-check: ${e.getMessage}")
-        })
 
   override def queryAccount(resource: String, queryParameters: Map[String, Seq[String]])(
     implicit hc: HeaderCarrier,

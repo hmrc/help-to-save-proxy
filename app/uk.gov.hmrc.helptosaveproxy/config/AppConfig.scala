@@ -56,7 +56,4 @@ class AppConfig @Inject()(val runModeConfiguration: Configuration, sc: ServicesC
   val dwpBaseUrl: String = sc.baseUrl("dwp")
 
   val dwpCheckURL: String = s"$dwpBaseUrl/${getString("microservice.services.dwp.check")}"
-
-  val dwpHealthCheckURL: String = s"$dwpBaseUrl/${getString("microservice.services.dwp.health-check")}"
-
 }
