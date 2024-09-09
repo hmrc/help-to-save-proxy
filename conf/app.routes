@@ -4,5 +4,4 @@ POST        /create-account                    uk.gov.hmrc.helptosaveproxy.contr
 PUT         /update-email                      uk.gov.hmrc.helptosaveproxy.controllers.HelpToSaveController.updateEmail()
 GET         /nsi-services/*resource            uk.gov.hmrc.helptosaveproxy.controllers.HelpToSaveController.queryAccount(resource: String)
 
-
 GET         /uc-claimant-check                 uk.gov.hmrc.helptosaveproxy.controllers.UCClaimantCheckController.ucClaimantCheck(nino, transactionId: java.util.UUID, threshold: Double)

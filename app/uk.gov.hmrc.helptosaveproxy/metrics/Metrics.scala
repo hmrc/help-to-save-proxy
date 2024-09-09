@@ -46,14 +46,9 @@ class Metrics @Inject()(val metrics: MetricRegistry) {
 
   val authTimer: Timer = timer("proxy.auth-timer")
 
-  val nsiHealthCheckTimer: Timer = timer("health.nsi-connection.timer")
-
   val dwpClaimantCheckTimer: Timer = timer("proxy.dwp-claimant-check-time")
 
   val dwpClaimantErrorCounter: Counter = counter("proxy.dwp-claimant-check-error.count")
-
-  val dwpHealthCheckTimer: Timer = timer("health.dwp-connection.timer")
-
 }
 
 object Metrics {

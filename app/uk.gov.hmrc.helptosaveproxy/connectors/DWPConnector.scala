@@ -36,12 +36,9 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @ImplementedBy(classOf[DWPConnectorImpl])
 trait DWPConnector {
-
   def ucClaimantCheck(nino: String, transactionId: UUID, threshold: Double)(
     implicit hc: HeaderCarrier,
     ec: ExecutionContext): EitherT[Future, String, HttpResponse]
-
-  def healthCheck()(implicit hc: HeaderCarrier, ec: ExecutionContext): EitherT[Future, String, Unit]
 }
 
 @Singleton
@@ -106,14 +103,6 @@ class DWPConnectorImpl @Inject()(
                 s"transactionId: $transactionId, thresholdAmount: $threshold, ${timeString(time)}")
         })
   }
-
-  def healthCheck()(implicit hc: HeaderCarrier, ec: ExecutionContext): EitherT[Future, String, Unit] =
-    EitherT(proxyClient.get(appConfig.dwpHealthCheckURL).map[Either[String, Unit]] { response =>
-      response.status match {
-        case Status.OK | Status.NO_CONTENT => Right(())
-        case other => Left(s"Received status $other from DWP health/connectivity check. Response body was '${response.body}'")
-      }
-    })
 
   private def timeString(nanos: Long): String = s"(round-trip time: ${nanosToPrettyString(nanos)})"
 
