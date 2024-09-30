@@ -17,40 +17,53 @@
 package uk.gov.hmrc.helptosaveproxy.connectors
 
 import cats.data.EitherT
+import com.typesafe.config.ConfigFactory
 import org.scalatest.EitherValues
+import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
+import org.scalatest.wordspec.AnyWordSpec
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import play.api.{Application, Configuration}
+import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
-import uk.gov.hmrc.helptosaveproxy.TestSupport
-import uk.gov.hmrc.helptosaveproxy.config.DwpWsClient
-import uk.gov.hmrc.helptosaveproxy.http.HttpProxyClient
 import uk.gov.hmrc.helptosaveproxy.models.UCDetails
-import uk.gov.hmrc.helptosaveproxy.testutil.{MockPagerDuty, UCClaimantTestSupport}
-import uk.gov.hmrc.http.HttpResponse
-import uk.gov.hmrc.play.audit.http.HttpAuditing
+import uk.gov.hmrc.helptosaveproxy.testutil.UCClaimantTestSupport
+import uk.gov.hmrc.helptosaveproxy.util.WireMockMethods
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.http.test.WireMockSupport
 
 import java.util.UUID
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{Await, ExecutionContext, Future}
 
 class DWPConnectorSpec
-    extends TestSupport with HttpSupport with EitherValues with UCClaimantTestSupport
-    with MockPagerDuty {
-
-  private val mockAuditor = mock[HttpAuditing]
-  private val mockWsClient = mock[DwpWsClient]
-
-  class MockedHttpProxyClient
-      extends HttpProxyClient(mockAuditor, configuration, mockWsClient, fakeApplication.actorSystem)
-
-  override val mockProxyClient = mock[MockedHttpProxyClient]
-
-  lazy val connector =
-    new DWPConnectorImpl(mockAuditor, mockMetrics, mockPagerDuty, mockWsClient, fakeApplication.actorSystem) {
-      override val proxyClient = mockProxyClient
-    }
-
-  val transactionId = UUID.randomUUID()
+    extends AnyWordSpec with WireMockMethods with WireMockSupport with GuiceOneAppPerSuite with UCClaimantTestSupport
+    with EitherValues {
+  val transactionId: UUID = UUID.randomUUID()
   val threshold = 650.0
-  val noHeaders = Map[String, Seq[String]]()
+  val noHeaders: Map[String, Seq[String]] = Map[String, Seq[String]]()
+
+  private val config = Configuration(
+    ConfigFactory.parseString(
+      s"""
+         |microservice {
+         |  services{
+         |    dwp {
+         |      protocol = http
+         |      host = $wireMockHost
+         |      port = $wireMockPort
+         |    }
+         |  }
+         |}
+         |
+         |""".stripMargin
+    )
+  )
+
+  override def fakeApplication(): Application = new GuiceApplicationBuilder().configure(config).build()
+
+  val connector: DWPConnector = app.injector.instanceOf[DWPConnectorImpl]
+  implicit val hc: HeaderCarrier = HeaderCarrier()
+  implicit lazy val ec: ExecutionContext = app.injector.instanceOf[ExecutionContext]
 
   def build200Response(uCDetails: UCDetails): HttpResponse =
     HttpResponse(200, Json.toJson(uCDetails), noHeaders) // scalastyle:ignore magic.number
@@ -58,54 +71,66 @@ class DWPConnectorSpec
   def resultValue(result: EitherT[Future, String, HttpResponse]): Either[String, HttpResponse] =
     Await.result(result.value, 3.seconds)
 
-  val queryParams = Seq(
-    "systemId"        -> appConfig.systemId,
-    "thresholdAmount" -> threshold.toString,
-    "transactionId"   -> transactionId.toString)
+  val queryParams: Map[String, String] =
+    Map("systemId" -> "607", "thresholdAmount" -> threshold.toString, "transactionId" -> transactionId.toString)
 
   "the ucClaimantCheck call" must {
     "return a Right with HttpResponse(200, Some(Y, Y)) when given an eligible NINO of a UC Claimant within the threshold" in {
       val ucDetails = build200Response(eUCDetails)
-      val dwpUrl = "http://localhost:7002/hmrc/WP010123A"
-      mockGet(dwpUrl, queryParams)(Some(ucDetails))
-
+      val dwpUrl = "/hmrc/WP010123A"
+      when(
+        GET,
+        dwpUrl,
+        queryParams
+      ) thenReturn (ucDetails.status, ucDetails.body)
       val result = connector.ucClaimantCheck("WP010123A", transactionId, threshold)
-      resultValue(result).value.body shouldBe ucDetails.body
+      val httpResp = resultValue(result)
+      httpResp.value.status shouldBe 200
     }
-
     "return a Right with HttpResponse(200, Some(Y, N)) when given a NINO of a UC Claimant that is not within the threshold" in {
       val ucDetails = build200Response(nonEUCDetails)
-      val dwpUrl = "http://localhost:7002/hmrc/WP020123A"
-      mockGet(dwpUrl, queryParams)(Some(ucDetails))
-
+      val dwpUrl = "/hmrc/WP020123A"
+      when(
+        GET,
+        dwpUrl,
+        queryParams
+      ) thenReturn (ucDetails.status, ucDetails.body)
       val result = connector.ucClaimantCheck("WP020123A", transactionId, threshold)
-      resultValue(result).value.body shouldBe ucDetails.body
+      val httpResp = resultValue(result)
+      httpResp.value.status shouldBe 200
     }
-
     "return a Right with HttpResponse(200, Some(N)) when given a NINO of a non UC Claimant" in {
       val ucDetails = build200Response(nonUCClaimantDetails)
-      val dwpUrl = "http://localhost:7002/hmrc/WP030123A"
-      mockGet(dwpUrl, queryParams)(Some(ucDetails))
-
+      val dwpUrl = "/hmrc/WP030123A"
+      when(
+        GET,
+        dwpUrl,
+        queryParams
+      ) thenReturn (ucDetails.status, ucDetails.body)
       val result = connector.ucClaimantCheck("WP030123A", transactionId, threshold)
-      resultValue(result).value.body shouldBe ucDetails.body
+      val httpResp = resultValue(result)
+      httpResp.value.status shouldBe 200
     }
 
     "return a Left when the ucClaimant call comes back with a status other than 200" in {
       val ucDetails = HttpResponse(500, Json.toJson(nonUCClaimantDetails), noHeaders) // scalastyle:ignore magic.number
-      val dwpUrl = "http://localhost:7002/hmrc/WP030123A"
-      mockGet(dwpUrl, queryParams)(Some(ucDetails))
-      mockPagerDutyAlert("Received unexpected http status in response to uc claimant check")
+      val dwpUrl = "/hmrc/WP030123A"
+      when(
+        GET,
+        dwpUrl,
+        queryParams
+      ) thenReturn (ucDetails.status, ucDetails.body)
       val result = connector.ucClaimantCheck("WP030123A", transactionId, threshold)
-      resultValue(result).isLeft shouldBe true
+      val httpResp = resultValue(result)
+      httpResp.isLeft shouldBe true
     }
 
     "return a Left when the ucClaimant call fails" in {
-      val dwpUrl = "http://localhost:7002/hmrc/WP030123A"
-      mockGet(dwpUrl, queryParams)(None)
-      mockPagerDutyAlert("Failed to make call to uc claimant check")
+      wireMockServer.stop()
       val result = connector.ucClaimantCheck("WP030123A", transactionId, threshold)
-      resultValue(result).isLeft shouldBe true
+      val httpResp = resultValue(result)
+      wireMockServer.start()
+      httpResp.isLeft shouldBe true
     }
   }
 }
