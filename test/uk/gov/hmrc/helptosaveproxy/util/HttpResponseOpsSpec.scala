@@ -21,7 +21,6 @@ import uk.gov.hmrc.helptosaveproxy.TestSupport
 import uk.gov.hmrc.http.HttpResponse
 
 class HttpResponseOpsSpec extends TestSupport {
-
   case class Test1(a: Int)
 
   case class Test2(b: String)
@@ -36,10 +35,11 @@ class HttpResponseOpsSpec extends TestSupport {
 
     def allHeaders: Map[String, Seq[String]] = ???
     def status: Int = ???
+
+    override def headers: Map[String, Seq[String]] = ???
   }
 
   "HttpResponseOps" must {
-
     "provide a method to parse JSON" in {
       import uk.gov.hmrc.helptosaveproxy.util.HttpResponseOps._
 
