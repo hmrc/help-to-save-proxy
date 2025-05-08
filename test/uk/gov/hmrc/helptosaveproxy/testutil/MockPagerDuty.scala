@@ -16,16 +16,16 @@
 
 package uk.gov.hmrc.helptosaveproxy.testutil
 
-import org.mockito.IdiomaticMockito
+
+import org.mockito.Mockito.doNothing
+import org.scalatestplus.mockito.MockitoSugar.mock
 import uk.gov.hmrc.helptosaveproxy.util.PagerDutyAlerting
 
-trait MockPagerDuty { this: IdiomaticMockito =>
-
+trait MockPagerDuty { 
   val mockPagerDuty: PagerDutyAlerting = mock[PagerDutyAlerting]
 
   def mockPagerDutyAlert(expectedMessage: String): Unit =
-    mockPagerDuty
+    doNothing()
+      .when(mockPagerDuty)
       .alert(expectedMessage)
-      .doesNothing()
-
 }

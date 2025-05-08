@@ -19,7 +19,7 @@ package uk.gov.hmrc.helptosaveproxy.connectors
 import cats.data.EitherT
 import com.typesafe.config.ConfigFactory
 import org.scalatest.EitherValues
-import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
+import org.scalatest.matchers.should.Matchers.shouldBe
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.{Application, Configuration}
@@ -32,7 +32,7 @@ import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.http.test.WireMockSupport
 
 import java.util.UUID
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 import scala.concurrent.{Await, ExecutionContext, Future}
 
 class DWPConnectorSpec

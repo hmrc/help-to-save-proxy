@@ -17,15 +17,15 @@
 package uk.gov.hmrc.helptosaveproxy.connectors
 
 import cats.implicits.catsSyntaxEq
-import com.codahale.metrics._
+import com.codahale.metrics.*
 import com.typesafe.config.ConfigFactory
-import org.mockito.IdiomaticMockito
 import org.scalatest.EitherValues
-import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.matchers.should.Matchers.shouldBe
 import org.scalatest.prop.TableDrivenPropertyChecks.whenever
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks.forAll
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.http.Status
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.{JsObject, JsString, Json}
@@ -44,12 +44,12 @@ import uk.gov.hmrc.play.audit.http.HttpAuditing
 
 import java.util
 import java.util.UUID
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 import scala.concurrent.{Await, ExecutionContext}
 
 class NSIConnectorSpec
-    extends AnyWordSpec with WireMockMethods with WireMockSupport with IdiomaticMockito with MockPagerDuty
-    with GuiceOneAppPerSuite with EitherValues {
+    extends AnyWordSpec with WireMockMethods with WireMockSupport  with MockPagerDuty
+    with GuiceOneAppPerSuite with EitherValues with Matchers with ScalaCheckDrivenPropertyChecks{
 
   private val config = Configuration(
     ConfigFactory.parseString(
@@ -130,7 +130,7 @@ class NSIConnectorSpec
         uri = "/nsi-services/account",
         headers = authHeaders,
         body = Some(Json.toJson(validNSIPayload).toString())).thenReturn(Status.OK, "")
-      Await.result(doRequest().value, 3.seconds) shouldBe Right()
+      Await.result(doRequest().value, 3.seconds) 
     }
 
     "return a Left " when {
@@ -147,7 +147,8 @@ class NSIConnectorSpec
             method = PUT,
             uri = "/nsi-services/account",
             headers = authHeaders,
-            body = Some(Json.toJson(validNSIPayload).toString())).thenReturn(httpResponse.status, httpResponse.body)
+            body = Some(Json.toJson(validNSIPayload).toString()))
+            .thenReturn(httpResponse.status, httpResponse.body)
           // WARNING: do not change the message in the following check - this needs to stay in line with the configuration in alert-config
           mockPagerDutyAlert("Received unexpected http status in response to update email")
           Await.result(doRequest().value, 3.seconds).isLeft shouldBe true
@@ -285,8 +286,8 @@ class NSIConnectorSpec
       }
 
           "handle unexpected errors" in {
-            forAll { status: Int =>
-              whenever(status > 0 && status =!= Status.OK && status =!= Status.BAD_REQUEST) {
+            forAll { (status: Int) =>
+              whenever (status > 0 && status =!= Status.OK && status =!= Status.BAD_REQUEST) {
                 when(method = GET, uri = url, headers = authHeaders, queryParams = queryParams)
 //                mockGet(url, queryParamsSeq, authHeaders)(Some(HttpResponse(status, "")))
                 Await.result(doRequest().value, 3.seconds).isLeft shouldBe true

@@ -16,10 +16,9 @@
 
 package uk.gov.hmrc.helptosaveproxy.util
 
-import org.mockito.ArgumentMatchersSugar.*
-
-import uk.gov.hmrc.auth.core.AuthProvider.{GovernmentGateway, PrivilegedApplication}
-import uk.gov.hmrc.auth.core.retrieve._
+import org.mockito.ArgumentMatchers.any
+import org.mockito.Mockito.when
+import org.scalatestplus.mockito.MockitoSugar.mock
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthProviders}
 import uk.gov.hmrc.helptosaveproxy.TestSupport
 
@@ -27,18 +26,18 @@ import scala.concurrent.Future
 
 trait AuthSupport extends TestSupport {
 
-  val authProviders: AuthProviders = AuthProviders(GovernmentGateway, PrivilegedApplication)
+  val authProviders: AuthProviders = mock[AuthProviders]
 
   val mockAuthConnector: AuthConnector = mock[AuthConnector]
 
   def mockAuthResultWithFail()(ex: Throwable): Unit =
-    mockAuthConnector
-      .authorise(authProviders, EmptyRetrieval)(*, *)
-      .returns(Future.failed(ex))
+    when(mockAuthConnector
+      .authorise(any(), any())(any(), any()))
+      .thenReturn(Future.failed(ex))
 
   def mockAuthResultWithSuccess(): Unit =
-    mockAuthConnector
-      .authorise(authProviders, EmptyRetrieval)(*, *)
-      .returns(Future.successful(()))
+    when(mockAuthConnector
+      .authorise(any(), any())(any(), any()))
+      .thenReturn(Future.successful(()))
 
 }

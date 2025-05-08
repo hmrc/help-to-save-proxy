@@ -17,13 +17,14 @@
 package uk.gov.hmrc.helptosaveproxy.controllers
 
 import cats.data.EitherT
-import cats.instances.future._
-import org.mockito.ArgumentMatchersSugar.*
-
+import cats.instances.future.*
+import org.mockito.ArgumentMatchers.{any, eq as eqTo}
+import org.mockito.Mockito.when
+import org.scalatestplus.mockito.MockitoSugar.mock
 import play.api.libs.json.Json
-import play.api.mvc.{Result => PlayResult}
+import play.api.mvc.Result as PlayResult
 import play.api.test.FakeRequest
-import play.api.test.Helpers._
+import play.api.test.Helpers.*
 import uk.gov.hmrc.helptosaveproxy.connectors.DWPConnector
 import uk.gov.hmrc.helptosaveproxy.testutil.UCClaimantTestSupport
 import uk.gov.hmrc.helptosaveproxy.util.AuthSupport
@@ -48,9 +49,9 @@ class UCClaimantCheckControllerSpec extends AuthSupport with UCClaimantTestSuppo
 
   def mockUCClaimantCheck(encodedNino: String, transactionId: UUID, threshold: Double)(
     result: Either[String, HttpResponse]): Unit =
-    mockDWPConnector
-      .ucClaimantCheck(encodedNino, transactionId, threshold)(*, *)
-      .returns(EitherT.fromEither[Future](result))
+    when(mockDWPConnector
+      .ucClaimantCheck(eqTo(encodedNino), eqTo(transactionId), eqTo(threshold))(any(),any()))
+      .thenReturn(EitherT.fromEither[Future](result))
 
   "ucClaimantCheck" must {
 
@@ -58,6 +59,7 @@ class UCClaimantCheckControllerSpec extends AuthSupport with UCClaimantTestSuppo
       val ucDetails = HttpResponse(200, Json.toJson(eUCDetails), noHeaders)
 
       mockAuthResultWithSuccess()
+
       mockUCClaimantCheck(nino, transactionId, threshold)(Right(ucDetails))
 
       val result = doUCClaimantCheck(controller, nino)
