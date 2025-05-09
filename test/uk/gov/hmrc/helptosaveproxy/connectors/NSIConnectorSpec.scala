@@ -130,7 +130,7 @@ class NSIConnectorSpec
         uri = "/nsi-services/account",
         headers = authHeaders,
         body = Some(Json.toJson(validNSIPayload).toString())).thenReturn(Status.OK, "")
-      Await.result(doRequest().value, 3.seconds) 
+      Await.result(doRequest().value, 3.seconds) shouldBe Right(())
     }
 
     "return a Left " when {
