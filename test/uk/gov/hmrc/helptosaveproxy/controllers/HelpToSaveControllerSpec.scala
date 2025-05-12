@@ -17,14 +17,15 @@
 package uk.gov.hmrc.helptosaveproxy.controllers
 
 import cats.data.EitherT
-import cats.instances.future._
-import org.mockito.ArgumentMatchersSugar.*
-
+import cats.instances.future.*
+import org.mockito.ArgumentMatchers.{any, eq as eqTo}
+import org.mockito.Mockito.when
+import org.scalatestplus.mockito.MockitoSugar.mock
 import play.api.http.Status
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent}
 import play.api.test.FakeRequest
-import play.api.test.Helpers._
+import play.api.test.Helpers.*
 import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.helptosaveproxy.connectors.NSIConnector
 import uk.gov.hmrc.helptosaveproxy.models.SubmissionResult.{SubmissionFailure, SubmissionSuccess}
@@ -49,25 +50,25 @@ class HelpToSaveControllerSpec extends AuthSupport {
   val noHeaders = Map[String, Seq[String]]()
 
   def mockJSONSchemaValidationService(expectedInfo: NSIPayload)(result: Either[String, Unit]) =
-    mockJsonSchema
-      .validate(Json.toJson(expectedInfo))
-      .returns(result.map(_ => Json.toJson(expectedInfo)))
+    when(mockJsonSchema
+      .validate(Json.toJson(expectedInfo)))
+      .thenReturn(result.map(_ => Json.toJson(expectedInfo)))
 
   def mockCreateAccount(expectedInfo: NSIPayload)(result: Either[SubmissionFailure, SubmissionSuccess]): Unit =
-    mockNSIConnector
-      .createAccount(expectedInfo)(*, *)
-      .returns(EitherT.fromEither[Future](result))
+    when(mockNSIConnector
+      .createAccount(eqTo(expectedInfo))(any(), any()))
+      .thenReturn(EitherT.fromEither[Future](result))
 
   def mockUpdateEmail(expectedInfo: NSIPayload)(result: Either[String, Unit]) =
-    mockNSIConnector
-      .updateEmail(expectedInfo)(*, *)
-      .returns(EitherT.fromEither[Future](result))
+    when(mockNSIConnector
+      .updateEmail(eqTo(expectedInfo))(any(), any()))
+      .thenReturn(EitherT.fromEither[Future](result))
 
   def mockGetAccountByNino(resource: String, queryString: Map[String, Seq[String]])(
     result: Either[String, HttpResponse]): Unit =
-    mockNSIConnector
-      .queryAccount(resource, queryString)(*, *)
-      .returns(EitherT.fromEither[Future](result))
+    when(mockNSIConnector
+      .queryAccount(eqTo(resource), eqTo(queryString))(any(), any()))
+      .thenReturn(EitherT.fromEither[Future](result))
 
   "The createAccount method" must {
 
@@ -75,6 +76,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
     def doCreateAccountRequest(userInfo: NSIPayload) =
       controller.createAccount()(
+
         FakeRequest().withJsonBody(Json.toJson(userInfo)).withHeaders("X-Correlation-Id" -> correlationId))
 
     behave like commonBehaviour(

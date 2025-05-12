@@ -16,36 +16,36 @@
 
 package uk.gov.hmrc.helptosaveproxy.connectors
 
-import org.mockito.ArgumentMatchersSugar.*
-import org.mockito.IdiomaticMockito
+import org.mockito.ArgumentMatchers.any
+import org.mockito.Mockito.when
+import uk.gov.hmrc.helptosaveproxy.TestSupport
 import uk.gov.hmrc.helptosaveproxy.http.HttpProxyClient
 import uk.gov.hmrc.http.HttpResponse
 
 import scala.concurrent.Future
 
-trait HttpSupport { this: IdiomaticMockito =>
-
+trait HttpSupport extends TestSupport {
+  
   val mockProxyClient: HttpProxyClient
-
-  def mockGet(
+    def mockGet(
     url: String,
     queryParams: Seq[(String, String)] = Seq.empty[(String, String)],
     headers: Map[String, String] = Map.empty)(response: Option[HttpResponse]): Unit =
-    mockProxyClient
-      .get(url, queryParams, headers)(*, *)
-      .returns(response.fold(Future.failed[HttpResponse](new Exception("Test exception message")))(Future.successful))
+    when(mockProxyClient
+      .get(url, queryParams, headers)(any(),any()))
+      .thenReturn(response.fold(Future.failed[HttpResponse](new Exception("Test exception message")))(Future.successful))
 
   def mockPut[A](url: String, body: A, headers: Map[String, String] = Map.empty, needsAuditing: Boolean = true)(
     result: Option[HttpResponse]): Unit =
-    mockProxyClient
-      .put(url, body, headers, needsAuditing)(*, *, *)
-      .returns(
+    when(mockProxyClient
+      .put(url, body, headers, needsAuditing)(any(),any(), any()))
+      .thenReturn(
         result.fold[Future[HttpResponse]](Future.failed(new Exception("Test exception message")))(Future.successful))
 
   def mockPost[A](url: String, body: A, headers: Map[String, String] = Map.empty[String, String])(
     result: Option[HttpResponse]): Unit =
-    mockProxyClient
-      .post(url, body, headers)(*, *, *)
-      .returns(
+    when(mockProxyClient
+      .post(url, body, headers)(any(),any(), any()))
+      .thenReturn(
         result.fold[Future[HttpResponse]](Future.failed(new Exception("Test exception message")))(Future.successful))
 }
