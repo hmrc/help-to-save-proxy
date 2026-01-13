@@ -54,7 +54,7 @@ class HelpToSaveController @Inject()(
 
   def createAccount(): Action[AnyContent] = authorised { implicit request =>
     processRequest[SubmissionSuccess] {
-      nsiConnector.createAccount(_).leftMap[Error](NSIError)
+      nsiConnector.createAccount(_).leftMap[Error](NSIError.apply)
     } { (submissionSuccess, nSIUserInfo) =>
       submissionSuccess.accountNumber match {
         case None => Conflict
@@ -96,10 +96,9 @@ class HelpToSaveController @Inject()(
 
     result.fold[Result](
       {
-        case InvalidRequest(m, d) => {
+        case InvalidRequest(m, d) =>
           logger.warn(s"Invalid request: $m, $d")
           BadRequest(SubmissionFailure(m, d).toJson)
-        }
         case NSIError(f) =>
           InternalServerError(f.toJson)
       }, {

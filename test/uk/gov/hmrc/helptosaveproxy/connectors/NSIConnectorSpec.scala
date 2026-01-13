@@ -30,7 +30,7 @@ import play.api.http.Status
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.{JsObject, JsString, Json}
 import play.api.{Application, Configuration}
-import uk.gov.hmrc.helptosaveproxy.config.{AppConfig, NsiWsClient}
+import uk.gov.hmrc.helptosaveproxy.config.AppConfig
 import uk.gov.hmrc.helptosaveproxy.metrics.Metrics
 import uk.gov.hmrc.helptosaveproxy.models.AccountNumber
 import uk.gov.hmrc.helptosaveproxy.models.SubmissionResult.{SubmissionFailure, SubmissionSuccess}
@@ -38,9 +38,9 @@ import uk.gov.hmrc.helptosaveproxy.testutil.MockPagerDuty
 import uk.gov.hmrc.helptosaveproxy.testutil.TestData.UserData.validNSIPayload
 import uk.gov.hmrc.helptosaveproxy.testutil.TestLogMessageTransformer.transformer
 import uk.gov.hmrc.helptosaveproxy.util.WireMockMethods
+import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.test.WireMockSupport
 import uk.gov.hmrc.http.{Authorization, HeaderCarrier, HttpResponse, SessionId}
-import uk.gov.hmrc.play.audit.http.HttpAuditing
 
 import java.util
 import java.util.UUID
@@ -83,6 +83,7 @@ class NSIConnectorSpec
               | microservice.services.nsi.keyManager.stores = []
               |     """.stripMargin)
         ) withFallback config)
+      .disable[uk.gov.hmrc.play.bootstrap.BuiltinModule]
       .build()
 
   lazy implicit val configuration: Configuration = app.injector.instanceOf[Configuration]
@@ -95,8 +96,7 @@ class NSIConnectorSpec
     override def histogram(name: String): Histogram = new Histogram(new UniformReservoir())
   }
 
-  val httpAuditing: HttpAuditing = fakeApplication().injector.instanceOf[HttpAuditing]
-  val nsiWsClient: NsiWsClient = fakeApplication().injector.instanceOf[NsiWsClient]
+  val httpClient: HttpClientV2 = fakeApplication().injector.instanceOf[HttpClientV2]
 
   implicit lazy val appConfig: AppConfig = fakeApplication().injector.instanceOf[AppConfig]
 
@@ -104,7 +104,7 @@ class NSIConnectorSpec
     HeaderCarrier(sessionId = Some(SessionId(UUID.randomUUID().toString)), authorization = Some(Authorization("auth")))
 
   lazy val nsiConnector: NSIConnectorImpl =
-    new NSIConnectorImpl(httpAuditing, mockMetrics, mockPagerDuty, nsiWsClient, fakeApplication().actorSystem)
+    new NSIConnectorImpl(mockMetrics, mockPagerDuty, httpClient)
 
   class StubMetricRegistry extends MetricRegistry {
     override def getGauges(filter: MetricFilter): util.SortedMap[String, Gauge[_]] =

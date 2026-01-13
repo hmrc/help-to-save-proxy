@@ -17,26 +17,26 @@
 package uk.gov.hmrc.helptosaveproxy.connectors
 
 import cats.data.EitherT
-import cats.instances.string._
-import cats.syntax.eq._
+import cats.instances.string.*
+import cats.syntax.eq.*
 import com.codahale.metrics.Timer
 import com.google.inject.ImplementedBy
-import org.apache.pekko.actor.ActorSystem
 import play.api.http.Status
 import play.api.libs.json.Json
-import uk.gov.hmrc.helptosaveproxy.config.{AppConfig, NsiWsClient}
-import uk.gov.hmrc.helptosaveproxy.http.HttpProxyClient
+import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
+import uk.gov.hmrc.helptosaveproxy.config.AppConfig
 import uk.gov.hmrc.helptosaveproxy.metrics.Metrics
 import uk.gov.hmrc.helptosaveproxy.metrics.Metrics.nanosToPrettyString
 import uk.gov.hmrc.helptosaveproxy.models.NSIPayload.nsiPayloadFormat
-import uk.gov.hmrc.helptosaveproxy.models.SubmissionResult._
+import uk.gov.hmrc.helptosaveproxy.models.SubmissionResult.*
 import uk.gov.hmrc.helptosaveproxy.models.{AccountNumber, NSIPayload}
-import uk.gov.hmrc.helptosaveproxy.util.HttpResponseOps._
-import uk.gov.hmrc.helptosaveproxy.util.Logging._
-import uk.gov.hmrc.helptosaveproxy.util.Toggles._
+import uk.gov.hmrc.helptosaveproxy.util.HttpResponseOps.*
+import uk.gov.hmrc.helptosaveproxy.util.Logging.*
+import uk.gov.hmrc.helptosaveproxy.util.Toggles.*
 import uk.gov.hmrc.helptosaveproxy.util.{LogMessageTransformer, Logging, NINO, PagerDutyAlerting, Result, maskNino}
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
-import uk.gov.hmrc.play.audit.http.HttpAuditing
+import uk.gov.hmrc.http.HttpReads.Implicits.*
+import uk.gov.hmrc.http.client.HttpClientV2
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -57,18 +57,10 @@ trait NSIConnector {
 
 @Singleton
 class NSIConnectorImpl @Inject()(
-  httpAuditing: HttpAuditing,
-  metrics: Metrics,
-  pagerDutyAlerting: PagerDutyAlerting,
-  wsClient: NsiWsClient,
-  system: ActorSystem)(implicit transformer: LogMessageTransformer, appConfig: AppConfig)
+                                  metrics: Metrics,
+                                  pagerDutyAlerting: PagerDutyAlerting,
+                                  http: HttpClientV2)(implicit transformer: LogMessageTransformer, appConfig: AppConfig)
     extends NSIConnector with Logging {
-
-  val proxyClient: HttpProxyClient = new HttpProxyClient(
-    httpAuditing,
-    appConfig.runModeConfiguration,
-    wsClient,
-    system)
 
   private val nsiCreateAccountUrl = appConfig.nsiCreateAccountUrl
   private val nsiAuthHeaderKey = appConfig.nsiAuthHeaderKey
@@ -85,11 +77,12 @@ class NSIConnectorImpl @Inject()(
     logCreateAccount(payload)
     val correlationId = getCorrelationId
     val timeContext = metrics.nsiAccountCreationTimer.time()
-    EitherT(proxyClient
-      .post(nsiCreateAccountUrl, payload, Map(nsiAuthHeaderKey -> nsiBasicAuth))(
-        nsiPayloadFormat,
-        hc.copy(authorization = None),
-        ec)
+    EitherT(http
+      .post(url"$nsiCreateAccountUrl")(hc.copy(authorization = None))
+      .withProxy
+      .withBody(Json.toJson(payload))
+      .transform(_.withHttpHeaders(Map(nsiAuthHeaderKey -> nsiBasicAuth).toSeq: _*))
+      .execute[HttpResponse]
       .map[Either[SubmissionFailure, SubmissionSuccess]] { response =>
         val time = stopTime(timeContext)
         response.status match {
@@ -142,11 +135,12 @@ class NSIConnectorImpl @Inject()(
     val correlationId = getCorrelationId
 
     EitherT(
-      proxyClient
-        .put(nsiCreateAccountUrl, payload, Map(nsiAuthHeaderKey -> nsiBasicAuth))(
-          nsiPayloadFormat,
-          hc.copy(authorization = None),
-          ec)
+      http
+        .put(url"$nsiCreateAccountUrl")(hc.copy(authorization = None))
+        .withProxy
+        .withBody(Json.toJson(payload))
+        .transform(_.withHttpHeaders(Map(nsiAuthHeaderKey -> nsiBasicAuth).toSeq: _*))
+        .execute[HttpResponse]
         .map[Either[String, Unit]] { response =>
           val time = stopTime(timeContext)
 
@@ -188,8 +182,12 @@ class NSIConnectorImpl @Inject()(
     val queryParams = queryParameters.toSeq.flatMap { case (name, values) => values.map(value => (name, value)) }
 
     EitherT(
-      proxyClient
-        .get(url, queryParams, Map(nsiAuthHeaderKey -> nsiBasicAuth))(hc.copy(authorization = None), ec)
+      http
+        .get(url"$url")(hc.copy(authorization = None))
+        .withProxy
+        .transform(_.withQueryStringParameters(queryParams: _*))
+        .transform(_.withHttpHeaders(Map(nsiAuthHeaderKey -> nsiBasicAuth).toSeq : _*))
+        .execute[HttpResponse]
         .map[Either[String, HttpResponse]] { response =>
           val time = timeContext.stop()
           response.status match {
