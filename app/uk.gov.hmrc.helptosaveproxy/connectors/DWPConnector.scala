@@ -19,16 +19,15 @@ package uk.gov.hmrc.helptosaveproxy.connectors
 import cats.data.EitherT
 import com.codahale.metrics.Timer
 import com.google.inject.ImplementedBy
-import org.apache.pekko.actor.ActorSystem
 import play.api.http.Status
-import uk.gov.hmrc.helptosaveproxy.config.{AppConfig, DwpWsClient}
-import uk.gov.hmrc.helptosaveproxy.http.HttpProxyClient
+import uk.gov.hmrc.helptosaveproxy.config.AppConfig
 import uk.gov.hmrc.helptosaveproxy.metrics.Metrics
-import uk.gov.hmrc.helptosaveproxy.metrics.Metrics._
-import uk.gov.hmrc.helptosaveproxy.util.Logging._
+import uk.gov.hmrc.helptosaveproxy.metrics.Metrics.*
+import uk.gov.hmrc.helptosaveproxy.util.Logging.*
 import uk.gov.hmrc.helptosaveproxy.util.{LogMessageTransformer, Logging, PagerDutyAlerting}
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
-import uk.gov.hmrc.play.audit.http.HttpAuditing
+import uk.gov.hmrc.http.HttpReads.Implicits.*
+import uk.gov.hmrc.http.client.HttpClientV2
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
 
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
@@ -43,19 +42,10 @@ trait DWPConnector {
 
 @Singleton
 class DWPConnectorImpl @Inject()(
-  httpAuditing: HttpAuditing,
   metrics: Metrics,
   pagerDutyAlerting: PagerDutyAlerting,
-  wsClient: DwpWsClient,
-  system: ActorSystem)(implicit transformer: LogMessageTransformer, appConfig: AppConfig)
+  http: HttpClientV2)(implicit transformer: LogMessageTransformer, appConfig: AppConfig)
     extends DWPConnector with Logging {
-
-  val proxyClient: HttpProxyClient = new HttpProxyClient(
-    httpAuditing,
-    appConfig.runModeConfiguration,
-    wsClient,
-    system)
-
   def ucClaimantCheck(nino: String, transactionId: UUID, threshold: Double)(
     implicit hc: HeaderCarrier,
     ec: ExecutionContext): EitherT[Future, String, HttpResponse] = {
@@ -72,8 +62,11 @@ class DWPConnectorImpl @Inject()(
       "transactionId"   -> transactionId.toString)
 
     EitherT(
-      proxyClient
-        .get(url, queryParams)(hc.copy(authorization = None), ec)
+      http
+        .get(url"$url")(hc.copy(authorization = None))
+        .withProxy
+        .transform(_.withQueryStringParameters(queryParams : _*))
+        .execute[HttpResponse]
         .map[Either[String, HttpResponse]] { response =>
           val time = timeContext.stop()
           response.status match {

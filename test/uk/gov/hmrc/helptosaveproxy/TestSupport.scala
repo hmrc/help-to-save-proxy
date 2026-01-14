@@ -51,7 +51,8 @@ trait TestSupport extends UnitSpec  with BeforeAndAfterAll with ScalaFutures { t
                                       | microservice.services.dwp.keyManager.stores = []
                                       | microservice.services.nsi.keyManager.stores = []
                                       |     """.stripMargin)
-        ) withFallback (additionalConfig))
+        ) withFallback additionalConfig)
+      .disable[uk.gov.hmrc.play.bootstrap.BuiltinModule]
       .build()
 
   lazy val fakeApplication: Application = buildFakeApplication(additionalConfig)
