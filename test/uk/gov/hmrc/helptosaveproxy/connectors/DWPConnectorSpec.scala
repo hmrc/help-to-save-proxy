@@ -59,7 +59,10 @@ class DWPConnectorSpec
     )
   )
 
-  override def fakeApplication(): Application = new GuiceApplicationBuilder().configure(config).build()
+  override def fakeApplication(): Application =
+    new GuiceApplicationBuilder()
+      .configure(config)
+      .build()
 
   val connector: DWPConnector = app.injector.instanceOf[DWPConnectorImpl]
   implicit val hc: HeaderCarrier = HeaderCarrier()

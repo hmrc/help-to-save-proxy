@@ -21,12 +21,12 @@ import com.codahale.metrics.Timer
 import com.google.inject.ImplementedBy
 import play.api.http.Status
 import uk.gov.hmrc.helptosaveproxy.config.AppConfig
+import uk.gov.hmrc.helptosaveproxy.http.DwpHttpClientV2
 import uk.gov.hmrc.helptosaveproxy.metrics.Metrics
 import uk.gov.hmrc.helptosaveproxy.metrics.Metrics.*
 import uk.gov.hmrc.helptosaveproxy.util.Logging.*
 import uk.gov.hmrc.helptosaveproxy.util.{LogMessageTransformer, Logging, PagerDutyAlerting}
 import uk.gov.hmrc.http.HttpReads.Implicits.*
-import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
 
 import java.util.UUID
@@ -44,7 +44,7 @@ trait DWPConnector {
 class DWPConnectorImpl @Inject()(
   metrics: Metrics,
   pagerDutyAlerting: PagerDutyAlerting,
-  http: HttpClientV2)(implicit transformer: LogMessageTransformer, appConfig: AppConfig)
+  http: DwpHttpClientV2)(implicit transformer: LogMessageTransformer, appConfig: AppConfig)
     extends DWPConnector with Logging {
   def ucClaimantCheck(nino: String, transactionId: UUID, threshold: Double)(
     implicit hc: HeaderCarrier,
