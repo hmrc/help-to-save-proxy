@@ -32,12 +32,12 @@ trait AuthSupport extends TestSupport {
 
   def mockAuthResultWithFail()(ex: Throwable): Unit =
     when(mockAuthConnector
-      .authorise(any(), any())(any(), any()))
+      .authorise(any(), any())(using any(), any()))
       .thenReturn(Future.failed(ex))
 
   def mockAuthResultWithSuccess(): Unit =
     when(mockAuthConnector
-      .authorise(any(), any())(any(), any()))
+      .authorise(any(), any())(using any(), any()))
       .thenReturn(Future.successful(()))
 
 }

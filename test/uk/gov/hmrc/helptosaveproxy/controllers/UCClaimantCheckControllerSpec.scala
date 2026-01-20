@@ -50,7 +50,7 @@ class UCClaimantCheckControllerSpec extends AuthSupport with UCClaimantTestSuppo
   def mockUCClaimantCheck(encodedNino: String, transactionId: UUID, threshold: Double)(
     result: Either[String, HttpResponse]): Unit =
     when(mockDWPConnector
-      .ucClaimantCheck(eqTo(encodedNino), eqTo(transactionId), eqTo(threshold))(any(),any()))
+      .ucClaimantCheck(eqTo(encodedNino), eqTo(transactionId), eqTo(threshold))(using any(),any()))
       .thenReturn(EitherT.fromEither[Future](result))
 
   "ucClaimantCheck" must {

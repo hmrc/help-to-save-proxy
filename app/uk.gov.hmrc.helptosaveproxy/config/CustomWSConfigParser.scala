@@ -153,7 +153,7 @@ class CustomWSConfigParser @Inject()(configuration: Configuration, env: Environm
 
 class CustomWSConfigParserModule extends Module {
 
-  override def bindings(environment: Environment, configuration: Configuration): Seq[Binding[_]] =
+  override def bindings(environment: Environment, configuration: Configuration): Seq[Binding[?]] =
     Seq(
       bind[WSConfigParser].to[CustomWSConfigParser]
     )
