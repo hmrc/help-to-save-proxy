@@ -18,18 +18,24 @@ package uk.gov.hmrc.helptosaveproxy.connectors
 
 import cats.data.EitherT
 import com.typesafe.config.ConfigFactory
+import org.mockito.ArgumentMatchers.any
+import org.mockito.Mockito
+import org.mockito.Mockito.{never, times, verify}
 import org.scalatest.EitherValues
 import org.scalatest.matchers.should.Matchers.shouldBe
 import org.scalatest.wordspec.AnyWordSpec
+import org.scalatestplus.mockito.MockitoSugar.mock
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import play.api.{Application, Configuration}
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
+import play.api.{Application, Configuration, inject}
+import uk.gov.hmrc.helptosaveproxy.http.DwpHttpClientV2
 import uk.gov.hmrc.helptosaveproxy.models.UCDetails
 import uk.gov.hmrc.helptosaveproxy.testutil.UCClaimantTestSupport
 import uk.gov.hmrc.helptosaveproxy.util.WireMockMethods
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.http.client.RequestBuilder
 import uk.gov.hmrc.http.test.WireMockSupport
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 
 import java.util.UUID
 import scala.concurrent.duration.*
@@ -42,20 +48,22 @@ class DWPConnectorSpec
   val threshold = 650.0
   val noHeaders: Map[String, Seq[String]] = Map[String, Seq[String]]()
 
+  val configString =  s"""
+                         |microservice {
+                         |  services{
+                         |    dwp {
+                         |      protocol = http
+                         |      host = $wireMockHost
+                         |      port = $wireMockPort
+                         |    }
+                         |  }
+                         |}
+                         |
+                         |"""
+
   private val config = Configuration(
     ConfigFactory.parseString(
-      s"""
-         |microservice {
-         |  services{
-         |    dwp {
-         |      protocol = http
-         |      host = $wireMockHost
-         |      port = $wireMockPort
-         |    }
-         |  }
-         |}
-         |
-         |""".stripMargin
+     configString.stripMargin
     )
   )
 
@@ -85,7 +93,7 @@ class DWPConnectorSpec
         GET,
         dwpUrl,
         queryParams
-      ) thenReturn (ucDetails.status, ucDetails.body)
+      ) `thenReturn` (ucDetails.status, ucDetails.body)
       val result = connector.ucClaimantCheck("WP010123A", transactionId, threshold)
       val httpResp = resultValue(result)
       httpResp.value.status shouldBe 200
@@ -97,7 +105,7 @@ class DWPConnectorSpec
         GET,
         dwpUrl,
         queryParams
-      ) thenReturn (ucDetails.status, ucDetails.body)
+      ) `thenReturn` (ucDetails.status, ucDetails.body)
       val result = connector.ucClaimantCheck("WP020123A", transactionId, threshold)
       val httpResp = resultValue(result)
       httpResp.value.status shouldBe 200
@@ -109,7 +117,7 @@ class DWPConnectorSpec
         GET,
         dwpUrl,
         queryParams
-      ) thenReturn (ucDetails.status, ucDetails.body)
+      ) `thenReturn` (ucDetails.status, ucDetails.body)
       val result = connector.ucClaimantCheck("WP030123A", transactionId, threshold)
       val httpResp = resultValue(result)
       httpResp.value.status shouldBe 200
@@ -122,7 +130,7 @@ class DWPConnectorSpec
         GET,
         dwpUrl,
         queryParams
-      ) thenReturn (ucDetails.status, ucDetails.body)
+      ) `thenReturn` (ucDetails.status, ucDetails.body)
       val result = connector.ucClaimantCheck("WP030123A", transactionId, threshold)
       val httpResp = resultValue(result)
       httpResp.isLeft shouldBe true
@@ -134,6 +142,60 @@ class DWPConnectorSpec
       val httpResp = resultValue(result)
       wireMockServer.start()
       httpResp.isLeft shouldBe true
+    }
+
+    "Verify when stub is enabled" in {
+
+      val ucDetails = build200Response(nonUCClaimantDetails)
+      val requestBuilder : RequestBuilder = mock[RequestBuilder]
+      val http = mock[DwpHttpClientV2]
+
+      val testApp = new GuiceApplicationBuilder().configure(config)
+        .overrides(inject.bind[DwpHttpClientV2].toInstance(http))
+        .build()
+
+      Mockito.when(http.get(any())(using any())).thenReturn(requestBuilder)
+      Mockito.when(requestBuilder.transform(any())).thenReturn(requestBuilder)
+      Mockito.when(requestBuilder.execute(using any(),any())).thenReturn(Future.successful(ucDetails))
+      val testConnector = testApp.injector.instanceOf[DWPConnectorImpl]
+
+      val result = testConnector.ucClaimantCheck("WP030123A", transactionId, threshold)
+
+      val httpResp = resultValue(result)
+
+      verify(requestBuilder, never()).withProxy
+
+      httpResp.value.status shouldBe 200
+    }
+    "Verify when stub is disabled" in {
+
+      val configStringDisabled = configString.concat("dwp.stubs.enabled = false")
+
+      val ucDetails = build200Response(nonUCClaimantDetails)
+      val requestBuilder: RequestBuilder = mock[RequestBuilder]
+      val http = mock[DwpHttpClientV2]
+
+      val testApp = new GuiceApplicationBuilder().configure(Configuration(
+          ConfigFactory.parseString(
+            configStringDisabled.stripMargin
+          )
+        ))
+        .overrides(inject.bind[DwpHttpClientV2].toInstance(http))
+        .build()
+
+      Mockito.when(http.get(any())(using any())).thenReturn(requestBuilder)
+      Mockito.when(requestBuilder.withProxy).thenReturn(requestBuilder)
+      Mockito.when(requestBuilder.transform(any())).thenReturn(requestBuilder)
+      Mockito.when(requestBuilder.execute(using any(), any())).thenReturn(Future.successful(ucDetails))
+      val testConnector = testApp.injector.instanceOf[DWPConnectorImpl]
+
+      val result = testConnector.ucClaimantCheck("WP030123A", transactionId, threshold)
+
+      val httpResp = resultValue(result)
+
+      verify(requestBuilder,times(1)).withProxy
+
+      httpResp.value.status shouldBe 200
     }
   }
 }

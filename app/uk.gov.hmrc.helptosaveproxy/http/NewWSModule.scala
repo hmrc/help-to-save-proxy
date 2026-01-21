@@ -47,7 +47,7 @@ import scala.concurrent.Future
   */
 class NewWSModule extends Module {
 
-  override def bindings(environment: Environment, configuration: Configuration): Seq[Binding[_]] =
+  override def bindings(environment: Environment, configuration: Configuration): Seq[Binding[?]] =
     Seq(
       bind[AsyncHttpClient].toProvider[AsyncHttpClientProvider],
       bind[WSClient].toProvider[AhcWSClientProvider]

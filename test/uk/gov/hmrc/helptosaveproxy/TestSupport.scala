@@ -75,8 +75,8 @@ trait TestSupport extends UnitSpec  with BeforeAndAfterAll with ScalaFutures { t
   }
 
   class StubMetricRegistry extends MetricRegistry {
-    override def getGauges(filter: MetricFilter): util.SortedMap[String, Gauge[_]] =
-      new util.TreeMap[String, Gauge[_]]()
+    override def getGauges(filter: MetricFilter): util.SortedMap[String, Gauge[?]] =
+      new util.TreeMap[String, Gauge[?]]()
   }
 
   val mockMetrics: Metrics = new Metrics(new StubMetricRegistry()) {

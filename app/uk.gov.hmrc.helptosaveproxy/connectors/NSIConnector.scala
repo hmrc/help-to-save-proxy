@@ -78,10 +78,10 @@ class NSIConnectorImpl @Inject()(
     val correlationId = getCorrelationId
     val timeContext = metrics.nsiAccountCreationTimer.time()
     EitherT(http
-      .post(url"$nsiCreateAccountUrl")(hc.copy(authorization = None))
+      .post(url"$nsiCreateAccountUrl")(using hc.copy(authorization = None))
       .withProxy
       .withBody(Json.toJson(payload))
-      .transform(_.withHttpHeaders(Map(nsiAuthHeaderKey -> nsiBasicAuth).toSeq: _*))
+      .transform(_.withHttpHeaders(Map(nsiAuthHeaderKey -> nsiBasicAuth).toSeq*))
       .execute[HttpResponse]
       .map[Either[SubmissionFailure, SubmissionSuccess]] { response =>
         val time = stopTime(timeContext)
@@ -136,10 +136,10 @@ class NSIConnectorImpl @Inject()(
 
     EitherT(
       http
-        .put(url"$nsiCreateAccountUrl")(hc.copy(authorization = None))
+        .put(url"$nsiCreateAccountUrl")(using hc.copy(authorization = None))
         .withProxy
         .withBody(Json.toJson(payload))
-        .transform(_.withHttpHeaders(Map(nsiAuthHeaderKey -> nsiBasicAuth).toSeq: _*))
+        .transform(_.withHttpHeaders(Map(nsiAuthHeaderKey -> nsiBasicAuth).toSeq*))
         .execute[HttpResponse]
         .map[Either[String, Unit]] { response =>
           val time = stopTime(timeContext)
@@ -183,10 +183,10 @@ class NSIConnectorImpl @Inject()(
 
     EitherT(
       http
-        .get(url"$url")(hc.copy(authorization = None))
+        .get(url"$url")(using hc.copy(authorization = None))
         .withProxy
-        .transform(_.withQueryStringParameters(queryParams: _*))
-        .transform(_.withHttpHeaders(Map(nsiAuthHeaderKey -> nsiBasicAuth).toSeq : _*))
+        .transform(_.withQueryStringParameters(queryParams*))
+        .transform(_.withHttpHeaders(Map(nsiAuthHeaderKey -> nsiBasicAuth).toSeq*))
         .execute[HttpResponse]
         .map[Either[String, HttpResponse]] { response =>
           val time = timeContext.stop()

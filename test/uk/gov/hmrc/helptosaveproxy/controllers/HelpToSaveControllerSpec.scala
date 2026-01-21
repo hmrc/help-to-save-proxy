@@ -56,18 +56,18 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
   def mockCreateAccount(expectedInfo: NSIPayload)(result: Either[SubmissionFailure, SubmissionSuccess]): Unit =
     when(mockNSIConnector
-      .createAccount(eqTo(expectedInfo))(any(), any()))
+      .createAccount(eqTo(expectedInfo))(using any(), any()))
       .thenReturn(EitherT.fromEither[Future](result))
 
   def mockUpdateEmail(expectedInfo: NSIPayload)(result: Either[String, Unit]) =
     when(mockNSIConnector
-      .updateEmail(eqTo(expectedInfo))(any(), any()))
+      .updateEmail(eqTo(expectedInfo))(using any(), any()))
       .thenReturn(EitherT.fromEither[Future](result))
 
   def mockGetAccountByNino(resource: String, queryString: Map[String, Seq[String]])(
     result: Either[String, HttpResponse]): Unit =
     when(mockNSIConnector
-      .queryAccount(eqTo(resource), eqTo(queryString))(any(), any()))
+      .queryAccount(eqTo(resource), eqTo(queryString))(using any(), any()))
       .thenReturn(EitherT.fromEither[Future](result))
 
   "The createAccount method" must {
@@ -80,7 +80,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
         FakeRequest().withJsonBody(Json.toJson(userInfo)).withHeaders("X-Correlation-Id" -> correlationId))
 
     behave like commonBehaviour(
-      controller.createAccount _,
+      (() => controller.createAccount()),
       () => mockCreateAccount(validNSIPayload)(Left(SubmissionFailure("", ""))),
       validNSIPayload)
 
@@ -111,7 +111,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
     val updatePayload = validNSIPayload.copy(version = None, systemId = None)
 
-    behave like commonBehaviour(controller.updateEmail _, () => mockUpdateEmail(updatePayload)(Left("")), updatePayload)
+    behave like commonBehaviour((() => controller.updateEmail()), () => mockUpdateEmail(updatePayload)(Left("")), updatePayload)
 
     "return an OK status when a user successfully updates their email address" in {
       mockAuthResultWithSuccess()

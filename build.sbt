@@ -11,7 +11,7 @@ lazy val microservice =
     .settings(onLoadMessage := "")
     .settings(CodeCoverageSettings.settings *)
     .settings(majorVersion := 2)
-    .settings(scalaVersion := "3.3.5")
+    .settings(scalaVersion := "3.7.1")
     .settings(PlayKeys.playDefaultPort := 7005)
 
     .settings(

@@ -17,10 +17,10 @@
 package uk.gov.hmrc.helptosaveproxy.controllers
 
 import cats.data.EitherT
-import cats.instances.future._
+import cats.instances.future.*
 import com.google.inject.Inject
 import play.api.libs.json.{JsError, JsSuccess, JsValue, Json}
-import play.api.mvc._
+import play.api.mvc.*
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.helptosaveproxy.auth.Auth
 import uk.gov.hmrc.helptosaveproxy.config.AppConfig
@@ -29,7 +29,7 @@ import uk.gov.hmrc.helptosaveproxy.controllers.HelpToSaveController.Error
 import uk.gov.hmrc.helptosaveproxy.models.NSIPayload
 import uk.gov.hmrc.helptosaveproxy.models.SubmissionResult.{SubmissionFailure, SubmissionSuccess}
 import uk.gov.hmrc.helptosaveproxy.services.JSONSchemaValidationService
-import uk.gov.hmrc.helptosaveproxy.util.JsErrorOps._
+import uk.gov.hmrc.helptosaveproxy.util.JsErrorOps.*
 import uk.gov.hmrc.helptosaveproxy.util.Toggles.FEATURE
 import uk.gov.hmrc.helptosaveproxy.util.{LogMessageTransformer, Logging, NINO}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
@@ -43,7 +43,7 @@ class HelpToSaveController @Inject()(
   cc: ControllerComponents)(implicit transformer: LogMessageTransformer, appConfig: AppConfig, ec: ExecutionContext)
     extends BackendController(cc) with Auth with Logging {
 
-  import HelpToSaveController.Error._
+  import HelpToSaveController.Error.*
 
   lazy val correlationIdHeaderName: String = appConfig.getString("microservice.correlationIdHeaderName")
 
@@ -55,7 +55,7 @@ class HelpToSaveController @Inject()(
   def createAccount(): Action[AnyContent] = authorised { implicit request =>
     processRequest[SubmissionSuccess] {
       nsiConnector.createAccount(_).leftMap[Error](NSIError.apply)
-    } { (submissionSuccess, nSIUserInfo) =>
+    } { (submissionSuccess, _) =>
       submissionSuccess.accountNumber match {
         case None => Conflict
         case Some(account) => Created(Json.toJson(account))

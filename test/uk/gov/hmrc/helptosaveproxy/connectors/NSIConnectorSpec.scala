@@ -21,8 +21,6 @@ import com.codahale.metrics.*
 import com.typesafe.config.ConfigFactory
 import org.scalatest.EitherValues
 import org.scalatest.matchers.should.Matchers
-import org.scalatest.matchers.should.Matchers.shouldBe
-import org.scalatest.prop.TableDrivenPropertyChecks.whenever
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
@@ -107,8 +105,8 @@ class NSIConnectorSpec
     new NSIConnectorImpl(mockMetrics, mockPagerDuty, httpClient)
 
   class StubMetricRegistry extends MetricRegistry {
-    override def getGauges(filter: MetricFilter): util.SortedMap[String, Gauge[_]] =
-      new util.TreeMap[String, Gauge[_]]()
+    override def getGauges(filter: MetricFilter): util.SortedMap[String, Gauge[?]] =
+      new util.TreeMap[String, Gauge[?]]()
   }
 
   val nsiCreateAccountUrl: String = appConfig.nsiCreateAccountUrl

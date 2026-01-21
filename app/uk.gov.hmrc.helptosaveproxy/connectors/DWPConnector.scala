@@ -61,11 +61,14 @@ class DWPConnectorImpl @Inject()(
       "thresholdAmount" -> threshold.toString,
       "transactionId"   -> transactionId.toString)
 
+    val requestBuilder = if(appConfig.isDwpStubEnabled) 
+      http.get(url"$url")(using hc.copy(authorization = None)) 
+    else 
+      http.get(url"$url")(using hc.copy(authorization = None)).withProxy
+
     EitherT(
-      http
-        .get(url"$url")(hc.copy(authorization = None))
-        .withProxy
-        .transform(_.withQueryStringParameters(queryParams : _*))
+      requestBuilder
+        .transform(_.withQueryStringParameters(queryParams*))
         .execute[HttpResponse]
         .map[Either[String, HttpResponse]] { response =>
           val time = timeContext.stop()
