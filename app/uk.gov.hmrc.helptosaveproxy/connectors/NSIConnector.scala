@@ -103,6 +103,7 @@ class NSIConnectorImpl @Inject()(
 
           case other =>
             pagerDutyAlerting.alert("Received unexpected http status in response to create account")
+            logger.info(s"NS&I createAccount $other")
             Left(handleErrorStatus(other, response, payload.nino, time, correlationId))
         }
       }
@@ -152,6 +153,7 @@ class NSIConnectorImpl @Inject()(
             case other =>
               metrics.nsiUpdateEmailErrorCounter.inc()
               pagerDutyAlerting.alert("Received unexpected http status in response to update email")
+              logger.info(s"NS&I updateEmail $other")
               Left(
                 s"Received unexpected status $other from NS&I while trying to update email $time. Body was ${maskNino(
                   response.body)}")
@@ -162,7 +164,7 @@ class NSIConnectorImpl @Inject()(
             val time = timeContext.stop()
             pagerDutyAlerting.alert("Failed to make call to update email")
             metrics.nsiUpdateEmailErrorCounter.inc()
-
+            logger.info("NS&I updateEmail Failed")
             Left(s"Encountered error while trying to update email: ${e.getMessage} $time")
         })
   }
@@ -195,6 +197,7 @@ class NSIConnectorImpl @Inject()(
               logger.debug(s"queryAccount resource: $resource, response: ${response.body}")
               Right(response)
             case other =>
+              logger.info(s"NS&I queryAccount $other")
               Left(s"Received unexpected status $other from NS&I while trying to query account. Body was ${maskNino(
                 response.body)} $time")
           }

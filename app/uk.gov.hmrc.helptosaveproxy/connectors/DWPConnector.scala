@@ -84,6 +84,7 @@ class DWPConnectorImpl @Inject()(
             case other =>
               pagerDutyAlerting.alert("Received unexpected http status in response to uc claimant check")
               metrics.dwpClaimantErrorCounter.inc()
+              logger.info(s"DWP ucClaimantCheck $other")
               Left(
                 s"ucClaimantCheck returned a status other than 200, with response body: ${response.body}, " +
                   s"status: $other, transactionId: $transactionId, thresholdAmount: $threshold, ${timeString(time)}")
@@ -94,6 +95,7 @@ class DWPConnectorImpl @Inject()(
             val time = timeContext.stop()
             pagerDutyAlerting.alert("Failed to make call to uc claimant check")
             metrics.dwpClaimantErrorCounter.inc()
+            logger.info("DWP ucClaimantCheck failed")
             Left(
               s"Encountered error while trying to make ucClaimantCheck call, with message: ${e.getMessage}, " +
                 s"transactionId: $transactionId, thresholdAmount: $threshold, ${timeString(time)}")
