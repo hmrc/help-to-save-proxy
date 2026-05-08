@@ -16,16 +16,14 @@
 
 package uk.gov.hmrc.helptosaveproxy.services
 
-import com.github.fge.jackson.JsonLoader
-import com.github.fge.jsonschema.core.report.LogLevel
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.google.inject.{ImplementedBy, Inject, Singleton}
+import com.networknt.schema.*
+import play.api.Configuration
+import play.api.libs.json.*
 
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import com.github.fge.jsonschema.main._
-import com.google.inject.{ImplementedBy, Inject, Singleton}
-import play.api.Configuration
-import play.api.libs.json._
-
 import scala.jdk.CollectionConverters.IteratorHasAsScala
 import scala.util.{Failure, Success, Try}
 
@@ -39,9 +37,10 @@ trait JSONSchemaValidationService {
 @Singleton
 class JSONSchemaValidationServiceImpl @Inject()(conf: Configuration) extends JSONSchemaValidationService {
 
-  private val validationSchema = JsonLoader.fromString(conf.underlying.getString("schema"))
+  private val objectMapper = ObjectMapper()
 
-  private lazy val jsonValidator = JsonSchemaFactory.byDefault().getValidator
+  private val schemaRegistry: SchemaRegistry = SchemaRegistry.withDefaultDialect(SpecificationVersion.DRAFT_7)
+  private val validationSchema: Schema = schemaRegistry.getSchema(conf.underlying.getString("schema"))
 
   private val dateFormatter = DateTimeFormatter.BASIC_ISO_DATE
 
@@ -69,12 +68,11 @@ class JSONSchemaValidationServiceImpl @Inject()(conf: Configuration) extends JSO
     )
 
   private def validateAgainstSchema(userInfo: JsValue): Either[String, JsValue] = {
-    val node = JsonLoader.fromString(userInfo.toString)
-    val validationResult = jsonValidator.validate(validationSchema, node)
-    if (validationResult.isSuccess) Right(userInfo)
+    val node = objectMapper.readTree(userInfo.toString)
+    val validationResult =validationSchema.validate(node)
+    if (validationResult.isEmpty) Right(userInfo)
     else {
-      val errors =
-        validationResult.iterator().asScala.filter(_.getLogLevel == LogLevel.ERROR).map(_.getMessage).mkString(",")
+      val errors = validationResult.iterator().asScala.map(_.getMessage).mkString(", ")
       Left(s"The following fields were either invalid or missing: [$errors]")
     }
   }

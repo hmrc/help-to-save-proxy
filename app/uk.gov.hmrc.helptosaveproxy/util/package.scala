@@ -16,11 +16,9 @@
 
 package uk.gov.hmrc.helptosaveproxy
 
-import java.util.Base64
-
 import cats.data.EitherT
-import org.joda.time.LocalDate
 
+import java.util.Base64
 import scala.concurrent.Future
 import scala.language.implicitConversions
 import scala.util.matching.Regex
@@ -35,10 +33,7 @@ package object util {
 
   implicit def toFuture[A](a: A): Future[A] = Future.successful(a)
 
-  implicit def toJavaDate(jodaDate: LocalDate): java.time.LocalDate =
-    java.time.LocalDate.of(jodaDate.getYear, jodaDate.getMonthOfYear, jodaDate.getDayOfMonth)
-
-  val ninoRegex: Regex = """[A-Za-z]{2}[0-9]{6}[A-Za-z]{1}""".r
+  private val ninoRegex: Regex = """[A-Za-z]{2}[0-9]{6}[A-Za-z]{1}""".r
 
   def maskNino(original: String): String =
     Option(original) match {
